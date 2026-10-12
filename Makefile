@@ -1,4 +1,4 @@
-.PHONY: harness test dev harness-integration icon
+.PHONY: harness test dev harness-integration icon tap
 
 harness: ## pipeline completo, igual ao CI
 	bash scripts/harness.sh
@@ -15,3 +15,6 @@ harness-integration: ## testes contra cluster kind local (manual, nunca no CI)
 
 icon: ## gera build/icon.png e build/icon.icns a partir do SVG (ICON=build/icon-src/a-deck.svg)
 	bash scripts/build-icon.sh $(or $(ICON),build/icon-src/a-deck.svg)
+
+tap: ## aponta o cask do Homebrew para uma release publicada (VERSION=1.2.0)
+	bash scripts/update-tap.sh $(VERSION)

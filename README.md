@@ -41,6 +41,14 @@ Todos os arquivos estão na página de [Releases](https://github.com/wisecort/Lo
 
 **macOS** (Apple Silicon ou Intel)
 
+Pelo Homebrew (instala o `kubectl` junto):
+
+```bash
+brew install --cask wisecort/tap/logdeck
+```
+
+Ou manualmente:
+
 1. Baixe `LogDeck-<versão>-arm64.dmg` (M1 ou mais novo) ou `LogDeck-<versão>-x64.dmg` (Intel).
 2. Abra o `.dmg` e arraste o **LogDeck** para **Aplicativos**.
 3. Na primeira vez, o macOS avisa que não consegue verificar o desenvolvedor (o app ainda não é assinado pela Apple). Para liberar, abra o LogDeck uma vez, feche o aviso e vá em **Ajustes do Sistema → Privacidade e Segurança → Abrir mesmo assim**. Ou, no Terminal:
