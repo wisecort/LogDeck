@@ -200,6 +200,40 @@ describe('assertReadOnly — final gate before spawn (G1)', () => {
   })
 })
 
+describe('assertReadOnly — allowlisted shapes not produced by builders', () => {
+  it.each([
+    [['version', '--client']],
+    [['config', 'get-contexts', '-o', 'name']],
+    [['config', 'get-contexts', '--no-headers']],
+    [['config', 'view', '--minify', '-o', 'jsonpath={..namespace}', `--context=${HML}`]],
+    [['get', 'pods', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`, '--request-timeout=10s']],
+    [['auth', 'can-i', 'watch', 'pods', '-n', 'portal-hml', `--context=${HML}`]],
+  ])('accepts %j', (argv) => {
+    expect(() => assertReadOnly(argv)).not.toThrow()
+  })
+
+  it.each([
+    [['version', '-o', 'json']],
+    [['config', 'view', '-o', 'json']],
+    [['config', 'get-contexts', '-o', 'yaml']],
+    [['config', 'set', 'contexts.x.namespace', 'y']],
+    [['auth', 'can-i', 'delete', 'pods', `--context=${HML}`]],
+    [['auth', 'can-i', 'get', 'secrets', `--context=${HML}`]],
+    [['auth', 'whoami', `--context=${HML}`]],
+    [['logs']],
+    [['logs', 'p', '-n', 'ns', `--context=${HML}`, '--context=kind-logdeck-test']],
+    [['logs', 'p', '-n', 'ns', '--tail=-5', `--context=${HML}`]],
+    [['logs', 'p', '-n', 'ns', '--since=1d', `--context=${HML}`]],
+    [['logs', 'p', '-n', 'ns', '--since-time=yesterday', `--context=${HML}`]],
+    [['get', 'pods', '-n']],
+    [['get', 'pods', '-n', 'portal-hml', '--context=-x']],
+    [['get', 'pods', '-n', 'portal-hml', `--context=${HML}`, '--request-timeout=forever']],
+    [['get', 'pods', '-n', 'portal-hml', '-o', 'yaml', `--context=${HML}`]],
+  ])('rejects %j', (argv) => {
+    expect(() => assertReadOnly(argv)).toThrow(UnsafeArgsError)
+  })
+})
+
 describe('assertShellArgs', () => {
   it('accepts the shell builder output only', () => {
     expect(() => assertShellArgs(buildShellArgs(POD))).not.toThrow()

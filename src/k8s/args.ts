@@ -1,25 +1,53 @@
 // The only place that builds kubectl argv (G1, G2). Read-only allowlist.
-import { todo } from '../shared/todo'
 
 export class UnsafeArgsError extends Error {
   override name = 'UnsafeArgsError'
 }
 
-export function validateNamespace(name: string): string {
-  return todo(name)
+const DNS1123_LABEL = /^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$/
+// eslint-disable-next-line no-control-regex -- rejecting control characters is the point
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
+const SINCE = /^\d+[smh]$/
+const RFC3339 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/
+const MAX_TAIL = 100_000
+
+/** Fixed command for the Pod Shell: bash when available, sh otherwise (P5). */
+export const SHELL_COMMAND = 'command -v bash >/dev/null && exec bash || exec sh'
+
+function fail(message: string): never {
+  throw new UnsafeArgsError(message)
 }
 
-export function validatePodName(name: string): string {
-  return todo(name)
+function label(kind: string, name: string): string {
+  if (typeof name !== 'string' || !DNS1123_LABEL.test(name)) fail(`${kind} inválido: ${JSON.stringify(name)}`)
+  return name
+}
+
+export function validateNamespace(name: string): string {
+  return label('namespace', name)
 }
 
 export function validateContainerName(name: string): string {
-  return todo(name)
+  return label('container', name)
+}
+
+export function validatePodName(name: string): string {
+  if (typeof name !== 'string' || name.length === 0 || name.length > 253) fail(`pod inválido: ${JSON.stringify(name)}`)
+  for (const part of name.split('.')) {
+    if (!DNS1123_LABEL.test(part)) fail(`pod inválido: ${JSON.stringify(name)}`)
+  }
+  return name
+}
+
+function contextShapeOk(name: string): boolean {
+  return typeof name === 'string' && name.length > 0 && !name.startsWith('-') && !CONTROL_CHARS.test(name)
 }
 
 /** Context names are not DNS-1123 on OKD; they must come from `config get-contexts`. */
 export function validateContextName(name: string, known: readonly string[]): string {
-  return todo(name, known)
+  if (!contextShapeOk(name)) fail(`contexto inválido: ${JSON.stringify(name)}`)
+  if (!known.includes(name)) fail(`contexto desconhecido: ${JSON.stringify(name)}`)
+  return name
 }
 
 export interface Target {
@@ -43,43 +71,191 @@ export interface LogsOptions {
   previous?: boolean
 }
 
+function contextFlag(target: Target): string {
+  return `--context=${validateContextName(target.context, target.knownContexts)}`
+}
+
 export function buildVersionArgs(): string[] {
-  return todo()
+  return ['version', '--client', '-o', 'json']
 }
 
 export function buildGetContextsArgs(): string[] {
-  return todo()
+  return ['config', 'get-contexts']
 }
 
 export function buildGetNamespacesArgs(target: Target): string[] {
-  return todo(target)
+  return ['get', 'namespaces', '-o', 'json', contextFlag(target)]
 }
 
 export function buildGetPodsArgs(target: Target & { namespace: string }): string[] {
-  return todo(target)
+  return ['get', 'pods', '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
 }
 
 export function buildCanIArgs(
   target: Target & { namespace?: string; verb: 'get' | 'list' | 'watch'; resource: 'namespaces' | 'pods' | 'pods/log' },
 ): string[] {
-  return todo(target)
+  if (!CAN_I_VERBS.has(target.verb)) fail(`verbo não permitido em auth can-i: ${target.verb}`)
+  if (!CAN_I_RESOURCES.has(target.resource)) fail(`recurso não permitido em auth can-i: ${target.resource}`)
+  const ns = target.namespace === undefined ? [] : ['-n', validateNamespace(target.namespace)]
+  return ['auth', 'can-i', target.verb, target.resource, ...ns, contextFlag(target)]
 }
 
 export function buildLogsArgs(target: PodTarget, opts: LogsOptions): string[] {
-  return todo(target, opts)
+  const argv = [
+    'logs',
+    validatePodName(target.pod),
+    '-n',
+    validateNamespace(target.namespace),
+    '-c',
+    validateContainerName(target.container),
+    '--timestamps',
+  ]
+  if (opts.follow && !opts.previous) argv.push('-f')
+  if (opts.tail !== undefined) {
+    if (!Number.isInteger(opts.tail) || opts.tail < -1 || opts.tail > MAX_TAIL) fail(`--tail inválido: ${opts.tail}`)
+    argv.push(`--tail=${opts.tail}`)
+  }
+  if (opts.since !== undefined) {
+    if (!SINCE.test(opts.since)) fail(`--since inválido: ${JSON.stringify(opts.since)}`)
+    argv.push(`--since=${opts.since}`)
+  }
+  if (opts.sinceTime !== undefined) {
+    if (!RFC3339.test(opts.sinceTime) || Number.isNaN(Date.parse(opts.sinceTime))) {
+      fail(`--since-time inválido: ${JSON.stringify(opts.sinceTime)}`)
+    }
+    argv.push(`--since-time=${opts.sinceTime}`)
+  }
+  if (opts.previous) argv.push('--previous')
+  argv.push(contextFlag(target))
+  return argv
 }
 
 /** Only for the user-initiated Pod Shell (P5). */
 export function buildShellArgs(target: PodTarget): string[] {
-  return todo(target)
+  return [
+    'exec',
+    '-it',
+    validatePodName(target.pod),
+    '-n',
+    validateNamespace(target.namespace),
+    '-c',
+    validateContainerName(target.container),
+    contextFlag(target),
+    '--',
+    'sh',
+    '-c',
+    SHELL_COMMAND,
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// Final gate: argv is re-validated right before spawning, whoever built it.
+
+const CAN_I_VERBS = new Set(['get', 'list', 'watch'])
+const CAN_I_RESOURCES = new Set(['namespaces', 'pods', 'pods/log'])
+const GET_RESOURCES = new Set(['namespaces', 'pods', 'pod'])
+
+interface FlagRules {
+  /** Flags followed by a separate value, with its validator. */
+  valued?: Record<string, (v: string) => boolean>
+  /** `--name=value` flags, with its validator. */
+  inline?: Record<string, (v: string) => boolean>
+  /** Boolean flags. */
+  bool?: readonly string[]
+}
+
+const isContext = (v: string) => contextShapeOk(v)
+const isTimeout = (v: string) => /^\d+[smh]?$/.test(v)
+
+function checkFlags(tokens: readonly string[], rules: FlagRules, needsContext: boolean): void {
+  let contexts = 0
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]!
+    const valued = rules.valued?.[t]
+    if (valued) {
+      const v = tokens[++i]
+      if (v === undefined || !valued(v)) fail(`valor inválido para ${t}`)
+      continue
+    }
+    if (rules.bool?.includes(t)) continue
+    const eq = t.indexOf('=')
+    if (t.startsWith('--') && eq > 0) {
+      const name = t.slice(0, eq)
+      const value = t.slice(eq + 1)
+      if (name === '--context' && isContext(value)) {
+        contexts++
+        continue
+      }
+      if (name === '--request-timeout' && isTimeout(value)) continue
+      const inline = rules.inline?.[name]
+      if (inline?.(value)) continue
+    }
+    fail(`argumento não permitido: ${JSON.stringify(t)}`)
+  }
+  if (needsContext && contexts !== 1) fail('--context explícito é obrigatório (G4)')
 }
 
 /** Final gate before spawning: throws unless argv is in the read-only allowlist. */
 export function assertReadOnly(argv: readonly string[]): void {
-  todo(argv)
+  const [verb, sub, ...rest] = argv
+  switch (verb) {
+    case 'version':
+      if (sub !== '--client') fail('version só com --client')
+      return checkFlags(rest, { valued: { '-o': (v) => v === 'json' } }, false)
+    case 'config':
+      if (sub === 'get-contexts') return checkFlags(rest, { bool: ['--no-headers'], valued: { '-o': (v) => v === 'name' } }, false)
+      if (sub === 'view') {
+        if (!rest.includes('--minify')) fail('config view só com --minify')
+        return checkFlags(rest, { bool: ['--minify'], valued: { '-o': (v) => v.startsWith('jsonpath=') } }, false)
+      }
+      return fail(`config ${sub} não permitido`)
+    case 'get':
+      if (!sub || !GET_RESOURCES.has(sub)) fail(`get ${sub} não permitido`)
+      return checkFlags(rest, { valued: { '-n': (v) => DNS1123_LABEL.test(v), '-o': (v) => v === 'json' } }, true)
+    case 'auth': {
+      const [canVerb, resource, ...flags] = rest
+      if (sub !== 'can-i' || !CAN_I_VERBS.has(canVerb ?? '') || !CAN_I_RESOURCES.has(resource ?? '')) fail('auth can-i não permitido')
+      return checkFlags(flags, { valued: { '-n': (v) => DNS1123_LABEL.test(v) } }, true)
+    }
+    case 'logs':
+      if (!sub) fail('logs sem pod')
+      validatePodName(sub)
+      return checkFlags(
+        rest,
+        {
+          valued: { '-n': (v) => DNS1123_LABEL.test(v), '-c': (v) => DNS1123_LABEL.test(v) },
+          bool: ['--timestamps', '-f', '--previous'],
+          inline: {
+            '--tail': (v) => /^-?\d+$/.test(v) && Number(v) >= -1 && Number(v) <= MAX_TAIL,
+            '--since': (v) => SINCE.test(v),
+            '--since-time': (v) => RFC3339.test(v),
+          },
+        },
+        true,
+      )
+    default:
+      return fail(`verbo não permitido: ${JSON.stringify(verb)}`)
+  }
 }
 
 /** Final gate for the Pod Shell argv. */
 export function assertShellArgs(argv: readonly string[]): void {
-  todo(argv)
+  const [verb, tty, pod, nFlag, ns, cFlag, container, context, dashdash, sh, shFlag, command, ...extra] = argv
+  const ok =
+    verb === 'exec' &&
+    tty === '-it' &&
+    nFlag === '-n' &&
+    cFlag === '-c' &&
+    dashdash === '--' &&
+    sh === 'sh' &&
+    shFlag === '-c' &&
+    command === SHELL_COMMAND &&
+    extra.length === 0 &&
+    typeof context === 'string' &&
+    context.startsWith('--context=') &&
+    isContext(context.slice('--context='.length)) &&
+    DNS1123_LABEL.test(ns ?? '') &&
+    DNS1123_LABEL.test(container ?? '')
+  if (!ok) fail('argv do shell fora do formato permitido')
+  validatePodName(pod!)
 }

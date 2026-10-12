@@ -5,12 +5,13 @@
 //   FAKE_KUBECTL_ARGV_LOG   file; each invocation appends one JSON line with argv
 //   FAKE_KUBECTL_MODE       ok (default) | auth-error | drop-after:<n> | not-found
 //   FAKE_KUBECTL_LOG_FILE   log fixture streamed by `logs` (default pod-php-apache.log)
-//   FAKE_KUBECTL_DELAY_MS   delay between streamed lines (default 2)
+//   FAKE_KUBECTL_DELAY_MS   delay between streamed lines (default 2; 0 = bulk)
+//   FAKE_KUBECTL_CAN_I      yes (default) | no
 //
 // Any verb outside the read-only allowlist exits with code 99 so tests catch it.
 
 const { appendFileSync, readFileSync } = require('node:fs')
-const { join, resolve } = require('node:path')
+const { isAbsolute, join, resolve } = require('node:path')
 
 const FIXTURES = resolve(__dirname, '../fixtures')
 const argv = process.argv.slice(2)
@@ -56,8 +57,10 @@ if (!argv.some((a) => a.startsWith('--context'))) fail('FAKE KUBECTL: missing --
 if (mode === 'auth-error') fail('error: You must be logged in to the server (Unauthorized)')
 
 if (verb === 'auth' && positional[1] === 'can-i') {
-  process.stdout.write('yes\n')
-  process.exit(0)
+  // Real kubectl prints "no" and exits 1 when RBAC denies the action.
+  const allowed = (env.FAKE_KUBECTL_CAN_I || 'yes') === 'yes'
+  process.stdout.write(allowed ? 'yes\n' : 'no\n')
+  process.exit(allowed ? 0 : 1)
 }
 
 if (verb === 'get') {
@@ -75,7 +78,8 @@ if (verb === 'get') {
 
 if (verb === 'logs') {
   if (mode === 'not-found') fail(`Error from server (NotFound): pods "${positional[1]}" not found`)
-  const file = has('--previous') ? join(FIXTURES, 'kubectl/previous.log') : join(FIXTURES, env.FAKE_KUBECTL_LOG_FILE || 'pod-php-apache.log')
+  const logFile = env.FAKE_KUBECTL_LOG_FILE || 'pod-php-apache.log'
+  const file = has('--previous') ? join(FIXTURES, 'kubectl/previous.log') : isAbsolute(logFile) ? logFile : join(FIXTURES, logFile)
   const TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z /
   let lines = readFileSync(file, 'utf8').split('\n').filter(Boolean)
   const sinceTime = flag('--since-time')
@@ -88,14 +92,18 @@ if (verb === 'logs') {
   const dropAfter = mode.startsWith('drop-after:') ? Number(mode.split(':')[1]) : Infinity
   const delay = Number(env.FAKE_KUBECTL_DELAY_MS ?? 2)
   let i = 0
+  // delay 0: write in chunks (throughput tests); otherwise one line per tick.
+  const chunk = delay === 0 ? 1000 : 1
   const tick = () => {
-    if (i >= dropAfter) fail('error: unexpected EOF')
-    if (i < lines.length) {
-      process.stdout.write(lines[i++] + '\n')
-      setTimeout(tick, delay)
-    } else if (!follow) {
-      process.exit(0)
+    const end = Math.min(i + chunk, lines.length, dropAfter)
+    if (i < end) process.stdout.write(lines.slice(i, end).join('\n') + '\n')
+    i = end
+    if (i >= dropAfter) {
+      process.stdout.write('', () => fail('error: unexpected EOF'))
+      return
     }
+    if (i < lines.length) setTimeout(tick, delay)
+    else if (!follow) process.stdout.write('', () => process.exit(0))
     // follow mode: stay alive until killed, like a real stream with no new lines
   }
   if (follow) setInterval(() => {}, 1 << 30)

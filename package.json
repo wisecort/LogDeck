@@ -16,7 +16,7 @@
     "build": "electron-vite build",
     "package:mac": "electron-builder --mac --dir --publish never",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.e2e.json",
     "guardrails": "node scripts/guardrails.mjs",
     "test": "vitest run",
     "test:unit": "vitest run --project unit --coverage",

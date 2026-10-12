@@ -37,3 +37,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - `search`: texto (padrão) e regex, exclusões, destaque sem HTML; regex com quantificador aninhado recusada e regex patológica abortada em 250 ms num worker descartável (F5.4).
 - `signatures`: catálogo do F6 (Timeout Apache → PHP-FPM, Permissão no startup, etc.) e agrupamento genérico por mensagem normalizada.
 - Cobertura de `src/logs/`: 99% linhas, 96% branches.
+
+### Fase 5 — Kubernetes
+
+- `args.ts`: builders e portão final `assertReadOnly` (allowlist de verbos, recursos e flags; `--context` obrigatório); nomes DNS-1123; contexto validado contra `get-contexts`.
+- `contexts.ts`: contextos só via `config get-contexts`, sem credenciais; aviso de produção (`prod`/`prd`).
+- `kubectl.ts`: único `spawn` (sem shell), PATH com Homebrew para apps abertos pelo Finder, mensagens acionáveis (kubectl ausente, sessão expirada, RBAC, cluster inacessível).
+- `pods.ts` e `service.ts`: navegação contexto → namespace → pod → container com status efetivo (CrashLoopBackOff, Init:…, Completed), restarts e fallback para o namespace padrão quando o RBAC não permite listar (OKD).
+- `stream.ts`: log ao vivo com lotes de 100 ms, reconexão 1/2/5/10 s com `--since-time` e sem linhas duplicadas, `--previous`, erros não recuperáveis sem retry, SIGTERM→SIGKILL no `stop`; `StreamRegistry` encerra tudo ao fechar janela ou app.
+- IPC tipado (`src/shared/ipc.ts`) e API do preload; o renderer não monta argumentos do kubectl e só a janela principal pode chamar.
+- E2E com kubectl fake: navegação, rejeição de entrada maliciosa vinda do renderer e nenhum kubectl órfão após fechar o app.

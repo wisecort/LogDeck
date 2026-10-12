@@ -1,5 +1,8 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, Menu, session, shell } from 'electron'
+import { K8sService } from '../k8s/service'
+import { StreamRegistry } from '../k8s/stream'
+import { registerIpc } from './ipc'
 
 const APP_NAME = 'LogDeck'
 
@@ -15,6 +18,10 @@ const CSP = [
 ].join('; ')
 
 app.setName(APP_NAME)
+
+const service = new K8sService()
+const registry = new StreamRegistry()
+let mainWindow: BrowserWindow | undefined
 
 function buildMenu(): void {
   Menu.setApplicationMenu(
@@ -55,7 +62,16 @@ function createWindow(): void {
     },
   })
 
+  mainWindow = win
   win.once('ready-to-show', () => win.show())
+  // A reload or a closed window must not leave kubectl processes behind (F3.5).
+  win.webContents.on('did-start-navigation', (details) => {
+    if (details.isMainFrame && !details.isSameDocument) void registry.stopAll()
+  })
+  win.on('closed', () => {
+    mainWindow = undefined
+    void registry.stopAll()
+  })
 
   // The renderer never opens windows or navigates away; external links go to the browser.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -75,6 +91,7 @@ void app.whenReady().then(() => {
       callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] } })
     })
   }
+  registerIpc({ service, registry, trusted: () => mainWindow?.webContents })
   buildMenu()
   createWindow()
   app.on('activate', () => {
@@ -83,3 +100,11 @@ void app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => app.quit())
+
+let quitting = false
+app.on('before-quit', (event) => {
+  if (quitting || registry.size === 0) return
+  event.preventDefault()
+  quitting = true
+  void registry.stopAll().finally(() => app.quit())
+})

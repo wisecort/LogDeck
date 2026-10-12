@@ -81,14 +81,17 @@ describe('fake kubectl', () => {
   it('keeps a -f stream open until killed', async () => {
     const fake = fakeKubectlEnv({ FAKE_KUBECTL_DELAY_MS: '0', FAKE_KUBECTL_LOG_FILE: 'startup.log' })
     const child = spawn('kubectl', ['logs', 'p', '-n', 'portal-hml', '-f', CTX], { env: fake.env })
-    let out = ''
-    child.stdout.on('data', (d) => (out += d))
-    await new Promise((r) => setTimeout(r, 500))
-    expect(child.exitCode).toBeNull()
-    expect(out).toContain('Starting php-fpm')
-    child.kill('SIGTERM')
-    const signal = await new Promise((r) => child.on('exit', (_c, s) => r(s)))
-    expect(signal).toBe('SIGTERM')
+    const exited = new Promise((r) => child.on('exit', (_c, s) => r(s)))
+    try {
+      let out = ''
+      child.stdout.on('data', (d) => (out += d))
+      await new Promise((r) => setTimeout(r, 500))
+      expect(child.exitCode).toBeNull()
+      expect(out).toContain('Starting php-fpm')
+    } finally {
+      child.kill('SIGTERM')
+    }
+    expect(await exited).toBe('SIGTERM')
   })
 
   it('prints the no-TTY errors of P5 when exec has no terminal', () => {
