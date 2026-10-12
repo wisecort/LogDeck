@@ -122,6 +122,31 @@ test('tabs: two pods stream side by side, switch, close and add a new one', asyn
   await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
 })
 
+test('compare with --previous: current and previous container side by side', async () => {
+  await openPod(win, { pod: /portal-worker/ })
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  const compare = win.getByRole('button', { name: 'Comparar com o anterior' })
+  await expect(compare).toBeEnabled()
+  await compare.click()
+  const previous = win.getByTestId('previous-pane')
+  await expect(previous).toContainText('Container anterior (--previous)')
+  await expect(previous.getByTestId('log-row').filter({ hasText: 'FPM initialization failed' })).toHaveCount(1)
+  await expect(previous.getByRole('button', { name: 'Marcar linha' })).toHaveCount(0)
+  await win.screenshot({ path: 'test-results/ui-compare.png' })
+
+  // level filters apply to both panes
+  await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^ERROR/ }).click({ modifiers: ['Alt'] })
+  for (const level of await previous.getByTestId('log-row').evaluateAll((els) => els.map((e) => e.getAttribute('data-level')))) expect(level).toBe('ERROR')
+
+  await compare.click()
+  await expect(previous).toHaveCount(0)
+  // a pod without restarts has no previous container
+  const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
+  await tree.getByRole('button', { name: /portal-migrate/ }).click()
+  await expect(win.locator('.statusbar')).toContainText('portal-migrate')
+  await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
+})
+
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Expressão regular' }).click()

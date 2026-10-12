@@ -3,7 +3,7 @@ import { checkLogFile, LogFileError, splitLogText } from '../logs/file'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
 import type { LogOptions, Selection } from './view-types'
 import { LogEngine } from './engine'
-import { activateTab, addTab, closeTab, initialTabs, updateTab, type TabsState } from './tabs'
+import { activateTab, addTab, closeTab, companionKey, initialTabs, updateTab, type TabsState } from './tabs'
 
 const RENDER_MS = 100
 const FILE_CHUNK = 5000
@@ -51,6 +51,9 @@ export function useLogTabs() {
     return s
   }, [slots])
 
+  /** The active tab and its --previous companion re-render; background tabs only ingest. */
+  const isVisible = (key: string) => key === stateRef.current.active || key === companionKey(stateRef.current.active)
+
   const scheduleRender = useCallback(() => {
     timer.current ??= setTimeout(() => {
       timer.current = undefined
@@ -66,7 +69,7 @@ export function useLogTabs() {
         return
       }
       slot(tabId).engine.ingest(lines)
-      if (tabId === stateRef.current.active) scheduleRender()
+      if (isVisible(tabId)) scheduleRender()
     })
     const offStatus = window.logdeck.onLogStatus(({ streamId, status }) => {
       const tabId = byStream.current.get(streamId)
@@ -75,7 +78,7 @@ export function useLogTabs() {
         return
       }
       slot(tabId).status = status
-      if (tabId === stateRef.current.active) setStatusTick((n) => n + 1)
+      if (isVisible(tabId)) setStatusTick((n) => n + 1)
     })
     return () => {
       offLines()
@@ -164,7 +167,9 @@ export function useLogTabs() {
   const close = useCallback(
     async (tabId: string) => {
       await stop(tabId)
+      await stop(companionKey(tabId))
       slots.delete(tabId)
+      slots.delete(companionKey(tabId))
       commit(closeTab(stateRef.current, tabId))
       setVersion((v) => v + 1)
     },
@@ -188,14 +193,37 @@ export function useLogTabs() {
     [commit],
   )
 
+  /** Starts the --previous stream next to the tab's log. */
+  const startCompare = useCallback(
+    async (request: StartLogsRequest, tabId: string = stateRef.current.active) => {
+      commit(updateTab(stateRef.current, tabId, { compare: true }))
+      await start({ ...request, previous: true }, companionKey(tabId))
+    },
+    [commit, start],
+  )
+
+  const stopCompare = useCallback(
+    async (tabId: string = stateRef.current.active) => {
+      if (stateRef.current.tabs.find((t) => t.id === tabId)?.compare) commit(updateTab(stateRef.current, tabId, { compare: false }))
+      await stop(companionKey(tabId))
+      slots.get(companionKey(tabId))?.engine.clear()
+      setVersion((v) => v + 1)
+    },
+    [commit, stop, slots],
+  )
+
   const activeTab = state.tabs.find((t) => t.id === state.active) ?? state.tabs[0]!
   const activeSlot = slot(activeTab.id)
+  const companionSlot = activeTab.compare ? slot(companionKey(activeTab.id)) : undefined
   return {
     tabs: state.tabs,
     activeTab,
     engine: activeSlot.engine,
     // version changes on every ingest for the active tab and on tab switches (engine identity changes too)
-    version: version + activeSlot.engine.version,
+    version: version + activeSlot.engine.version + (companionSlot?.engine.version ?? 0),
+    companion: companionSlot && { engine: companionSlot.engine, status: companionSlot.status },
+    startCompare,
+    stopCompare,
     status: activeSlot.status,
     file: activeTab.file,
     start,

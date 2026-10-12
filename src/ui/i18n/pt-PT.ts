@@ -121,5 +121,7 @@ export const ptPT: Record<MessageKey, string> = {
   'tabs.close': 'Fechar separador {name}',
   'tabs.limit': 'Limite de {n} separadores abertos; feche um para abrir outro.',
   'sidebar.newTabHint': '⌘-clique: abrir num novo separador',
+  'lv.compareHint': 'Mostra o log do contentor anterior (--previous) ao lado do atual',
+  'cmp.previous': 'Contentor anterior (--previous)',
   'theme.meia-noite': 'Meia-noite',
 }

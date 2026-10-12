@@ -37,6 +37,8 @@ const AROUND_RADIUS = 10
 const MAX_AI_LINES = 200
 /** ⌘ on macOS, Ctrl on Windows/Linux. */
 const IS_MAC = isMacUserAgent(navigator.userAgent)
+const NO_BOOKMARKS: ReadonlySet<number> = new Set()
+const NOOP = () => {}
 const EMPTY_SEARCH: SearchState = { text: '', regex: false, caseSensitive: false, exclude: '' }
 
 export function App() {
@@ -138,6 +140,7 @@ export function App() {
 
   const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions, tabId?: string) => {
     resetView()
+    void session.stopCompare(tabId)
     setRecents((prev) => {
       const next = pushRecent(prev, { context, namespace, pod: pod.name, container })
       saveRecents(next)
@@ -272,6 +275,18 @@ export function App() {
     [engine, viewVersion, baseFilter, timeRange, collapse], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const counts = useMemo(() => engine.counts, [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
+  // --previous side by side: same level and text filters (group/regex/time filters are tied to the main log's lines).
+  const companion = session.companion
+  const previousRows = useMemo(
+    () => (companion ? companion.engine.view({ levels, ...(compiled && { search: compiled }), collapse }) : []),
+    [companion, version, levels, compiled, collapse], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const canCompare = Boolean(selection.pod?.canPrevious && selection.container && !options.previous)
+  const toggleCompare = () => {
+    const { context, namespace, pod, container } = selection
+    if (session.activeTab.compare) return void session.stopCompare()
+    if (context && namespace && pod && container) void session.startCompare({ context, namespace, pod: pod.name, container, tail: options.tail })
+  }
   const entriesBySeq = useMemo(() => new Map(engine.entries().map((e) => [e.seq, e])), [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
   const selectedEntry = selectedSeq !== undefined ? entriesBySeq.get(selectedSeq) : undefined
   const bookmarkedEntries = [...bookmarks].flatMap((s) => {
@@ -467,6 +482,9 @@ export function App() {
               engine.clear()
               resetView()
             }}
+            canCompare={canCompare}
+            compare={!!session.activeTab.compare}
+            onCompare={toggleCompare}
             canShell={Boolean(selection.pod && selection.container && !selection.pod.initContainers.includes(selection.container))}
             onShell={() => {
               const { context, namespace, pod, container } = selection
@@ -478,20 +496,53 @@ export function App() {
             onFollow={() => (paused ? resume() : pause())}
           />
           {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
-          <LogList
-            rows={rows}
-            {...(highlightSearch && { search: highlightSearch })}
-            {...(cursor !== undefined && { cursor })}
-            {...(selectedSeq !== undefined && { selectedSeq })}
-            bookmarks={bookmarks}
-            wrap={wrap}
-            paused={paused}
-            {...(command && { command })}
-            onSelect={selectEntry}
-            onBookmark={toggleBookmark}
-            onUserScrollUp={pause}
-            onResume={resume}
-          />
+          {(() => {
+            const main = (
+              <LogList
+                rows={rows}
+                {...(highlightSearch && { search: highlightSearch })}
+                {...(cursor !== undefined && { cursor })}
+                {...(selectedSeq !== undefined && { selectedSeq })}
+                bookmarks={bookmarks}
+                wrap={wrap}
+                paused={paused}
+                {...(command && { command })}
+                onSelect={selectEntry}
+                onBookmark={toggleBookmark}
+                onUserScrollUp={pause}
+                onResume={resume}
+              />
+            )
+            if (!companion) return main
+            return (
+              <div className="log-split">
+                <div className="log-pane">
+                  <div className="pane-head">{t('cmp.current')}</div>
+                  {main}
+                </div>
+                <div className="log-pane" data-testid="previous-pane">
+                  <div className="pane-head">
+                    {t('cmp.previous')}
+                    <span className="spacer" />
+                    <span>{t('st.lines', { shown: previousRows.length, total: companion.engine.size })}</span>
+                  </div>
+                  <LogList
+                    label={t('cmp.previous')}
+                    rows={previousRows}
+                    {...(highlightSearch && { search: highlightSearch })}
+                    bookmarks={NO_BOOKMARKS}
+                    wrap={wrap}
+                    paused={false}
+                    markable={false}
+                    onSelect={NOOP}
+                    onBookmark={NOOP}
+                    onUserScrollUp={NOOP}
+                    onResume={NOOP}
+                  />
+                </div>
+              </div>
+            )
+          })()}
           {shell && <ShellPanel target={shell} onClose={() => setShell(undefined)} />}
         </main>
         <RightPanel

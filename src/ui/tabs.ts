@@ -9,7 +9,12 @@ export interface Tab {
   options: LogOptions
   /** Name of a local file opened in this tab. */
   file?: string
+  /** Showing the previous container (--previous) side by side. */
+  compare?: boolean
 }
+
+/** Slot of the side-by-side --previous stream of a tab. */
+export const companionKey = (tabId: string) => `${tabId}:previous`
 
 export interface TabsState {
   tabs: Tab[]

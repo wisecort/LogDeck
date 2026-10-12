@@ -28,9 +28,10 @@ interface RowProps {
   wrap: boolean
   onSelect(seq: number): void
   onBookmark(seq: number): void
+  markable: boolean
 }
 
-const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked, wrap, onSelect, onBookmark }: RowProps) {
+const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked, wrap, onSelect, onBookmark, markable }: RowProps) {
   const { t } = useI18n()
   const { entry } = row
   const time = displayTime(entry)
@@ -63,6 +64,7 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
           ))}
       </span>
       {!wrap && entry.continuation.length > 0 && <span className="more">{t('log.more', { n: entry.continuation.length })}</span>}
+      {markable && (
       <button
         className={`icon-btn row-mark ${bookmarked ? 'on' : ''}`}
         aria-label={bookmarked ? t('log.unmark') : t('log.mark')}
@@ -74,6 +76,7 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
       >
         <IconBookmark filled={bookmarked} />
       </button>
+      )}
     </div>
   )
 })
@@ -91,6 +94,9 @@ interface Props {
   onBookmark(seq: number): void
   onUserScrollUp(): void
   onResume(): void
+  /** false for the read-only --previous pane: no bookmark button. */
+  markable?: boolean
+  label?: string
 }
 
 export function LogList(p: Props) {
@@ -125,7 +131,7 @@ export function LogList(p: Props) {
   }, [p.command]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="log-wrap">
+    <section className="log-wrap" aria-label={p.label}>
       <div
         ref={parentRef}
         className={`log-list ${p.wrap ? 'wrap' : ''}`}
@@ -153,6 +159,7 @@ export function LogList(p: Props) {
                   wrap={p.wrap}
                   onSelect={p.onSelect}
                   onBookmark={p.onBookmark}
+                  markable={p.markable ?? true}
                 />
               </div>
             )
@@ -165,6 +172,6 @@ export function LogList(p: Props) {
           {t('log.backToLive')}
         </button>
       )}
-    </div>
+    </section>
   )
 }
