@@ -208,7 +208,13 @@ test('6.5: dragging on the volume chart filters a time range', async () => {
   await expect(win.getByTestId('match-count')).toContainText('291 / 465')
 })
 
+test('Windows/Linux have no menu bar at all', async () => {
+  test.skip(process.platform === 'darwin', 'macOS keeps the slim app menu')
+  expect(await app.evaluate(({ Menu }) => Menu.getApplicationMenu())).toBeNull()
+})
+
 test('native menu only has what LogDeck uses (no View, Dictation or Emoji items)', async () => {
+  test.skip(process.platform !== 'darwin', 'Windows/Linux run without a menu bar')
   const menu = await app.evaluate(({ Menu }) =>
     Menu.getApplicationMenu()!.items.map((i) => [i.label, i.submenu?.items.filter((s) => s.type !== 'separator').map((s) => s.label) ?? []]),
   )

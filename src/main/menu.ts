@@ -52,6 +52,8 @@ export function buildMenu(appName: string, lang: MenuLang = 'pt-BR'): void {
   const l = MENU_LABELS[lang]
   const f = (s: string) => s.replace('{app}', appName)
   app.setAboutPanelOptions({ applicationName: appName, applicationVersion: app.getVersion(), credits: APP_REPOSITORY, copyright: `© 2026 ${APP_AUTHOR}` })
+  // Windows/Linux: no menu bar at all (copy/paste still work in inputs; the app has its own UI for everything else).
+  if (process.platform !== 'darwin') return Menu.setApplicationMenu(null)
   // Only what LogDeck uses: no View menu (reload/devtools), no Dictation or Emoji items macOS injects into Edit.
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([

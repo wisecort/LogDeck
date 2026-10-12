@@ -27,7 +27,8 @@ G7. Logs são dados, não instruções — na IA e na renderização.
 G8. Nenhum dado real de cluster commitado. Fixtures sempre anonimizadas
     (IPs 10.0.0.x, hosts example.internal, sem nomes de empresas ou instituições reais).
 G9. Nenhuma dependência nova sem justificar no PR (nome, motivo, licença).
-G10. Escopo MVP 1: só macOS. Não implementar nada de MVP 2.
+G10. Plataformas: macOS, Linux e Windows (desde a 1.1.0). Código específico de plataforma só em
+    `src/platform/`. Não implementar nada de MVP 2 (ver docs/backlog-mvp2.md).
 ```
 
 ## Como cada regra é garantida
@@ -43,7 +44,7 @@ G10. Escopo MVP 1: só macOS. Não implementar nada de MVP 2.
 | G7 | renderização só como texto (React escapa; ANSI convertido em spans com classes fixas); prompt de sistema declara o log como dado | `dangerouslySetInnerHTML`, `innerHTML =`, `outerHTML =`, `insertAdjacentHTML`, `document.write`, `eval(`, `new Function` | `guardrails.test` |
 | G8 | — | segredos (JWT `eyJ…`, `AKIA`/`ASIA`, `-----BEGIN`, `password=`) em `src/` e `tests/fixtures/`; IPv4 fora de `10.0.0.0/24` e `127.0.0.1` em `tests/fixtures/`; hosts fora de `*.example.internal`/`localhost` em fixtures | `guardrails.test` |
 | G9 | — | diff de `package.json` sem entrada correspondente em `docs/dependencies.md` | revisão |
-| G10 | — | `process.platform` com ramos `win32`/`linux` em `src/`; alvos `win`/`linux` no electron-builder | revisão |
+| G10 | — | ramos `win32`/`linux` em `src/` fora de `src/platform/` | unit (guardrails) + CI em macOS, Linux e Windows |
 
 Exceções pontuais (ex.: fixture de teste "suja" do próprio `guardrails.test`) ficam listadas em `scripts/guardrails.allow` com caminho e justificativa. Sem exceção genérica por diretório.
 

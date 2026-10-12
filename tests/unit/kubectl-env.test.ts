@@ -3,26 +3,32 @@ import { friendlyError, kubectlEnv } from '../../src/k8s/kubectl'
 
 describe('kubectlEnv', () => {
   it('adds Homebrew paths for apps opened from Finder', () => {
-    const env = kubectlEnv({ PATH: '/usr/bin:/bin', HOME: '/Users/x' })
-    expect(env['PATH']!.split(':')).toEqual(['/usr/bin', '/bin', '/opt/homebrew/bin', '/usr/local/bin'])
+    const env = kubectlEnv({ PATH: '/usr/bin:/bin', HOME: '/Users/x' }, 'darwin')
+    expect(env['PATH']!.split(':')).toEqual(['/usr/bin', '/bin', '/opt/homebrew/bin', '/usr/local/bin', '/Users/x/.local/bin'])
     expect(env['HOME']).toBe('/Users/x')
   })
 
   it('keeps an existing order and does not duplicate entries', () => {
-    const env = kubectlEnv({ PATH: '/opt/homebrew/bin:/usr/bin', KUBECONFIG: '/a:/b' })
-    expect(env['PATH']).toBe('/opt/homebrew/bin:/usr/bin:/usr/local/bin')
+    const env = kubectlEnv({ PATH: '/opt/homebrew/bin:/usr/bin', KUBECONFIG: '/a:/b', HOME: '/Users/x' }, 'darwin')
+    expect(env['PATH']).toBe('/opt/homebrew/bin:/usr/bin:/usr/local/bin:/Users/x/.local/bin')
     expect(env['KUBECONFIG']).toBe('/a:/b')
   })
 
   it('works without PATH', () => {
-    expect(kubectlEnv({})['PATH']).toBe('/opt/homebrew/bin:/usr/local/bin')
+    expect(kubectlEnv({ HOME: '/Users/x' }, 'darwin')['PATH']).toBe('/opt/homebrew/bin:/usr/local/bin:/Users/x/.local/bin')
+  })
+
+  it('uses the Linux and Windows dirs on those systems', () => {
+    expect(kubectlEnv({ PATH: '/usr/bin', HOME: '/home/x' }, 'linux')['PATH']).toContain('/snap/bin')
+    expect(kubectlEnv({ Path: 'C:\\Windows', USERPROFILE: 'C:\\Users\\x' }, 'win32')['Path']).toContain('WinGet')
   })
 })
 
 describe('friendlyError (F1.5)', () => {
   it('explains a missing kubectl', () => {
     const err = Object.assign(new Error('spawn kubectl ENOENT'), { code: 'ENOENT' })
-    expect(friendlyError(err)).toContain('brew install kubectl')
+    expect(friendlyError(err, 'darwin')).toContain('brew install kubectl')
+    expect(friendlyError(err, 'win32')).toContain('winget install')
   })
 
   it.each([

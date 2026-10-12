@@ -1,0 +1,5 @@
+# Keep LF everywhere: fixtures and parsers depend on it (Windows checkouts would convert to CRLF).
+* text=auto eol=lf
+*.png binary
+*.icns binary
+*.ico binary

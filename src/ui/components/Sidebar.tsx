@@ -43,7 +43,7 @@ function podDot(status: string): string {
 
 export function Sidebar(p: Props) {
   const { nav, selection } = p
-  const { t } = useI18n()
+  const { t, k } = useI18n()
   const [managing, setManaging] = useState(false)
   const [podFilter, setPodFilter] = useState('')
   const q = podFilter.trim().toLowerCase()
@@ -210,7 +210,7 @@ export function Sidebar(p: Props) {
             <button className="node" onClick={p.onOpenFile} title={t('sidebar.openFileHint')}>
               <IconFile />
               <span className="node-label">{t('sidebar.openFile')}</span>
-              <kbd>⌘O</kbd>
+              <kbd>{k('⌘O')}</kbd>
             </button>
           </li>
           {p.fileName && (

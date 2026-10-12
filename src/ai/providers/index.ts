@@ -2,11 +2,11 @@ import type { AiSettings } from '../../shared/ai-settings'
 import type { AiProvider } from '../types'
 import { anthropicMessage } from './anthropic'
 import { runClaude } from './claude-cli'
-import type { Keychain } from './keychain'
+import type { SecretStore } from './secrets'
 import { chatCompletion, destinationOf, validateBaseUrl } from './openai-compatible'
 
 export interface ProviderDeps {
-  keychain: Keychain
+  keychain: SecretStore
   env?: NodeJS.ProcessEnv
   claudeBinary?: string
   /** Tests only. */

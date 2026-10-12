@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { app, BrowserWindow, session, shell } from 'electron'
 import { ExplainService } from '../ai/explain'
 import { createProvider } from '../ai/providers'
-import { Keychain } from '../ai/providers/keychain'
+import { createSecretStore } from '../platform/secret-store'
 import { K8sService } from '../k8s/service'
 import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
@@ -48,6 +48,8 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 560,
     show: false,
+    // Linux/Windows window and taskbar icon (macOS uses the bundle's icon.icns).
+    icon: join(app.getAppPath(), 'build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -88,8 +90,8 @@ void app.whenReady().then(() => {
   }
   const presets = new PresetStore(join(app.getPath('userData'), 'presets.json'))
   const aiSettings = new AiSettingsStore(join(app.getPath('userData'), 'ai.json'))
-  // Tests point this at a fake `security` so they never read the user's Keychain.
-  const keychain = new Keychain({ ...(process.env['LOGDECK_SECURITY_BIN'] && { binary: process.env['LOGDECK_SECURITY_BIN'] }) })
+  // Tests point the Keychain path at a fake `security` so they never read the user's vault.
+  const keychain = createSecretStore(app.getPath('userData'), process.env['LOGDECK_SECURITY_BIN'])
   const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }) })
   registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents, onLanguage: (lang) => buildMenu(APP_NAME, lang) })
   buildMenu(APP_NAME)

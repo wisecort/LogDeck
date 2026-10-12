@@ -2,6 +2,18 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [1.1.0] — 12/10/2026
+
+### Multiplataforma
+
+- **Linux** (AppImage, `.deb`, `.rpm`, x64), **Windows** (instalador `.exe`, x64) e **macOS Intel** (`.dmg`/`.zip` x64), além do Apple Silicon.
+- Código de plataforma isolado em `src/platform/` (G10 atualizado e verificado pelo guardrails): PATH extra de cada sistema, busca de `.exe` no Windows (nunca `.cmd`/`.bat`, que exigiriam shell), dica de instalação do kubectl por sistema.
+- Chaves de IA no cofre de cada sistema: Keychain (macOS), DPAPI (Windows), GNOME Keyring/KWallet (Linux) via `safeStorage`; no Linux sem cofre a chave não é gravada.
+- Atalhos com Ctrl no Windows e no Linux (rótulos trocam ⌘ por Ctrl); sem barra de menu fora do macOS; ícone na janela e na barra de tarefas.
+- CI em macOS, Linux (xvfb) e Windows; `.gitattributes` mantém LF (os logs de teste dependem disso).
+- Release automática: tag `v*` gera os pacotes nos três sistemas e anexa à Release com os checksums.
+- ADR 0003.
+
 ## [1.0.0] — 12/10/2026
 
 Primeira versão pública (macOS, Apple Silicon). As seções abaixo registram cada fase do desenvolvimento.

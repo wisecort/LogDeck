@@ -48,7 +48,7 @@ const RULES = [
   { id: 'G8-secret', scope: ['src/', 'tests/fixtures/'], re: /\b(AKIA|ASIA)[0-9A-Z]{16}\b/, msg: 'chave AWS' },
   { id: 'G8-secret', scope: ['src/', 'tests/fixtures/'], re: /-----BEGIN [A-Z ]*(PRIVATE KEY|CERTIFICATE)-----/, msg: 'chave/certificado PEM' },
   { id: 'G8-secret', scope: ['src/', 'tests/fixtures/'], re: /password\s*=\s*[^\s&"'*]/i, msg: 'password= com valor' },
-  { id: 'G10-platform', scope: ['src/'], re: /['"](win32|linux)['"]/, msg: 'código para Windows/Linux (MVP 2)' },
+  { id: 'G10-platform', scope: ['src/'], except: ['src/platform/'], re: /['"](win32|linux)['"]/, msg: 'código específico de plataforma fora de src/platform/' },
 ]
 
 const violations = []
@@ -101,9 +101,6 @@ function checkPackageJson() {
   const path = join(ROOT, 'package.json')
   if (!existsSync(path)) return
   const pkg = JSON.parse(readFileSync(path, 'utf8'))
-  for (const key of ['win', 'linux', 'nsis', 'appImage', 'snap', 'deb', 'rpm']) {
-    if (pkg.build?.[key]) report('G10-platform', 'package.json', 0, `alvo electron-builder "${key}" (MVP 2)`)
-  }
   const docPath = join(ROOT, 'docs/dependencies.md')
   const doc = existsSync(docPath) ? readFileSync(docPath, 'utf8') : ''
   const documented = new Set([...doc.matchAll(/^\|\s*`([^`]+)`/gm)].map((m) => m[1]))

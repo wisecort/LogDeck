@@ -1,0 +1,62 @@
+name: release
+
+# Builds the installers for every OS when a version tag is pushed and attaches them to the GitHub Release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            script: release:mac
+            files: release/*.dmg release/*.zip
+          - os: ubuntu-latest
+            script: release:linux
+            files: release/*.AppImage release/*.deb release/*.rpm
+          - os: windows-latest
+            script: release:win
+            files: release/*.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Linux deps for .rpm
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - run: npm ci --no-fund --no-audit
+      - run: npm run build
+      - run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Checksums
+        run: |
+          cd release
+          files=$(cd .. && ls ${{ matrix.files }} | xargs -n1 basename)
+          if command -v sha256sum >/dev/null; then sha256sum $files; else shasum -a 256 $files; fi > "SHA256SUMS-${{ runner.os }}.txt"
+          cat "SHA256SUMS-${{ runner.os }}.txt"
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "LogDeck ${TAG#v}" --notes "Veja o CHANGELOG.md." || true
+          gh release upload "$TAG" ${{ matrix.files }} "release/SHA256SUMS-${{ runner.os }}.txt" --clobber

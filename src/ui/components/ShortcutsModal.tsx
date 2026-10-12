@@ -10,16 +10,16 @@ const KEYS: Array<[string | MessageKey, MessageKey]> = [
 ]
 
 export function ShortcutsModal({ onClose }: { onClose(): void }) {
-  const { t } = useI18n()
+  const { t, k } = useI18n()
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={t('keys.title')} onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>{t('keys.title')}</h2>
         <div className="shortcuts">
-          {KEYS.map(([k, d]) => (
-            <div key={k} style={{ display: 'contents' }}>
+          {KEYS.map(([key, d]) => (
+            <div key={key} style={{ display: 'contents' }}>
               <span>
-                <kbd>{k.startsWith('keys.') ? t(k as MessageKey) : k}</kbd>
+                <kbd>{key.startsWith('keys.') ? t(key as MessageKey) : k(key)}</kbd>
               </span>
               <span>{t(d)}</span>
             </div>

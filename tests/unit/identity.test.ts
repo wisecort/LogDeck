@@ -22,9 +22,10 @@ describe('app identity', () => {
     expect(pkg.author).toBe('Matheus Corteletti (Wise)')
   })
 
-  it('only builds for macOS (G10)', () => {
-    expect(pkg.build.mac).toBeDefined()
-    expect(pkg.build.win).toBeUndefined()
-    expect(pkg.build.linux).toBeUndefined()
+  it('builds for macOS (Apple Silicon and Intel), Linux and Windows (1.1.0)', () => {
+    const archs = (targets: Array<{ arch: string[] }>) => [...new Set(targets.flatMap((t) => t.arch))].sort()
+    expect(archs(pkg.build.mac.target)).toEqual(['arm64', 'x64'])
+    expect(pkg.build.linux.target.map((t: { target: string }) => t.target).sort()).toEqual(['AppImage', 'deb', 'rpm'])
+    expect(pkg.build.win.target.map((t: { target: string }) => t.target)).toEqual(['nsis'])
   })
 })
