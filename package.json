@@ -1,7 +1,7 @@
 {
   "name": "logdeck",
   "productName": "LogDeck",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Log explorer de Kubernetes para macOS (somente leitura)",
   "private": true,
   "license": "MIT",

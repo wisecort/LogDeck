@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
-## [Não lançado]
+## [1.2.0] — 12/10/2026
 
 - **Windows no CI completo:** testes de integração e E2E também no Windows (os fakes viram `.exe` com o Node SEA).
 - Correção no Windows: a limpeza da pasta temporária do Claude CLI não esconde mais o erro de tempo esgotado.
