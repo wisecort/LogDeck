@@ -1,47 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1d2b64"/>
-      <stop offset="0.55" stop-color="#0f1736"/>
-      <stop offset="1" stop-color="#070b1c"/>
+      <stop offset="0" stop-color="#2a3f8f"/>
+      <stop offset="0.55" stop-color="#141d45"/>
+      <stop offset="1" stop-color="#080c20"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.3" cy="0.2" r="0.8">
-      <stop offset="0" stop-color="#5b8cff" stop-opacity="0.45"/>
-      <stop offset="1" stop-color="#5b8cff" stop-opacity="0"/>
+    <radialGradient id="glow" cx="0.25" cy="0.15" r="0.75">
+      <stop offset="0" stop-color="#6d97ff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#6d97ff" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1a2348"/>
-      <stop offset="1" stop-color="#10172f"/>
+      <stop offset="0" stop-color="#1b2550"/>
+      <stop offset="1" stop-color="#0e1530"/>
     </linearGradient>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity="0.45"/>
-    </filter>
-    <filter id="neon" x="-30%" y="-200%" width="160%" height="500%">
-      <feGaussianBlur stdDeviation="10"/>
-    </filter>
   </defs>
-  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)"/>
-  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#glow)"/>
-  <rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="2"/>
-  <!-- back cards of the deck -->
-  <g filter="url(#soft)">
-    <rect x="262" y="238" width="520" height="430" rx="44" fill="#2b3a78" opacity="0.55" transform="rotate(-9 522 453)"/>
-    <rect x="252" y="262" width="520" height="430" rx="44" fill="#22306a" opacity="0.8" transform="rotate(-4 512 477)"/>
-    <rect x="242" y="300" width="540" height="440" rx="44" fill="url(#card)" stroke="#6f8cff" stroke-opacity="0.35" stroke-width="3"/>
-  </g>
+  <!-- Apple grid: 824×824 body on a 1024 canvas -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#glow)"/>
+  <rect x="102" y="102" width="820" height="820" rx="183" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="3"/>
+  <!-- deck: two cards peeking behind -->
+  <rect x="214" y="176" width="596" height="560" rx="56" fill="#3a4fa0" opacity="0.55" transform="rotate(-8 512 456)"/>
+  <rect x="200" y="206" width="610" height="570" rx="56" fill="#2a3a80" opacity="0.85" transform="rotate(-3.5 505 491)"/>
+  <!-- front card -->
+  <rect x="182" y="250" width="660" height="600" rx="60" fill="#000" opacity="0.35" transform="translate(0 18)"/>
+  <rect x="182" y="250" width="660" height="600" rx="60" fill="url(#card)" stroke="#7d96ff" stroke-opacity="0.45" stroke-width="5"/>
   <!-- window dots -->
-  <circle cx="292" cy="348" r="11" fill="#ff6b6b"/>
-  <circle cx="326" cy="348" r="11" fill="#f2c14e"/>
-  <circle cx="360" cy="348" r="11" fill="#3fd99a"/>
-  <!-- log lines: level dot + message bar -->
+  <circle cx="246" cy="314" r="16" fill="#ff6b6b"/>
+  <circle cx="296" cy="314" r="16" fill="#f2c14e"/>
+  <circle cx="346" cy="314" r="16" fill="#3fd99a"/>
+  <!-- log lines: bigger dots and bars -->
   <g stroke-linecap="round">
-    <circle cx="300" cy="420" r="12" fill="#3fd9b8"/><line x1="334" y1="420" x2="640" y2="420" stroke="#8ea2d8" stroke-opacity="0.75" stroke-width="20"/>
-    <circle cx="300" cy="476" r="12" fill="#3fd9b8"/><line x1="334" y1="476" x2="560" y2="476" stroke="#8ea2d8" stroke-opacity="0.75" stroke-width="20"/>
-    <circle cx="300" cy="532" r="12" fill="#f2c14e"/><line x1="334" y1="532" x2="700" y2="532" stroke="#8ea2d8" stroke-opacity="0.75" stroke-width="20"/>
+    <circle cx="258" cy="410" r="20" fill="#3fd9b8"/><line x1="310" y1="410" x2="700" y2="410" stroke="#93a6dc" stroke-opacity="0.85" stroke-width="34"/>
+    <circle cx="258" cy="500" r="20" fill="#f2c14e"/><line x1="310" y1="500" x2="770" y2="500" stroke="#93a6dc" stroke-opacity="0.85" stroke-width="34"/>
     <!-- the error line, highlighted -->
-    <rect x="262" y="560" width="500" height="64" rx="18" fill="#ff5d73" opacity="0.16"/>
-    <line x1="334" y1="592" x2="690" y2="592" stroke="#ff5d73" stroke-width="22" filter="url(#neon)" opacity="0.9"/>
-    <circle cx="300" cy="592" r="13" fill="#ff5d73"/><line x1="334" y1="592" x2="690" y2="592" stroke="#ffb3be" stroke-width="20"/>
-    <circle cx="300" cy="664" r="12" fill="#3fd9b8"/><line x1="334" y1="664" x2="600" y2="664" stroke="#8ea2d8" stroke-opacity="0.75" stroke-width="20"/>
+    <rect x="206" y="548" width="612" height="104" rx="28" fill="#ff5d73" opacity="0.2"/>
+    <circle cx="258" cy="600" r="22" fill="#ff5d73"/><line x1="310" y1="600" x2="752" y2="600" stroke="#ffb7c1" stroke-width="36"/>
+    <circle cx="258" cy="700" r="20" fill="#3fd9b8"/><line x1="310" y1="700" x2="640" y2="700" stroke="#93a6dc" stroke-opacity="0.85" stroke-width="34"/>
+    <circle cx="258" cy="786" r="20" fill="#3fd9b8"/><line x1="310" y1="786" x2="560" y2="786" stroke="#93a6dc" stroke-opacity="0.5" stroke-width="34"/>
   </g>
 </svg>

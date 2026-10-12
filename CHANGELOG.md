@@ -106,3 +106,4 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Sobre: botões GitHub e LinkedIn (endereços fixos no main), repositório clicável, nome do autor uma vez só, sem "Inspirado no Logui"; licença e documentos em nome de Matheus Corteletti.
 - Tema Matrix removido. Exportar com ícone de download; "Ir para o topo" virou pausar/retomar.- Ícone do app (proposta "Deck": cartões empilhados com linhas de log e a linha de erro em destaque), com mais duas propostas em `build/icon-src/` (Lente e Pulso); `make icon` gera `build/icon.png` e `build/icon.icns` só com ferramentas do macOS (Quick Look, sips, iconutil). No `make dev`, o Dock mostra o mesmo ícone.
 - README sem a linha "Inspirado no Logui".
+- Ícone: cantos transparentes (o Quick Look desenhava sobre branco; `scripts/icon-mask.mjs` recorta o quadrado arredondado da grade da Apple) e Deck redesenhado com cartão e linhas maiores.
