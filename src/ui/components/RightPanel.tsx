@@ -6,6 +6,7 @@ import type { ExplainGroupInput, ExplainResult, PreviewResult } from '../../shar
 import type { AiStatus } from '../../shared/ai-settings'
 import { formatDateTime } from '../format'
 import { useI18n, type Translate } from '../i18n'
+import { groupTitle } from '../group-title'
 import { ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
 import { IconBookmark, IconCopy, IconGear, IconSparkle } from './icons'
@@ -70,9 +71,9 @@ function ErrorsTab(p: Props) {
       <ul className="groups">
         {p.groups.map((g) => (
           <li key={g.key} className={`group ${p.activeGroup === g.key ? 'active' : ''}`} data-testid="error-group">
-            <input type="checkbox" aria-label={t('err.select', { title: g.title })} checked={p.selectedGroups.has(g.key)} onChange={() => p.onToggleGroup(g.key)} />
+            <input type="checkbox" aria-label={t('err.select', { title: groupTitle(t, g) })} checked={p.selectedGroups.has(g.key)} onChange={() => p.onToggleGroup(g.key)} />
             <button className="group-body" onClick={() => p.onGroup(p.activeGroup === g.key ? undefined : g.key)} title={g.sample}>
-              <span className="group-title">{g.title}</span>
+              <span className="group-title">{groupTitle(t, g)}</span>
               <span className="group-meta">
                 <span className="pill bad">{g.count}×</span>
                 <span className="muted">

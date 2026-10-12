@@ -245,6 +245,7 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await expect(win.getByLabel('Search', { exact: true })).toBeVisible()
   await expect(win.getByTestId('follow-pill')).toContainText('Live')
   await expect(win.getByTestId('match-count')).toContainText('lines')
+  await expect(win.getByTestId('error-group').first()).toContainText('Apache → PHP-FPM timeout')
   await win.screenshot({ path: 'test-results/ui-english.png' })
 
   await win.reload()

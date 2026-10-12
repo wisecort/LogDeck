@@ -105,10 +105,12 @@ export const ptPT: Record<MessageKey, string> = {
   'keys.solo': 'Mostrar apenas esse nível',
 
   'pref.title': 'Definições',
-  'pref.languageNote': 'As mensagens do kubectl e as respostas da IA continuam em português do Brasil.',
+  'pref.languageNote': 'Aplica-se também às mensagens do kubectl, aos títulos dos grupos de erros e às respostas da IA.',
   'pref.tagline': 'Explorador de logs de Kubernetes/OKD para macOS, apenas de leitura.',
   'pref.source': 'Código-fonte',
   'lv.resume': 'Retomar',
 
+  'sig.startup-permission': 'Permissão no arranque',
+  'sig.node-etimedout': 'Tempo limite de ligação',
   'theme.meia-noite': 'Meia-noite',
 }

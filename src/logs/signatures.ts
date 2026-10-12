@@ -35,6 +35,9 @@ const RULES: readonly Rule[] = [
   { id: 'php-fatal', title: 'PHP Fatal error', re: /PHP Fatal error/ },
 ]
 
+/** Ids of the catalog rules; the UI translates their titles as `sig.<id>`. */
+export const CATALOG_IDS: readonly string[] = RULES.map((r) => r.id)
+
 const TIMEOUT = /\btimed? ?out\b|\btimeout\b/i
 const GENERIC_TITLE_MAX = 120
 

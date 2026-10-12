@@ -12,7 +12,6 @@ Itens fora do escopo do MVP 1 (G10). Anote aqui; não implemente no MVP 1.
 | IA com leitura do repositório de código ("linked repository") | fase 6.5 | exige regras próprias: injeção vinda do log poderia ler segredos do repositório |
 | Alertas (sino) por pico de erros | fase 6.5 | notificação do macOS |
 | Abrir `.gz` e arquivos acima de 200 MB (leitura em streaming) | fase 6.6 | hoje o arquivo é lido inteiro no renderer |
-| Traduzir mensagens do main/kubectl, títulos do catálogo F6 e pedir a resposta da IA no idioma escolhido | fase 6.7 | hoje ficam em pt-BR |
 | Integração e E2E no CI do Windows | 1.1.0 | os fakes de `tests/bin` são scripts POSIX; precisam de `.exe`/shim para rodar sem shell |
 | Linux arm64 e Windows arm64 | 1.1.0 | só x64 na 1.1.0 |
 | Assinatura de código no Windows | 1.1.0 | sem ela o SmartScreen avisa na instalação |

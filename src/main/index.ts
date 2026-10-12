@@ -8,6 +8,7 @@ import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
 import { registerIpc } from './ipc'
 import { buildMenu, disableSystemMenuItems } from './menu'
+import { messagesLanguage, setMessagesLanguage } from '../k8s/messages'
 import { AiSettingsStore } from './ai-settings-store'
 import { PresetStore } from './presets-store'
 
@@ -92,8 +93,12 @@ void app.whenReady().then(() => {
   const aiSettings = new AiSettingsStore(join(app.getPath('userData'), 'ai.json'))
   // Tests point the Keychain path at a fake `security` so they never read the user's vault.
   const keychain = createSecretStore(app.getPath('userData'), process.env['LOGDECK_SECURITY_BIN'])
-  const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }) })
-  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents, onLanguage: (lang) => buildMenu(APP_NAME, lang) })
+  const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }), language: messagesLanguage })
+  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents, onLanguage: (lang) => {
+      buildMenu(APP_NAME, lang)
+      setMessagesLanguage(lang)
+    },
+  })
   buildMenu(APP_NAME)
   // Packaged apps get build/icon.icns from electron-builder; in `make dev` show the same icon in the Dock.
   if (!app.isPackaged) app.dock?.setIcon(join(app.getAppPath(), 'build/icon.png'))

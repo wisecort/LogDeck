@@ -26,6 +26,7 @@ import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogSession } from './useLogSession'
 import { useNavigation } from './useNavigation'
+import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
 
 const POD_REFRESH_MS = 5000
@@ -310,7 +311,7 @@ export function App() {
     return groups
       .filter((g) => selectedGroups.has(g.key))
       .map((g) => ({
-        title: g.title,
+        title: groupTitle(t, g),
         count: g.count,
         lines: g.seqs.flatMap((seq) => {
           const e = entriesBySeq.get(seq)

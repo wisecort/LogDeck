@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildPayload, buildUserMessage, MAX_BYTES, MAX_LINES, SYSTEM_PROMPT } from '../../src/ai/prompt'
+import { buildPayload, buildUserMessage, MAX_BYTES, MAX_LINES, SYSTEM_PROMPT, systemPrompt } from '../../src/ai/prompt'
 
 const group = (title: string, n: number, len = 20) => ({
   title,
@@ -85,5 +85,21 @@ describe('buildUserMessage with question and history (block B)', () => {
 
   it('keeps the default request when there is no question', () => {
     expect(buildUserMessage('x')).toContain('Explique os erros abaixo')
+  })
+})
+
+describe('systemPrompt in the interface language', () => {
+  it('asks for the answer in the chosen language with matching section titles', () => {
+    expect(systemPrompt('en')).toContain('English')
+    expect(systemPrompt('en')).toContain('## Probable cause')
+    expect(systemPrompt('en')).toContain('## Confidence')
+    expect(systemPrompt('es')).toContain('## Causa probable')
+    expect(systemPrompt('pt-PT')).toContain('português europeu')
+  })
+
+  it('keeps the safety rules in every language and defaults to pt-BR', () => {
+    for (const lang of ['pt-BR', 'pt-PT', 'en', 'es']) expect(systemPrompt(lang)).toContain('<logs>')
+    expect(systemPrompt('xx')).toBe(SYSTEM_PROMPT)
+    expect(SYSTEM_PROMPT).toContain('português do Brasil')
   })
 })

@@ -1,0 +1,65 @@
+// Actionable messages for common kubectl failures (F1.5), in the interface language chosen in Preferências.
+// main sets the language through app:set-language; pt-BR until then.
+
+type Kind = 'auth' | 'forbidden' | 'unreachable' | 'notFound' | 'noContext'
+
+export const PATTERNS: ReadonlyArray<[RegExp, Kind]> = [
+  [/Unauthorized|must be logged in|token has expired|provide credentials/i, 'auth'],
+  [/Forbidden|forbidden/, 'forbidden'],
+  [/Unable to connect|no such host|connection refused|i\/o timeout|handshake timeout|EOF$/i, 'unreachable'],
+  [/NotFound|not found/i, 'notFound'],
+  [/context .* does not exist/i, 'noContext'],
+]
+
+interface Texts extends Record<Kind, string> {
+  missing: string
+}
+
+const TEXTS: Record<string, Texts> = {
+  'pt-BR': {
+    auth: 'Sessão expirada ou sem login. Rode `oc login` (OKD) ou renove as credenciais do contexto no terminal.',
+    forbidden: 'Sem permissão para esta ação no cluster (RBAC).',
+    unreachable: 'Cluster inacessível. Verifique VPN/rede e o endereço do contexto.',
+    notFound: 'Recurso não encontrado (o pod pode ter sido removido ou recriado).',
+    noContext: 'Contexto não existe no kubeconfig.',
+    missing: 'kubectl não encontrado. Instale com: {hint}',
+  },
+  'pt-PT': {
+    auth: 'Sessão expirada ou sem início de sessão. Execute `oc login` (OKD) ou renove as credenciais do contexto no terminal.',
+    forbidden: 'Sem permissão para esta ação no cluster (RBAC).',
+    unreachable: 'Cluster inacessível. Verifique a VPN/rede e o endereço do contexto.',
+    notFound: 'Recurso não encontrado (o pod pode ter sido removido ou recriado).',
+    noContext: 'O contexto não existe no kubeconfig.',
+    missing: 'kubectl não encontrado. Instale com: {hint}',
+  },
+  en: {
+    auth: 'Session expired or not logged in. Run `oc login` (OKD) or renew the context credentials in a terminal.',
+    forbidden: 'No permission for this action in the cluster (RBAC).',
+    unreachable: 'Cluster unreachable. Check the VPN/network and the context address.',
+    notFound: 'Resource not found (the pod may have been removed or recreated).',
+    noContext: 'Context does not exist in the kubeconfig.',
+    missing: 'kubectl not found. Install it with: {hint}',
+  },
+  es: {
+    auth: 'Sesión caducada o sin iniciar. Ejecute `oc login` (OKD) o renueve las credenciales del contexto en una terminal.',
+    forbidden: 'Sin permiso para esta acción en el clúster (RBAC).',
+    unreachable: 'Clúster inaccesible. Revise la VPN/red y la dirección del contexto.',
+    notFound: 'Recurso no encontrado (el pod puede haberse eliminado o recreado).',
+    noContext: 'El contexto no existe en el kubeconfig.',
+    missing: 'kubectl no encontrado. Instálelo con: {hint}',
+  },
+}
+
+let current = 'pt-BR'
+
+export function setMessagesLanguage(lang: string): void {
+  current = lang in TEXTS ? lang : 'pt-BR'
+}
+
+export function messagesLanguage(): string {
+  return current
+}
+
+export function texts(lang: string = current): Texts {
+  return TEXTS[lang] ?? TEXTS['pt-BR']!
+}

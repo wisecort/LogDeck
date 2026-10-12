@@ -1,6 +1,6 @@
 // "Explicar esses erros" (F7): preview with masking, explicit one-shot send (G6), log as data (G7).
 import { randomUUID } from 'node:crypto'
-import { buildPayload, buildUserMessage, SYSTEM_PROMPT, type PayloadGroup, type Turn } from './prompt'
+import { buildPayload, buildUserMessage, systemPrompt, type PayloadGroup, type Turn } from './prompt'
 import { redact } from './redact'
 import type { ExplainResult, PreviewResult } from '../shared/ai'
 import { extractConfidence, parseResponse, writeCommands } from './response'
@@ -22,6 +22,8 @@ export interface ExplainOptions {
   provider: () => Promise<AiProvider | undefined>
   now?: () => number
   ttlMs?: number
+  /** Interface language: the answer comes in it (default pt-BR). */
+  language?: () => string
 }
 
 /** Groups come from the renderer: validate shape and cap sizes before anything else. */
@@ -65,6 +67,10 @@ export class ExplainService {
   constructor(private readonly opts: ExplainOptions) {
     this.now = opts.now ?? Date.now
     this.ttl = opts.ttlMs ?? DEFAULT_TTL_MS
+  }
+
+  private system(): string {
+    return systemPrompt(this.opts.language?.() ?? 'pt-BR')
   }
 
   private async requireProvider(): Promise<AiProvider> {
@@ -115,7 +121,7 @@ export class ExplainService {
     if (!entry || entry.expires <= this.now()) throw new Error('Preview expirado ou já enviado; gere um novo preview')
     const provider = await this.requireProvider()
     if (provider.destination !== entry.destination) throw new Error('O provedor mudou desde o preview; gere um novo preview')
-    const text = await provider.complete(SYSTEM_PROMPT, buildUserMessage(entry.text, { ...(entry.question && { question: entry.question }) }))
+    const text = await provider.complete(this.system(), buildUserMessage(entry.text, { ...(entry.question && { question: entry.question }) }))
     const conversationId = randomUUID()
     for (const [key, c] of this.conversations) if (c.expires <= this.now()) this.conversations.delete(key)
     this.conversations.set(conversationId, {
@@ -137,7 +143,7 @@ export class ExplainService {
     if (c.turns.length >= MAX_TURNS) throw new Error('Limite de perguntas nesta conversa; gere uma nova explicação')
     const provider = await this.requireProvider()
     if (provider.destination !== c.destination) throw new Error('O provedor mudou; gere uma nova explicação')
-    const text = await provider.complete(SYSTEM_PROMPT, buildUserMessage(c.logs, { history: c.turns, question }))
+    const text = await provider.complete(this.system(), buildUserMessage(c.logs, { history: c.turns, question }))
     c.turns.push({ question, answer: text })
     c.expires = this.now() + CONVERSATION_TTL_MS
     return this.result(conversationId, text)
@@ -146,6 +152,6 @@ export class ExplainService {
   /** "Testar provedor": fixed prompt, no logs. */
   async test(): Promise<string> {
     const provider = await this.requireProvider()
-    return provider.complete(SYSTEM_PROMPT, 'Responda apenas OK')
+    return provider.complete(this.system(), 'Responda apenas OK')
   }
 }

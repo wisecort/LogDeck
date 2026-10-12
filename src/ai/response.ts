@@ -60,9 +60,9 @@ export function writeCommands(text: string): string[] {
   return found
 }
 
-/** The AI self-estimate from the "## Confiança" section (0–100), shown as an estimate only. */
+/** The AI self-estimate from the "## Confiança" / "## Confidence" / "## Confianza" section (0–100), shown as an estimate only. */
 export function extractConfidence(text: string): number | undefined {
-  const m = /Confian[çc]a[^\n]*?\n?[^\n]*?(\d{1,3})\s*%/i.exec(text)
+  const m = /(?:Confian[çc]a|Confidence|Confianza)[^\n]*?\n?[^\n]*?(\d{1,3})\s*%/i.exec(text)
   if (!m) return undefined
   const n = Number(m[1])
   return n >= 0 && n <= 100 ? n : undefined

@@ -56,6 +56,6 @@ export function resolveExecutable(name: string, env: NodeJS.ProcessEnv, platform
 
 export function kubectlInstallHint(platform: Platform = currentPlatform()): string {
   if (platform === 'darwin') return 'brew install kubectl'
-  if (platform === 'linux') return 'sudo snap install kubectl --classic (ou o pacote kubectl da sua distribuição)'
+  if (platform === 'linux') return 'sudo snap install kubectl --classic'
   return 'winget install -e --id Kubernetes.kubectl'
 }

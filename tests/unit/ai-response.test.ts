@@ -61,3 +61,12 @@ describe('extractConfidence', () => {
     expect(extractConfidence('Confiança: 140%')).toBeUndefined()
   })
 })
+
+describe('extractConfidence in other languages', () => {
+  it.each([
+    ['## Confidence\nEstimate: 70% — clear evidence', 70],
+    ['## Confianza\nEstimación: 40% — poca evidencia', 40],
+  ])('%s', (text, n) => {
+    expect(extractConfidence(text)).toBe(n)
+  })
+})
