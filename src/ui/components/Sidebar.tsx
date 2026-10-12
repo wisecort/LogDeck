@@ -8,7 +8,7 @@ import { ContextsModal } from './ContextsModal'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
 import { nsKey, type Navigation } from '../useNavigation'
-import { IconBookmark, IconBuild, IconChevron, IconClock, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
+import { IconBookmark, IconBuild, IconChevron, IconClock, IconCube, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
 
 export type { Selection } from '../view-types'
 import type { Selection } from '../view-types'
@@ -36,6 +36,24 @@ interface Props {
 
 const MANAGE = '__manage__'
 const SHOW_BUILDS_KEY = 'logdeck.showBuildPods'
+const SHOW_PODS_KEY = 'logdeck.showPodsFolder'
+
+function loadFlag(key: string, fallback: boolean): boolean {
+  try {
+    const v = localStorage.getItem(key)
+    return v === null ? fallback : v === '1'
+  } catch {
+    return fallback
+  }
+}
+
+function saveFlag(key: string, on: boolean): void {
+  try {
+    localStorage.setItem(key, on ? '1' : '0')
+  } catch {
+    // ignore
+  }
+}
 
 function loadShowBuilds(): boolean {
   try {
@@ -76,6 +94,13 @@ export function Sidebar(p: Props) {
   const [managing, setManaging] = useState(false)
   const [podFilter, setPodFilter] = useState('')
   const [showBuilds, setShowBuilds] = useState(loadShowBuilds)
+  const [showPods, setShowPods] = useState(() => loadFlag(SHOW_PODS_KEY, true))
+  const togglePods = () => {
+    setShowPods((on) => {
+      saveFlag(SHOW_PODS_KEY, !on)
+      return !on
+    })
+  }
   const toggleBuilds = () => {
     setShowBuilds((on) => {
       saveShowBuilds(!on)
@@ -161,8 +186,18 @@ export function Sidebar(p: Props) {
     }
     const count = builds.length + others.length
     if (count === 0) return rows.length > 0 ? rows : <li className="muted node">{t('sidebar.noPods')}</li>
+    // With builds, the namespace shows two folders side by side: Pods (open by default) and Builds (closed).
+    const appCount = shown.filter((pod) => pod.kind === 'app').length
     return [
-      ...(rows.length > 0 ? rows : [<li key="__nopods" className="muted node">{t('sidebar.noPods')}</li>]),
+      <li key="__pods">
+        <button className="node builds-folder" aria-expanded={showPods} onClick={togglePods}>
+          <IconChevron open={showPods} />
+          <IconCube />
+          <span className="node-label">{t('sidebar.podsFolder')}</span>
+          <span className="node-meta">{appCount}</span>
+        </button>
+        {showPods && <ul aria-label={t('sidebar.podsFolder')}>{rows.length > 0 ? rows : <li className="muted node">{t('sidebar.noPods')}</li>}</ul>}
+      </li>,
       <li key="__builds">
         <button className="node builds-folder" aria-expanded={showBuilds} onClick={toggleBuilds} title={t('sidebar.buildsHint')}>
           <IconChevron open={showBuilds} />

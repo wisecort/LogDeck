@@ -292,6 +292,7 @@ export const ptBR = {
   'lv.compareHint': 'Mostra o log do container anterior (--previous) ao lado do atual',
   'cmp.current': 'Atual',
   'cmp.previous': 'Container anterior (--previous)',
+  'sidebar.podsFolder': 'Pods',
   'sidebar.buildsFolder': 'Builds e deploys',
   'sidebar.buildOpenLog': 'Clique para abrir o log do build',
   'sidebar.buildNoLog': 'Sem log (pod removido): clique para ver os detalhes do build',

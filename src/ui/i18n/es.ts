@@ -293,6 +293,7 @@ export const es: Record<MessageKey, string> = {
   'lv.compareHint': 'Muestra el log del contenedor anterior (--previous) junto al actual',
   'cmp.current': 'Actual',
   'cmp.previous': 'Contenedor anterior (--previous)',
+  'sidebar.podsFolder': 'Pods',
   'sidebar.buildsFolder': 'Builds y deploys',
   'sidebar.buildOpenLog': 'Clic para abrir el log del build',
   'sidebar.buildNoLog': 'Sin log (pod eliminado): clic para ver los detalles del build',

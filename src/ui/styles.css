@@ -2224,3 +2224,9 @@ button.primary:hover:not(:disabled) {
   white-space: nowrap;
   font-size: 12px;
 }
+
+.builds-folder svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}

@@ -293,6 +293,7 @@ export const en: Record<MessageKey, string> = {
   'lv.compareHint': 'Shows the previous container log (--previous) next to the current one',
   'cmp.current': 'Current',
   'cmp.previous': 'Previous container (--previous)',
+  'sidebar.podsFolder': 'Pods',
   'sidebar.buildsFolder': 'Builds and deploys',
   'sidebar.buildOpenLog': 'Click to open the build log',
   'sidebar.buildNoLog': 'No log (pod removed): click to see the build details',

@@ -152,6 +152,10 @@ test('OKD builds folder: Build history after the pods; log while the pod exists,
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()
   await expect(tree.getByRole('button', { name: /portal-worker/ })).toBeVisible()
   await expect(tree.getByRole('button', { name: /portal-web-12/ })).toHaveCount(0)
+  // with builds, the namespace has two folders: Pods (open) and Builds e deploys (closed)
+  await expect(tree.getByRole('button', { name: /^Pods/ })).toHaveAttribute('aria-expanded', 'true')
+  await expect(tree.getByRole('list', { name: 'Pods' }).getByRole('button', { name: /portal-worker/ })).toBeVisible()
+  await expect(tree.getByRole('button', { name: /Builds e deploys/ })).toHaveAttribute('aria-expanded', 'false')
 
   // 2 Build objects + 1 deployer pod (the build pod of portal-web-12 is represented by its Build)
   const folder = tree.getByRole('button', { name: /Builds e deploys/ })
