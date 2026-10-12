@@ -30,7 +30,7 @@ Projeto **greenfield**: o código-fonte do Logui não está disponível (é um a
 | Lista virtualizada | `@tanstack/react-virtual` |
 | Terminal (P5) | `node-pty` + `xterm.js` |
 | IA | Claude Code CLI (`spawn`), API da Anthropic (`@anthropic-ai/sdk`) ou API compatível com OpenAI (`fetch`), sempre no processo main |
-| Build | electron-builder, sem assinatura: macOS `.dmg`/`.zip` (arm64 e x64), Linux AppImage/`.deb`/`.rpm` (x64), Windows instalador `.exe` (x64) |
+| Build | electron-builder; macOS assinado ad-hoc (sem conta Apple, sem notarização), demais sem assinatura: macOS `.dmg`/`.zip` (arm64 e x64), Linux AppImage/`.deb`/`.rpm` (x64), Windows instalador `.exe` (x64) |
 
 Toda dependência é justificada no PR (G9).
 

@@ -190,6 +190,7 @@ As regras completas estão em [`GUARDRAILS.md`](GUARDRAILS.md) e o escopo em [`S
 | Não lista namespaces | falta permissão de listar; digite o nome do namespace e tecle Enter |
 | Linhas antigas sumiram | o limite é 50 mil linhas; a barra de status mostra quantas foram descartadas |
 | Aviso de desenvolvedor não verificado | veja o passo 3 da [instalação](#baixar) |
+| "LogDeck está danificado e não pode ser aberto" (versões até 1.2.0) | o app não está danificado: era a assinatura incompleta. Rode `xattr -dr com.apple.quarantine /Applications/LogDeck.app` ou atualize para a 1.2.1+ |
 
 ## Construir a partir do código
 

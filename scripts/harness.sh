@@ -62,12 +62,19 @@ build_mac() {
   npm run build
   CSC_IDENTITY_AUTO_DISCOVERY=false npm run package:mac
   local plist
-  plist=$(find release -maxdepth 4 -path '*LogDeck.app/Contents/Info.plist' | head -1)
+  # package:mac --dir builds for the host arch: release/mac-arm64 on Apple Silicon, release/mac on Intel
+  local dir=release/mac
+  [[ "$(uname -m)" == "arm64" ]] && dir=release/mac-arm64
+  plist="${dir}/LogDeck.app/Contents/Info.plist"
+  [[ -f "$plist" ]] || plist=""
   [[ -n "$plist" ]] || { echo "LogDeck.app não encontrado em release/"; return 1; }
   local bundle_id
   bundle_id=$(plutil -extract CFBundleIdentifier raw "$plist")
   echo "Bundle id: ${bundle_id}"
-  [[ "$bundle_id" == "io.github.wisecort.logdeck" ]]
+  [[ "$bundle_id" == "io.github.wisecort.logdeck" ]] || return 1
+  # A broken signature makes Gatekeeper call the downloaded app "damaged" (fixed in 1.2.1).
+  local app="${plist%/Contents/Info.plist}"
+  codesign --verify --deep --strict "$app" && echo "Assinatura ad-hoc válida: ${app}"
 }
 
 build_linux() {
@@ -129,7 +136,7 @@ step "3. Typecheck" npm run typecheck
 step "4. Guardrails" node scripts/guardrails.mjs
 step "5. Testes unitários + cobertura" npm run test:unit
 step "6. Testes de integração (kubectl fake)" with_fakes npm run test:integration
-step "7. Build do app (${OS}, sem assinatura)" build_app
+step "7. Build do app (${OS})" build_app
 step "8. E2E" with_fakes e2e
 step "9. Auditoria de dependências" audit
 step "10. Segredos (gitleaks)" secrets

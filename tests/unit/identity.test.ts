@@ -22,6 +22,12 @@ describe('app identity', () => {
     expect(pkg.author).toBe('Matheus Corteletti (Wise)')
   })
 
+  it('signs the macOS app ad-hoc so a downloaded copy is not reported as damaged (1.2.1)', () => {
+    // identity: null left the bundle with an invalid signature: Gatekeeper said "LogDeck is damaged".
+    expect(pkg.build.mac.identity).toBe('-')
+    expect(pkg.build.mac.hardenedRuntime).toBe(false)
+  })
+
   it('builds for macOS (Apple Silicon and Intel), Linux and Windows (1.1.0)', () => {
     const archs = (targets: Array<{ arch: string[] }>) => [...new Set(targets.flatMap((t) => t.arch))].sort()
     expect(archs(pkg.build.mac.target)).toEqual(['arm64', 'x64'])
