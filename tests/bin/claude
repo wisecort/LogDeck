@@ -12,12 +12,9 @@ const { appendFileSync, readdirSync } = require('node:fs')
 // As a Node script argv is [node, script, ...args]; as a Windows .exe built with Node SEA
 // (scripts/build-test-bins.mjs) the script entry may be missing.
 const argv = (() => {
-  let isSea = false
-  try {
-    isSea = require('node:sea').isSea()
-  } catch {
-    // older Node: not a SEA
-  }
+  // Running as tests/bin/<fake>.exe instead of node.exe: there is no script entry in argv.
+  const exe = require('node:path').basename(process.execPath).toLowerCase()
+  const isSea = exe.endsWith('.exe') && exe !== 'node.exe'
   return isSea && process.argv[1] !== process.execPath ? process.argv.slice(1) : process.argv.slice(2)
 })()
 const mode = process.env.FAKE_CLAUDE_MODE || 'ok'
