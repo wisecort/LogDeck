@@ -6,7 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 - **Visual Cockpit:** tela de boas-vindas nas abas vazias (logo, cartões Pods / Arquivo / Último pod com atalhos, status do contexto e do kubectl), botão **Início** na barra de abas, indicador ao vivo pulsando, superfícies de vidro e brilho na cor de destaque.
 - **Preferências** redesenhadas: temas em miniaturas com as cores reais, idiomas em botões, cartão Sobre com logo. **Atalhos** agrupados (Geral, Busca, Mouse) com teclas desenhadas (Ctrl no Windows/Linux).
-- **Builds do OKD** numa pasta dentro do namespace, depois dos pods: o histórico de builds (`kubectl get builds.build.openshift.io`, só leitura) com status, commit, duração e idade; abre o log quando o pod do build ainda existe. Pods de deploy na mesma pasta.
+- **Builds do OKD** numa pasta dentro do namespace, depois dos pods: o histórico de builds (`kubectl get builds.build.openshift.io`, só leitura) com status, commit, duração e idade; abre o log quando o pod do build ainda existe; quando o cluster já removeu o pod, abre um painel com os detalhes do build (status, motivo, commit, duração) e o comando `oc describe` para copiar. Pods de deploy na mesma pasta.
 - **Produção (G5):** sem a faixa vermelha no topo; a marca PROD fica no seletor de contexto e na barra de status.
 - Tempo esgotado do kubectl com mensagem útil e traduzida (qual comando demorou e o que verificar: VPN/rede, login do contexto).
 

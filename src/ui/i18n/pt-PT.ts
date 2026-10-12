@@ -16,7 +16,7 @@ export const ptPT: Record<MessageKey, string> = {
   'sidebar.recents': 'Recentes',
   'recent.gone': '{pod} já não existe (o pod pode ter sido recriado). Abri o namespace.',
   'sidebar.buildOpenLog': 'Clique para abrir o log do build',
-  'sidebar.buildNoLog': 'Log indisponível: o pod deste build já foi removido pelo cluster',
+  'sidebar.buildNoLog': 'Sem log (pod removido): clique para ver os detalhes do build',
   'sidebar.manageContexts': 'Gerir contextos…',
   'sidebar.searchPods': 'Pesquisar pod ou namespace',
   'sidebar.searchPodsHint': 'Pesquisa nos nomes dos namespaces e nos pods dos namespaces já abertos',
@@ -134,5 +134,7 @@ export const ptPT: Record<MessageKey, string> = {
   'welcome.fileHint': 'Abra um log guardado, com ou sem ‑‑timestamps',
   'welcome.tip': 'Dica: arraste um ficheiro de log para a janela · ? mostra os atalhos · apenas leitura, sempre',
   'welcome.file': 'Ficheiro de log',
+  'bd.started': 'Início',
+  'bd.noLog': 'O cluster já removeu o pod deste build, e o log foi junto (o OKD limpa os pods de builds antigos). Para ver o log de um build, abra-o enquanto está a correr ou logo a seguir.',
   'theme.meia-noite': 'Meia-noite',
 }

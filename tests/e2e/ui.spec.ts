@@ -147,7 +147,7 @@ test('compare with --previous: current and previous container side by side', asy
   await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
 })
 
-test('OKD builds folder: Build history after the pods, log only while the build pod exists', async () => {
+test('OKD builds folder: Build history after the pods; log while the pod exists, details after', async () => {
   const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()
   await expect(tree.getByRole('button', { name: /portal-worker/ })).toBeVisible()
@@ -161,7 +161,16 @@ test('OKD builds folder: Build history after the pods, log only while the build 
   await expect(builds.getByRole('button')).toHaveCount(3)
   await expect(builds.getByRole('button', { name: /portal-web-12/ })).toContainText('Complete')
   await expect(builds.getByRole('button', { name: /portal-web-11/ })).toContainText('Failed')
-  await expect(builds.getByRole('button', { name: /portal-web-11/ })).toBeDisabled()
+  // a build whose pod was pruned shows its details instead of a log
+  await builds.getByRole('button', { name: /portal-web-11/ }).click()
+  const details = win.getByTestId('build-details')
+  await expect(details).toContainText('Failed — BuildPodEvicted')
+  await expect(details).toContainText('e890735')
+  await expect(details).toContainText('Log não disponível')
+  await win.screenshot({ path: 'test-results/build-details.png' })
+  await details.getByRole('button', { name: /Copiar/ }).click()
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe('oc describe build/portal-web-11 -n portal-hml')
+  await expect(win.getByRole('tablist', { name: 'Abas' }).getByRole('tab', { selected: true })).toContainText('portal-web-11')
   await expect(builds.getByRole('button', { name: /portal-web-3-deploy/ })).toContainText('deploy')
 
   // the build whose pod still exists opens it

@@ -3,7 +3,7 @@ import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { PodInfo } from '../shared/ipc'
+import type { BuildInfo, PodInfo } from '../shared/ipc'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
@@ -26,6 +26,7 @@ import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogTabs } from './useLogTabs'
 import { TabBar } from './components/TabBar'
 import { Welcome } from './components/Welcome'
+import { BuildDetails } from './components/BuildDetails'
 import { MAX_TABS } from './tabs'
 import { useNavigation } from './useNavigation'
 import { displayLabel } from './context-view'
@@ -171,6 +172,14 @@ export function App() {
       setSelection({ context, namespace, pod }, tabId)
       void session.stop(tabId)
     }
+  }
+
+  /** A build whose pod is gone: stop this tab's log and show the build details. */
+  const openBuild = async (context: string, namespace: string, build: BuildInfo) => {
+    setShell(undefined)
+    resetView()
+    await session.goHome()
+    setSelection({ context, namespace, build })
   }
 
   /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
@@ -382,7 +391,8 @@ export function App() {
   }, [rows.length, version])
 
   // Empty tab: welcome screen instead of the log views, and no right panel.
-  const isEmptyTab = !selection.pod && !session.file
+  const showingBuild = !!selection.build && !selection.pod
+  const isEmptyTab = !selection.pod && !session.file && !showingBuild
   const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
     <I18nProvider lang={lang}>
@@ -407,11 +417,12 @@ export function App() {
           if (f) void openFile(f)
         }}
       />
-      <div className={`layout ${isEmptyTab ? 'no-panel' : ''}`}>
+      <div className={`layout ${isEmptyTab || showingBuild ? 'no-panel' : ''}`}>
         <Sidebar
           nav={nav}
           selection={selection}
           onPod={(c, n, p, inNewTab) => void selectPod(c, n, p, undefined, inNewTab)}
+          onBuild={(c, n, b) => void openBuild(c, n, b)}
           onContainer={selectContainer}
           bookmarks={bookmarkedEntries}
           onBookmark={(seq) => {
@@ -452,7 +463,9 @@ export function App() {
               afterTabChange()
             }}
           />
-          {isEmptyTab ? (
+          {showingBuild && selection.build && selection.namespace ? (
+            <BuildDetails namespace={selection.namespace} build={selection.build} />
+          ) : isEmptyTab ? (
             <Welcome
               contexts={nav.visible.length}
               {...(nav.activeContext && { currentContext: displayLabel(nav.activeContext, nav.aliases).title })}
@@ -569,7 +582,7 @@ export function App() {
             </>
           )}
         </main>
-        {!isEmptyTab && (
+        {!isEmptyTab && !showingBuild && (
         <RightPanel
           tab={tab}
           onTab={setTab}

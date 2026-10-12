@@ -17,6 +17,8 @@ interface Props {
   nav: Navigation
   selection: Selection
   onPod(context: string, namespace: string, pod: PodInfo, inNewTab: boolean): void
+  /** A build whose pod the cluster already removed: show its details. */
+  onBuild(context: string, namespace: string, build: BuildInfo): void
   onContainer(name: string): void
   bookmarks: LogEntry[]
   onBookmark(seq: number): void
@@ -137,7 +139,7 @@ export function Sidebar(p: Props) {
     const others = extra.filter((pod) => !buildPods.has(pod.name))
     const buildRow = (b: BuildInfo) => {
       const pod = byName.get(b.podName)
-      const selected = !!pod && selection.namespace === namespace && selection.pod?.name === pod.name
+      const selected = selection.namespace === namespace && (pod ? selection.pod?.name === pod.name : selection.build?.name === b.name)
       const details = [b.phase + (b.reason ? ` (${b.reason})` : ''), b.strategy, b.commit && `commit ${b.commit}`, b.durationMs !== undefined && formatDuration(b.durationMs)]
         .filter(Boolean)
         .join(' · ')
@@ -145,8 +147,8 @@ export function Sidebar(p: Props) {
         <li key={`build:${b.name}`}>
           <button
             className={`node build-row ${selected ? 'selected' : ''}`}
-            disabled={!pod}
-            onClick={(e) => pod && p.onPod(context, namespace, pod, e.metaKey || e.ctrlKey)}
+            data-nolog={!pod || undefined}
+            onClick={(e) => (pod ? p.onPod(context, namespace, pod, e.metaKey || e.ctrlKey) : p.onBuild(context, namespace, b))}
             title={`${b.name}\n${details}\n${pod ? t('sidebar.buildOpenLog') : t('sidebar.buildNoLog')}`}
           >
             <span className={`dot ${buildDot(b.phase)}`} />
