@@ -101,3 +101,5 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Créditos: "Feito por Matheus Corteletti — Wise" em Preferências → Sobre, no painel Sobre do macOS e no `package.json`.
 - "Seguindo" virou "Ao vivo"; botão "Terminal" com texto; ícone duplicado de "Ir para o fim" removido e exportar com ícone próprio; status "Conectado".
 - Renomear contextos só no LogDeck (apelido) e nomes curtos para EKS (`cluster (EKS · região)`, sem número da conta) e GKE.
+- Temas: saem Solarizado, Gruvbox, Monokai, One Dark e GitHub claro (parecido com o Claro); entra Matrix (estilo hacker). Quem usava um tema removido volta ao Escuro.
+- Correções: "Gerenciar contextos" abre por cima da janela inteira (portal) com nome, apelido e botões visíveis; a seção "Sobre" das Preferências mostra uma informação por linha.

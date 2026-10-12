@@ -217,7 +217,7 @@ test('6.5: themes, bookmarks and favourite namespaces', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
   const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
-  for (const theme of ['claro', 'meia-noite', 'dracula', 'nord', 'github-claro', 'alto-contraste', 'sistema', 'escuro']) {
+  for (const theme of ['claro', 'meia-noite', 'dracula', 'nord', 'matrix', 'alto-contraste', 'sistema', 'escuro']) {
     await prefs.getByLabel('Tema').selectOption(theme)
     await expect(win.locator('html')).toHaveAttribute('data-theme', theme)
   }

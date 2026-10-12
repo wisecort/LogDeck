@@ -266,16 +266,12 @@ export const ptBR = {
   'theme.meia-noite': 'Meia-noite',
   'theme.claro': 'Claro',
   'theme.sistema': 'Sistema (macOS)',
-  'theme.solarizado': 'Solarizado',
   'theme.alto-contraste': 'Alto contraste',
   'theme.dracula': 'Dracula',
   'theme.nord': 'Nord',
-  'theme.monokai': 'Monokai',
-  'theme.gruvbox': 'Gruvbox',
-  'theme.one-dark': 'One Dark',
   'theme.tokyo-night': 'Tokyo Night',
   'theme.catppuccin': 'Catppuccin Mocha',
-  'theme.github-claro': 'GitHub claro',
+  'theme.matrix': 'Matrix (hacker)',
 } as const
 
 export type MessageKey = keyof typeof ptBR

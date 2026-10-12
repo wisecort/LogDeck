@@ -108,5 +108,4 @@ export const ptPT: Record<MessageKey, string> = {
   'pref.source': 'Código-fonte',
 
   'theme.meia-noite': 'Meia-noite',
-  'theme.github-claro': 'GitHub claro',
 }

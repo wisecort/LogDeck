@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { contextLabel, deleteContextCommand } from '../context-view'
 import { useI18n } from '../i18n'
 import type { Navigation } from '../useNavigation'
@@ -10,7 +11,8 @@ export function ContextsModal({ nav, onClose }: { nav: Navigation; onClose(): vo
   const [filter, setFilter] = useState('')
   const [copied, setCopied] = useState<string>()
   const list = nav.contexts.filter((c) => c.name.toLowerCase().includes(filter.toLowerCase()))
-  return (
+  // Portal: the picker lives inside the sidebar; the dialog must cover the whole window.
+  return createPortal(
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={t('ctx.title')} onClick={onClose}>
       <div className="modal ctx-modal" onClick={(e) => e.stopPropagation()}>
         <h2>{t('ctx.title')}</h2>
@@ -24,7 +26,7 @@ export function ContextsModal({ nav, onClose }: { nav: Navigation; onClose(): vo
             const l = contextLabel(c.name)
             const alias = nav.aliases[c.name] ?? ''
             return (
-              <li key={c.name} className={hidden ? 'is-hidden' : ''} data-testid="ctx-row">
+              <li key={c.name} className={`ctx-row ${hidden ? 'is-hidden' : ''}`} data-testid="ctx-row">
                 <div className="ctx-name" title={c.name}>
                   <strong>{l.title}</strong>
                   {c.production && <span className="pill bad">PROD</span>}
@@ -66,6 +68,7 @@ export function ContextsModal({ nav, onClose }: { nav: Navigation; onClose(): vo
           <button onClick={onClose}>{t('common.close')}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

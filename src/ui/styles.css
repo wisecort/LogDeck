@@ -126,31 +126,6 @@
   }
 }
 
-:root[data-theme='solarizado'] {
-  color-scheme: dark;
-  --bg: #002b36;
-  --bg-2: #073642;
-  --bg-3: #0b4150;
-  --bg-elev: #073642;
-  --fg: #93a1a1;
-  --muted: #657b83;
-  --border: #0e4a59;
-  --accent: #268bd2;
-  --mark: #586e00;
-  --ok: #859900;
-  --warn: #b58900;
-  --bad: #dc322f;
-  --row-hover: #04323e;
-  --row-sel: #0d4a5c;
-  --lvl-TRACE: #586e75;
-  --lvl-DEBUG: #6c71c4;
-  --lvl-INFO: #2aa198;
-  --lvl-WARN: #b58900;
-  --lvl-ERROR: #dc322f;
-  --lvl-FATAL-bg: #d33682;
-  --lvl-UNKNOWN: #657b83;
-}
-
 :root[data-theme='alto-contraste'] {
   color-scheme: dark;
   --bg: #000000;
@@ -234,90 +209,6 @@
   --lvl-UNKNOWN: #7b88a1;
 }
 
-:root[data-theme='monokai'] {
-  color-scheme: dark;
-  --bg: #272822;
-  --bg-2: #1e1f1c;
-  --bg-3: #3a3b32;
-  --bg-elev: #2d2e27;
-  --fg: #f8f8f2;
-  --muted: #a59f85;
-  --border: #49483e;
-  --accent: #a6e22e;
-  --accent-fg: #272822;
-  --mark: #75715e;
-  --mark-fg: inherit;
-  --ok: #a6e22e;
-  --warn: #e6db74;
-  --bad: #f92672;
-  --row-hover: #30312a;
-  --row-sel: #49483e;
-  --lvl-TRACE: #75715e;
-  --lvl-DEBUG: #ae81ff;
-  --lvl-INFO: #66d9ef;
-  --lvl-WARN: #e6db74;
-  --lvl-ERROR: #f92672;
-  --lvl-FATAL: #ffffff;
-  --lvl-FATAL-bg: #f92672;
-  --lvl-UNKNOWN: #75715e;
-}
-
-:root[data-theme='gruvbox'] {
-  color-scheme: dark;
-  --bg: #282828;
-  --bg-2: #1d2021;
-  --bg-3: #3c3836;
-  --bg-elev: #32302f;
-  --fg: #ebdbb2;
-  --muted: #a89984;
-  --border: #504945;
-  --accent: #fe8019;
-  --accent-fg: #282828;
-  --mark: #665c54;
-  --mark-fg: inherit;
-  --ok: #b8bb26;
-  --warn: #fabd2f;
-  --bad: #fb4934;
-  --row-hover: #32302f;
-  --row-sel: #45403d;
-  --lvl-TRACE: #928374;
-  --lvl-DEBUG: #d3869b;
-  --lvl-INFO: #83a598;
-  --lvl-WARN: #fabd2f;
-  --lvl-ERROR: #fb4934;
-  --lvl-FATAL: #ffffff;
-  --lvl-FATAL-bg: #cc241d;
-  --lvl-UNKNOWN: #928374;
-}
-
-:root[data-theme='one-dark'] {
-  color-scheme: dark;
-  --bg: #282c34;
-  --bg-2: #21252b;
-  --bg-3: #2c313a;
-  --bg-elev: #2a2f37;
-  --fg: #abb2bf;
-  --muted: #7f848e;
-  --border: #3e4451;
-  --accent: #61afef;
-  --accent-fg: #282c34;
-  --mark: #4b5263;
-  --mark-fg: inherit;
-  --ok: #98c379;
-  --warn: #e5c07b;
-  --bad: #e06c75;
-  --row-hover: #2c313c;
-  --row-sel: #3a4050;
-  --lvl-TRACE: #5c6370;
-  --lvl-DEBUG: #c678dd;
-  --lvl-INFO: #56b6c2;
-  --lvl-WARN: #e5c07b;
-  --lvl-ERROR: #e06c75;
-  --lvl-FATAL: #ffffff;
-  --lvl-FATAL-bg: #be5046;
-  --lvl-UNKNOWN: #5c6370;
-}
-
 :root[data-theme='tokyo-night'] {
   color-scheme: dark;
   --bg: #1a1b26;
@@ -374,32 +265,53 @@
   --lvl-UNKNOWN: #7f849c;
 }
 
-:root[data-theme='github-claro'] {
-  color-scheme: light;
-  --bg: #ffffff;
-  --bg-2: #f6f8fa;
-  --bg-3: #eaeef2;
-  --bg-elev: #ffffff;
-  --fg: #1f2328;
-  --muted: #656d76;
-  --border: #d0d7de;
-  --accent: #0969da;
-  --accent-fg: #ffffff;
-  --mark: #fff8c5;
-  --mark-fg: inherit;
-  --ok: #1a7f37;
-  --warn: #9a6700;
-  --bad: #cf222e;
-  --row-hover: #f6f8fa;
-  --row-sel: #ddf4ff;
-  --lvl-TRACE: #6e7781;
-  --lvl-DEBUG: #8250df;
-  --lvl-INFO: #0969da;
-  --lvl-WARN: #9a6700;
-  --lvl-ERROR: #cf222e;
-  --lvl-FATAL: #ffffff;
-  --lvl-FATAL-bg: #cf222e;
-  --lvl-UNKNOWN: #6e7781;
+:root[data-theme='matrix'] {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-2: #030a03;
+  --bg-3: #0a1f0a;
+  --bg-elev: #051005;
+  --fg: #33ff66;
+  --muted: #1f9e3f;
+  --border: #0f3d17;
+  --accent: #00ff41;
+  --accent-fg: #000000;
+  --mark: #0b5d1e;
+  --mark-fg: #eaffea;
+  --ok: #00ff41;
+  --warn: #c8ff00;
+  --bad: #ff3b3b;
+  --row-hover: #061406;
+  --row-sel: #0b2e12;
+  --lvl-TRACE: #1a7f35;
+  --lvl-DEBUG: #4dd97a;
+  --lvl-INFO: #00ff41;
+  --lvl-WARN: #c8ff00;
+  --lvl-ERROR: #ff3b3b;
+  --lvl-FATAL: #000000;
+  --lvl-FATAL-bg: #ff3b3b;
+  --lvl-UNKNOWN: #1a7f35;
+  --mono: 'SF Mono', Menlo, monospace;
+  font-family: var(--mono);
+}
+
+/* Matrix: terminal look everywhere (monospace, soft green glow, square corners). */
+:root[data-theme='matrix'] body,
+:root[data-theme='matrix'] button,
+:root[data-theme='matrix'] input,
+:root[data-theme='matrix'] select,
+:root[data-theme='matrix'] textarea,
+:root[data-theme='matrix'] .empty {
+  font-family: var(--mono);
+}
+
+:root[data-theme='matrix'] .log-row .msg,
+:root[data-theme='matrix'] h2 {
+  text-shadow: 0 0 4px rgb(0 255 65 / 35%);
+}
+
+:root[data-theme='matrix'] * {
+  border-radius: 0 !important;
 }
 
 /* ───────── Base ───────── */
@@ -652,9 +564,23 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
-.alias-input {
-  width: 170px;
-  flex: none;
+.ctx-list .ctx-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.ctx-list .alias-input {
+  margin: 0;
+  width: 100%;
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.5;
 }
 
 .ctx-name .pill {
