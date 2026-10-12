@@ -13,6 +13,21 @@ export interface PodSummary {
   initContainers: string[]
   /** `--previous` makes sense (restarts > 0 or CrashLoopBackOff). */
   canPrevious: boolean
+  /** OKD/OpenShift build and deployer pods are hidden by default in the sidebar. */
+  kind: PodKind
+}
+
+export type PodKind = 'app' | 'build' | 'deploy'
+
+const BUILD_KEY = 'openshift.io/build.name'
+const DEPLOYER_KEY = 'openshift.io/deployer-pod-for.name'
+
+/** Build pods (BuildConfig) and deployer pods (DeploymentConfig) by their OpenShift labels/annotations. */
+export function podKind(metadata: { labels?: Record<string, string>; annotations?: Record<string, string> } | undefined): PodKind {
+  const has = (key: string) => Boolean(metadata?.labels?.[key] ?? metadata?.annotations?.[key])
+  if (has(BUILD_KEY)) return 'build'
+  if (has(DEPLOYER_KEY)) return 'deploy'
+  return 'app'
 }
 
 interface ContainerState {
@@ -29,7 +44,14 @@ interface ContainerStatus {
 }
 
 interface PodJson {
-  metadata?: { name?: string; namespace?: string; creationTimestamp?: string; deletionTimestamp?: string }
+  metadata?: {
+    name?: string
+    namespace?: string
+    creationTimestamp?: string
+    deletionTimestamp?: string
+    labels?: Record<string, string>
+    annotations?: Record<string, string>
+  }
   spec?: { containers?: Array<{ name?: string }>; initContainers?: Array<{ name?: string }> }
   status?: { phase?: string; containerStatuses?: ContainerStatus[]; initContainerStatuses?: ContainerStatus[] }
 }
@@ -103,6 +125,7 @@ export function parsePods(json: string, onInvalid?: (name: string) => void): Pod
       containers,
       initContainers: validNames(pod.spec?.initContainers),
       canPrevious: restarts > 0 || status.endsWith('CrashLoopBackOff'),
+      kind: podKind(pod.metadata),
     }
     const created = pod.metadata?.creationTimestamp ? Date.parse(pod.metadata.creationTimestamp) : NaN
     if (!Number.isNaN(created)) summary.createdAt = created

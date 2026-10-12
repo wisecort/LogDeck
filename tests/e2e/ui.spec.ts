@@ -147,6 +147,25 @@ test('compare with --previous: current and previous container side by side', asy
   await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
 })
 
+test('OKD build and deployer pods are hidden until the user shows them', async () => {
+  const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
+  await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()
+  await expect(tree.getByRole('button', { name: /portal-worker/ })).toBeVisible()
+  await expect(tree.getByRole('button', { name: /portal-web-12-build/ })).toHaveCount(0)
+  await expect(tree.getByRole('button', { name: /portal-web-3-deploy/ })).toHaveCount(0)
+
+  await tree.getByRole('button', { name: '+ 2 builds/deploys do OKD' }).click()
+  await expect(tree.getByRole('button', { name: /portal-web-12-build/ })).toContainText('build')
+  await expect(tree.getByRole('button', { name: /portal-web-3-deploy/ })).toContainText('deploy')
+
+  await win.reload()
+  const tree2 = navTree(win).getByRole('list', { name: 'Namespaces' })
+  await tree2.getByRole('button', { name: 'portal-hml', exact: true }).click()
+  await expect(tree2.getByRole('button', { name: /portal-web-12-build/ })).toBeVisible()
+  await tree2.getByRole('button', { name: 'Ocultar builds/deploys do OKD' }).click()
+  await expect(tree2.getByRole('button', { name: /portal-web-12-build/ })).toHaveCount(0)
+})
+
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Expressão regular' }).click()

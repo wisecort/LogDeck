@@ -67,6 +67,8 @@ export interface PodInfo {
   containers: string[]
   initContainers: string[]
   canPrevious: boolean
+  /** app, or OKD build/deployer pod (hidden by default in the sidebar). */
+  kind: 'app' | 'build' | 'deploy'
 }
 
 export interface StreamStatus {
