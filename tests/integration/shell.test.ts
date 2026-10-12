@@ -49,7 +49,8 @@ describe('PodShell (P5)', () => {
     s.shell.write('echo hello\r')
     await waitFor(() => s.out().includes('echo hello'))
     s.shell.resize(120, 40)
-    await waitFor(() => s.out().includes('resize cols=120 rows=40'))
+    // The fake learns about resizes through SIGWINCH, which ConPTY does not send on Windows.
+    if (process.platform !== 'win32') await waitFor(() => s.out().includes('resize cols=120 rows=40'))
   })
 
   it('reports exit when the remote shell ends', async () => {

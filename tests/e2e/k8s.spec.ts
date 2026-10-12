@@ -6,6 +6,11 @@ import { fakeKubectlEnv } from '../helpers/fake-kubectl'
 const HML = 'portal-hml/api-hml-example-internal:6443/dev'
 
 function kubectlLogsProcesses(): string[] {
+  if (process.platform === 'win32') {
+    // The fake runs as tests/bin/kubectl.exe on Windows; the runner has no other kubectl.exe running.
+    const out = execFileSync('tasklist', ['/FI', 'IMAGENAME eq kubectl.exe', '/NH', '/FO', 'CSV'], { encoding: 'utf8' })
+    return out.split('\n').filter((line) => line.toLowerCase().includes('kubectl.exe'))
+  }
   try {
     return execFileSync('pgrep', ['-f', 'node .*tests/bin/kubectl logs'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean)
   } catch {
