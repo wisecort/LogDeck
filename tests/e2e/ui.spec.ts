@@ -36,7 +36,7 @@ test('main flow: live log, ERROR filter, FPM search and the F6 timeout group', a
   await expect(group).toContainText('6×')
   await expect(win.getByTestId('error-group').filter({ hasText: 'Permissão no startup' })).toContainText('3×')
 
-  await win.keyboard.press('Meta+f')
+  await win.keyboard.press('ControlOrMeta+f')
   await expect(win.getByLabel('Buscar')).toBeFocused()
   await win.keyboard.type('FPM')
   await expect(rows().first()).toBeVisible()
