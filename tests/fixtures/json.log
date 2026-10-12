@@ -1,0 +1,12 @@
+{"message":"Payment gateway timeout","context":{"order":42},"level":400,"level_name":"ERROR","channel":"production","datetime":"2026-10-09T03:26:40.123456+00:00","extra":{}}
+{"message":"User logged in","context":{},"level":200,"level_name":"INFO","channel":"production","datetime":"2026-10-09T03:26:40.200000+00:00","extra":{}}
+{"level":30,"time":1791516400000,"pid":7,"hostname":"api-6f7c9","msg":"request completed","responseTime":12}
+{"level":50,"time":1791516401000,"pid":7,"hostname":"api-6f7c9","msg":"connect ETIMEDOUT 10.0.0.9:5432"}
+{"level":"warn","ts":1791516402.123,"caller":"server/http.go:88","msg":"slow request","duration":"2.3s"}
+{"level":"error","ts":"2026-10-09T03:26:43.000Z","msg":"upstream unavailable"}
+{"severity":"INFO","timestamp":"2026-10-09T03:26:44Z","message":"cloud logging style"}
+{"level":60,"time":1791516405000,"msg":"pino fatal"}
+{"level":10,"time":1791516406000,"msg":"pino trace"}
+{"level":20,"time":1791516406000,"msg":"pino debug"}
+{"level":"dpanic","ts":1791516406.5,"msg":"zap dpanic"}
+{"lvl":"debug","t":"2026-10-09T03:26:47Z","msg":"lvl and t keys"}

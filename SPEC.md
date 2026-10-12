@@ -144,9 +144,9 @@ Parsers plugáveis, um arquivo por formato em `src/logs/parsers/`, todos com a i
 | 4 | `apache-error` | `[módulo:nível]` (2.4) ou `[nível]` (2.2) | `trace*`→TRACE, `debug`→DEBUG, `info`/`notice`→INFO, `warn`→WARN, `error`→ERROR, `crit`/`alert`/`emerg`→FATAL |
 | 5 | `php-fpm` | `[DD-Mon-YYYY HH:MM:SS] LEVEL:` | `DEBUG`, `NOTICE`→INFO, `WARNING`→WARN, `ERROR`, `ALERT`→FATAL |
 | 6 | `nginx-error` | `YYYY/MM/DD HH:MM:SS [nível] pid#tid:` | mesma tabela do Apache |
-| 7 | `heuristic` | último recurso | palavras inteiras: `fatal`/`panic`→FATAL, `error`/`exception`/`failed`→ERROR, `warn`/`timeout`/`timed out`/`deprecated`→WARN |
+| 7 | `heuristic` | último recurso | 1º token de nível em maiúsculas (`TRACE`, `DEBUG`, `INFO`, `WARN`/`WARNING`, `ERROR`, `FATAL`); senão palavras inteiras: `fatal`/`panic`→FATAL, `error`/`exception`/`failed`/`permission denied`/`not permitted`→ERROR, `warn`/`timeout`/`timed out`/`deprecated`→WARN |
 
-- **Multiline:** depois de remover o prefixo `--timestamps`, linhas que começam com espaço/tab, `#\d+ `, `at `, `Caused by:`, `Stack trace:`, `Next ` ou `... N more` são anexadas à entrada anterior (stack traces PHP/Java) e herdam o nível dela.
+- **Multiline:** depois de remover o prefixo `--timestamps`, linhas que começam com espaço/tab, `#\d+ `, `at `, `Caused by:`, `Stack trace:`, `Next `, `... N more`, `[stacktrace]` ou `"}` (fim do contexto do Laravel), e linhas que são só o nome de uma exceção Java (`java.lang.IllegalStateException: …`), são anexadas à entrada anterior e herdam o nível dela.
 - **Meta:** UNKNOWN **< 5%** das entradas de `tests/fixtures/*.log` (asserção em `classify.test`).
 
 ### P2 — todas as linhas com o horário de ingestão

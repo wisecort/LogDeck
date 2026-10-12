@@ -1,0 +1,4 @@
+2026-10-09T03:20:00.000412Z chown: changing ownership of '/var/log/php-fpm/error.log': Operation not permitted
+2026-10-09T03:20:00.1Z [09-Oct-2026 03:20:00] ERROR: failed to open error_log (/var/log/php-fpm/error.log): Permission denied (13)
+2026-10-09T03:20:00.1Z [09-Oct-2026 03:20:00] ERROR: failed to post process the configuration
+2026-10-09T03:20:00.100001Z [09-Oct-2026 03:20:00] ERROR: FPM initialization failed

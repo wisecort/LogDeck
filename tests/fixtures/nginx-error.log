@@ -1,0 +1,8 @@
+2026/10/09 03:26:40 [error] 12#12: *1 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 10.0.0.2, server: portal.example.internal, request: "GET /api HTTP/1.1", upstream: "fastcgi://10.0.0.7:9000", host: "portal.example.internal"
+2026/10/09 03:26:41 [warn] 12#12: *2 an upstream response is buffered to a temporary file /var/cache/nginx/fastcgi_temp/1/00/0000000001 while reading upstream
+2026/10/09 03:26:42 [notice] 1#1: signal process started
+2026/10/09 03:26:43 [crit] 12#12: *3 connect() to unix:/run/php-fpm/www.sock failed (2: No such file or directory) while connecting to upstream
+2026/10/09 03:26:44 [emerg] 1#1: bind() to 0.0.0.0:80 failed (13: Permission denied)
+2026/10/09 03:26:45 [info] 12#12: *4 client closed connection while waiting for request, client: 10.0.0.15, server: 0.0.0.0:8080
+2026/10/09 03:26:46 [debug] 12#12: *5 http keepalive handler
+2026/10/09 03:26:47 [alert] 1#1: worker process 13 exited on signal 9

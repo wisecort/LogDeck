@@ -1,0 +1,10 @@
+[09-Oct-2026 03:26:38] NOTICE: fpm is running, pid 1
+[09-Oct-2026 03:26:38] NOTICE: ready to handle connections
+[09-Oct-2026 03:26:40] WARNING: [pool www] server reached pm.max_children setting (5), consider raising it
+[09-Oct-2026 03:26:41] WARNING: [pool www] child 23 said into stderr: "PHP Warning:  Undefined array key "id" in /var/www/html/app/Api.php on line 88"
+[09-Oct-2026 03:26:42] ERROR: unable to bind listening socket for address '127.0.0.1:9000': Address already in use (98)
+[09-Oct-2026 03:26:43] ALERT: oops, unknown child (31) exited with code 1. Please open a bug report
+[09-Oct-2026 03:26:44] DEBUG: pid 1, fpm_children_make(), line 421: [pool www] child 32 started
+[09-Oct-2026 03:26:45.123456] NOTICE: [pool www] child 24 exited with code 0 after 3600.012 seconds from start
+[09-Oct-2026 03:26:46] ERROR: failed to open error_log (/var/log/php-fpm/error.log): Permission denied (13)
+[09-Oct-2026 03:26:47] WARNING: [pool www] child 25, script '/var/www/html/index.php' (request: "GET /index.php") execution timed out (30.012345 sec), terminating

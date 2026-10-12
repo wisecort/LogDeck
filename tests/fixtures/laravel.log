@@ -1,0 +1,13 @@
+[2026-10-09 03:26:40] production.ERROR: SQLSTATE[HY000] [2002] Connection timed out (Connection: mysql, SQL: select * from `users` where `id` = 1 limit 1) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 2002): SQLSTATE[HY000] [2002] Connection timed out at /var/www/html/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
+[stacktrace]
+#0 /var/www/html/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\Database\Connection->runQueryCallback()
+#1 /var/www/html/app/Http/Controllers/UserController.php(31): Illuminate\Database\Connection->select()
+#2 {main}
+"}
+[2026-10-09 03:26:41] production.WARNING: Cache miss for key solicitacoes:42
+[2026-10-09 03:26:42] production.INFO: Job App\Jobs\EnviarNotificacao processed
+[2026-10-09 03:26:43] local.DEBUG: Query executed in 12ms
+[2026-10-09 03:26:44] production.CRITICAL: Queue worker crashed
+[2026-10-09 03:26:45] production.NOTICE: User 42 logged out
+[2026-10-09T03:26:46.123456+00:00] production.EMERGENCY: Disk full on /var/www/html/storage
+[2026-10-09 03:26:47] production.ALERT: Payment provider unreachable

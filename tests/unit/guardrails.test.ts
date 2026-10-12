@@ -93,6 +93,12 @@ describe('guardrails.mjs', () => {
     expect(r.out).toContain(path)
   })
 
+  it('does not mistake Java package names for hosts in fixtures', () => {
+    const r = run(project({ 'tests/fixtures/java.log': 'Caused by: java.net.SocketTimeoutException: Connect timed out\n' }))
+    expect(r.out).not.toContain('G8-fixture-host')
+    expect(r.code).toBe(0)
+  })
+
   it('reports the offending line number', () => {
     const r = run(project({ 'src/ui/line.ts': 'const a = 1\nel.innerHTML = x\n' }))
     expect(r.out).toContain('src/ui/line.ts:2')

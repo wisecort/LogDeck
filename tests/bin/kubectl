@@ -1,0 +1,126 @@
+#!/usr/bin/env node
+// Fake kubectl for tests. Put tests/bin first in PATH. Never talks to a cluster.
+//
+// Env:
+//   FAKE_KUBECTL_ARGV_LOG   file; each invocation appends one JSON line with argv
+//   FAKE_KUBECTL_MODE       ok (default) | auth-error | drop-after:<n> | not-found
+//   FAKE_KUBECTL_LOG_FILE   log fixture streamed by `logs` (default pod-php-apache.log)
+//   FAKE_KUBECTL_DELAY_MS   delay between streamed lines (default 2)
+//
+// Any verb outside the read-only allowlist exits with code 99 so tests catch it.
+
+const { appendFileSync, readFileSync } = require('node:fs')
+const { join, resolve } = require('node:path')
+
+const FIXTURES = resolve(__dirname, '../fixtures')
+const argv = process.argv.slice(2)
+const env = process.env
+
+if (env.FAKE_KUBECTL_ARGV_LOG) appendFileSync(env.FAKE_KUBECTL_ARGV_LOG, JSON.stringify(argv) + '\n')
+
+const mode = env.FAKE_KUBECTL_MODE || 'ok'
+const positional = argv.filter((a) => !a.startsWith('-'))
+const flag = (name) => {
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === name) return argv[i + 1]
+    if (argv[i].startsWith(name + '=')) return argv[i].slice(name.length + 1)
+  }
+  return undefined
+}
+const has = (name) => argv.includes(name)
+
+function fail(message, code = 1) {
+  process.stderr.write(message + '\n')
+  process.exit(code)
+}
+
+const FORBIDDEN = ['delete', 'apply', 'patch', 'scale', 'rollout', 'edit', 'cordon', 'drain', 'label', 'annotate', 'create', 'replace', 'set', 'expose', 'taint']
+if (FORBIDDEN.includes(positional[0]) || argv.includes('use-context') || argv.includes('--raw')) {
+  fail(`FAKE KUBECTL: forbidden invocation: ${argv.join(' ')}`, 99)
+}
+
+const verb = positional[0]
+
+if (verb === 'version') {
+  if (!has('--client')) fail('FAKE KUBECTL: version without --client would contact the cluster', 99)
+  process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/version.json')))
+  process.exit(0)
+}
+
+if (verb === 'config' && positional[1] === 'get-contexts') {
+  process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/get-contexts.txt')))
+  process.exit(0)
+}
+
+if (!argv.some((a) => a.startsWith('--context'))) fail('FAKE KUBECTL: missing --context', 98)
+if (mode === 'auth-error') fail('error: You must be logged in to the server (Unauthorized)')
+
+if (verb === 'auth' && positional[1] === 'can-i') {
+  process.stdout.write('yes\n')
+  process.exit(0)
+}
+
+if (verb === 'get') {
+  const resource = positional[1]
+  if (resource === 'namespaces' || resource === 'ns') {
+    process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/namespaces.json')))
+    process.exit(0)
+  }
+  if (resource === 'pods' || resource === 'pod') {
+    process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/pods.json')))
+    process.exit(0)
+  }
+  fail(`error: the server doesn't have a resource type "${resource}"`)
+}
+
+if (verb === 'logs') {
+  if (mode === 'not-found') fail(`Error from server (NotFound): pods "${positional[1]}" not found`)
+  const file = has('--previous') ? join(FIXTURES, 'kubectl/previous.log') : join(FIXTURES, env.FAKE_KUBECTL_LOG_FILE || 'pod-php-apache.log')
+  const TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z /
+  let lines = readFileSync(file, 'utf8').split('\n').filter(Boolean)
+  const sinceTime = flag('--since-time')
+  if (sinceTime) lines = lines.filter((l) => !TS.test(l) || Date.parse(l.slice(0, l.indexOf(' '))) > Date.parse(sinceTime))
+  const tail = flag('--tail')
+  if (tail !== undefined && Number(tail) >= 0) lines = lines.slice(-Number(tail))
+  if (!has('--timestamps')) lines = lines.map((l) => l.replace(TS, ''))
+
+  const follow = has('-f') || has('--follow')
+  const dropAfter = mode.startsWith('drop-after:') ? Number(mode.split(':')[1]) : Infinity
+  const delay = Number(env.FAKE_KUBECTL_DELAY_MS ?? 2)
+  let i = 0
+  const tick = () => {
+    if (i >= dropAfter) fail('error: unexpected EOF')
+    if (i < lines.length) {
+      process.stdout.write(lines[i++] + '\n')
+      setTimeout(tick, delay)
+    } else if (!follow) {
+      process.exit(0)
+    }
+    // follow mode: stay alive until killed, like a real stream with no new lines
+  }
+  if (follow) setInterval(() => {}, 1 << 30)
+  tick()
+  return
+}
+
+if (verb === 'exec') {
+  if (!has('-it') && !(has('-i') && has('-t'))) fail('FAKE KUBECTL: exec without -it', 97)
+  if (!process.stdin.isTTY) {
+    process.stderr.write('sh: cannot set terminal process group (-1): Inappropriate ioctl for device\n')
+    process.stderr.write('sh: no job control in this shell\n')
+  } else {
+    process.stdout.write(`fake-shell tty=yes cols=${process.stdout.columns} rows=${process.stdout.rows}\n`)
+  }
+  process.stdout.write('$ ')
+  process.stdin.setEncoding('utf8')
+  process.stdin.on('data', (chunk) => {
+    for (const line of chunk.split(/\r?\n|\r/)) {
+      if (line.trim() === 'exit') process.exit(0)
+      if (line) process.stdout.write(`${line}\n$ `)
+    }
+  })
+  process.stdout.on('resize', () => process.stdout.write(`\nresize cols=${process.stdout.columns} rows=${process.stdout.rows}\n$ `))
+  return
+}
+
+fail(`FAKE KUBECTL: unsupported invocation: ${argv.join(' ')}`, 96)

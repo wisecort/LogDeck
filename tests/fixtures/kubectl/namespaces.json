@@ -1,0 +1,9 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    { "metadata": { "name": "portal-hml" }, "status": { "phase": "Active" } },
+    { "metadata": { "name": "monitoring" }, "status": { "phase": "Active" } },
+    { "metadata": { "name": "default" }, "status": { "phase": "Active" } }
+  ]
+}

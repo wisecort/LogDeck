@@ -1,0 +1,10 @@
+10.0.0.2 - - [09/Oct/2026:03:26:40 +0000] "GET / HTTP/1.1" 200 19340 "-" "dashboard-okd (checagem de disponibilidade)"
+10.0.0.15 - - [09/Oct/2026:03:26:41 +0000] "GET /login HTTP/1.1" 200 5120 "https://portal.example.internal/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+10.0.0.15 - - [09/Oct/2026:03:26:42 +0000] "POST /api/v1/solicitacoes HTTP/1.1" 504 247 "-" "Mozilla/5.0"
+10.0.0.16 - - [09/Oct/2026:03:26:43 +0000] "GET /favicon.ico HTTP/1.1" 404 196 "-" "Mozilla/5.0"
+10.0.0.16 - - [09/Oct/2026:03:26:44 +0000] "GET /assets/app.js HTTP/1.1" 304 - "-" "Mozilla/5.0"
+10.0.0.3 - - [09/Oct/2026:03:26:45 +0000] "GET /healthz HTTP/1.1" 200 2 "-" "kube-probe/1.31"
+10.0.0.15 - admin [09/Oct/2026:03:26:46 -0300] "DELETE /api/v1/cache HTTP/1.1" 500 512 "-" "curl/8.7.1"
+10.0.0.4 - - [09/Oct/2026:03:26:47 +0000] "GET /index.php HTTP/1.0" 302 0
+10.0.0.21 - - [09/Oct/2026:03:26:48 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.62 (internal dummy connection)"
+10.0.0.22 - - [09/Oct/2026:03:26:49 +0000] "GET /api/v1/solicitacoes?page=2&q=a%20b HTTP/2.0" 503 0 "-" "Mozilla/5.0"

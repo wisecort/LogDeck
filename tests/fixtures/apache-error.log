@@ -1,0 +1,11 @@
+[Fri Oct 09 03:26:39.001122 2026] [mpm_event:notice] [pid 1:tid 140210] AH00489: Apache/2.4.62 (Red Hat Enterprise Linux) configured -- resuming normal operations
+[Fri Oct 09 03:26:39.001200 2026] [core:notice] [pid 1:tid 140210] AH00094: Command line: 'httpd -D FOREGROUND'
+[Fri Oct 09 03:26:40.123456 2026] [proxy_fcgi:error] [pid 12:tid 140213] (70007)The timeout specified has expired: [client 10.0.0.2:48660] AH01075: Error dispatching request to : (polling)
+[Fri Oct 09 03:26:41.555000 2026] [proxy_fcgi:error] [pid 13:tid 140214] [client 10.0.0.15:51234] AH01071: Got error 'PHP message: PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [2002] Connection timed out in /var/www/html/app/Db.php:42'
+[Fri Oct 09 03:26:42.000001 2026] [core:warn] [pid 1:tid 140210] AH00045: child process 14 still did not exit, sending a SIGTERM
+[Fri Oct 09 03:26:43.000001 2026] [ssl:emerg] [pid 1:tid 140210] AH02572: Failed to configure at least one certificate and key
+[Fri Oct 09 03:26:44.000001 2026] [authz_core:debug] [pid 15:tid 140215] mod_authz_core.c(820): [client 10.0.0.15:51240] AH01626: authorization result: granted
+[Fri Oct 09 03:26:45.000001 2026] [rewrite:trace3] [pid 15:tid 140215] mod_rewrite.c(483): [client 10.0.0.15:51240] applying pattern '^/api/(.*)$' to uri '/api/v1'
+[Fri Oct 09 03:26:46 2026] [error] [client 10.0.0.15] File does not exist: /var/www/html/missing
+[Fri Oct 09 03:26:47.000001 2026] [mpm_event:crit] [pid 1:tid 140210] AH00484: server reached MaxRequestWorkers setting
+[Fri Oct 09 03:26:48.000001 2026] [proxy:info] [pid 16:tid 140216] AH01144: No protocol handler was valid for the URL /status

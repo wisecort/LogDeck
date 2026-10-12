@@ -90,7 +90,7 @@ function scanFixtureLine(rel, line, n) {
   for (const m of line.matchAll(/(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?![\d.])/g)) {
     if (!ALLOWED_FIXTURE_IP.test(m[1])) report('G8-fixture-ip', rel, n, `IP fora de 10.0.0.0/24: ${m[1]}`)
   }
-  for (const m of line.matchAll(/\b((?:[a-z0-9-]+\.)+(?:com|br|gov|org|net|io|cloud|local))\b/gi)) {
+  for (const m of line.matchAll(/\b((?:[a-z0-9-]+\.)+(?:com|br|gov|org|net|io|cloud|local))(?![\w-]|\.[a-z0-9])/gi)) {
     if (!ALLOWED_FIXTURE_HOST.test(m[1])) report('G8-fixture-host', rel, n, `host real: ${m[1]}`)
   }
 }

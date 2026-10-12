@@ -20,7 +20,7 @@
     "guardrails": "node scripts/guardrails.mjs",
     "test": "vitest run",
     "test:unit": "vitest run --project unit --coverage",
-    "test:integration": "vitest run --project integration --passWithNoTests",
+    "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "harness": "bash scripts/harness.sh"
   },

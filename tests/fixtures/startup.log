@@ -1,0 +1,7 @@
+chown: changing ownership of '/var/log/php-fpm/error.log': Operation not permitted
+chown: changing ownership of '/var/lib/php/session': Operation not permitted
+mkdir: cannot create directory '/run/httpd': Permission denied
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 10.0.0.12. Set the 'ServerName' directive globally to suppress this message
+Starting php-fpm...
+panic: runtime error: invalid memory address or nil pointer dereference
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space

@@ -1,0 +1,10 @@
+2026-10-09 03:26:40.123 ERROR 1 --- [main] c.e.portal.Application : Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:798)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:325)
+Caused by: java.net.SocketTimeoutException: Connect timed out
+	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:546)
+	... 12 more
+2026-10-09 03:26:41.000  INFO 1 --- [main] c.e.portal.Application : Started Application in 4.2 seconds
+2026-10-09 03:26:42.000  WARN 1 --- [main] o.h.engine.jdbc.spi.SqlExceptionHelper : SQL Error: 0, SQLState: 08001
+2026-10-09 03:26:43.000 DEBUG 1 --- [main] c.e.portal.Cache : warming cache

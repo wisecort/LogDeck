@@ -1,0 +1,4 @@
+CURRENT   NAME                                          CLUSTER                         AUTHINFO                                 NAMESPACE
+*         portal-hml/api-hml-example-internal:6443/dev  api-hml-example-internal:6443   dev/api-hml-example-internal:6443        portal-hml
+          portal-prd/api-prd-example-internal:6443/dev  api-prd-example-internal:6443   dev/api-prd-example-internal:6443        portal-prd
+          kind-logdeck-test                             kind-logdeck-test               kind-logdeck-test                        

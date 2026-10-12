@@ -1,0 +1,8 @@
+{
+  "clientVersion": {
+    "major": "1",
+    "minor": "34",
+    "gitVersion": "v1.34.1-fake",
+    "platform": "darwin/arm64"
+  }
+}
