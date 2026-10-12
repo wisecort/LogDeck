@@ -83,6 +83,19 @@ test('popovers close on outside click and Escape, so they never cover the toolba
   await expect(win.getByLabel('tail')).toHaveCount(0)
 })
 
+test('recent pods: the last ones opened reopen with the same container', async () => {
+  await openPod(win, { pod: /portal-web/, container: 'php-fpm' })
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  // the namespace is already open: click the second pod directly
+  await navTree(win).getByRole('list', { name: 'Namespaces' }).getByRole('button', { name: /portal-worker/ }).click()
+  const recents = navTree(win).getByRole('list', { name: 'Recentes' })
+  await expect(recents.getByRole('button')).toHaveCount(2)
+  await expect(recents.getByRole('button').first()).toContainText('portal-worker')
+  await recents.getByRole('button', { name: /portal-web/ }).click()
+  await expect(win.locator('.statusbar')).toContainText('portal-web-7d9f8c6b5-x2k4p › php-fpm')
+  await expect(recents.getByRole('button').first()).toContainText('portal-web')
+})
+
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Expressão regular' }).click()

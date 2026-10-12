@@ -30,6 +30,8 @@ export const es: Record<MessageKey, string> = {
   'sidebar.otherNamespace': 'Otro namespace en {context}',
   'sidebar.cannotList': 'sin permiso para listar; escriba y pulse Enter',
   'sidebar.favorite': 'Marcar {ns} como favorito',
+  'sidebar.recents': 'Recientes',
+  'recent.gone': '{pod} ya no existe (puede haberse recreado). Se abrió su namespace.',
   'sidebar.favorites': 'Favoritos',
   'sidebar.containers': 'Contenedores',
   'sidebar.podTitle': '{name}\n{status} · {ready} listos · {restarts} reinicios',

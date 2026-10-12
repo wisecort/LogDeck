@@ -2,6 +2,10 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [Não lançado]
+
+- **Pods recentes:** os últimos 5 pods abertos aparecem em "Recentes" na barra lateral e reabrem no mesmo container; se o pod foi recriado, o app avisa e abre o namespace.
+
 ## [1.1.0] — 12/10/2026
 
 ### Multiplataforma

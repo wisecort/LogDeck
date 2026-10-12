@@ -29,6 +29,8 @@ export const ptBR = {
   'sidebar.otherNamespace': 'Outro namespace em {context}',
   'sidebar.cannotList': 'sem permissão para listar; digite e Enter',
   'sidebar.favorite': 'Favoritar {ns}',
+  'sidebar.recents': 'Recentes',
+  'recent.gone': '{pod} não existe mais (o pod pode ter sido recriado). Abri o namespace.',
   'sidebar.favorites': 'Favoritos',
   'sidebar.containers': 'Containers',
   'sidebar.podTitle': '{name}\n{status} · {ready} prontos · {restarts} restarts',

@@ -26,6 +26,7 @@ import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogSession } from './useLogSession'
 import { useNavigation } from './useNavigation'
+import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
 
 const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
@@ -68,6 +69,7 @@ export function App() {
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const [lang, setLang] = useState<Lang>(loadLanguage)
   const [prefs, setPrefs] = useState(false)
+  const [recents, setRecents] = useState<RecentPod[]>(loadRecents)
   const t = useMemo(() => translator(lang), [lang])
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -122,21 +124,36 @@ export function App() {
 
   const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions) => {
     resetView()
+    setRecents((prev) => {
+      const next = pushRecent(prev, { context, namespace, pod: pod.name, container })
+      saveRecents(next)
+      return next
+    })
     void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) })
   }
 
-  const selectPod = async (context: string, namespace: string, pod: PodInfo) => {
+  const selectPod = async (context: string, namespace: string, pod: PodInfo, preferred?: string) => {
     setShell(undefined)
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
     const opts = { ...options, previous: options.previous && pod.canPrevious }
     setOptions(opts)
-    if (pod.containers.length === 1 && pod.initContainers.length === 0) {
-      setSelection({ context, namespace, pod, container: pod.containers[0]! })
-      openLogs(context, namespace, pod, pod.containers[0]!, opts)
+    const all = [...pod.containers, ...pod.initContainers]
+    const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : undefined
+    if (container) {
+      setSelection({ context, namespace, pod, container })
+      openLogs(context, namespace, pod, container, opts)
     } else {
       setSelection({ context, namespace, pod })
       void session.stop()
     }
+  }
+
+  /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
+  const openRecent = async (r: RecentPod) => {
+    await nav.openNamespace(r.context, r.namespace, true)
+    const pod = (await nav.loadPods(r.context, r.namespace))?.find((p) => p.name === r.pod)
+    if (!pod) return setNotice(t('recent.gone', { pod: r.pod }))
+    await selectPod(r.context, r.namespace, pod, r.container)
   }
 
   const selectContainer = (c: string) => {
@@ -368,6 +385,8 @@ export function App() {
           onCloseShell={() => setShell(undefined)}
           now={now}
           onPreferences={() => setPrefs(true)}
+          recents={recents}
+          onRecent={(r) => void openRecent(r)}
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}

@@ -13,6 +13,8 @@ export const ptPT: Record<MessageKey, string> = {
   'file.empty': '{name}: ficheiro vazio',
   'file.binary': '{name}: não parece texto (comprimido ou binário?)',
 
+  'sidebar.recents': 'Recentes',
+  'recent.gone': '{pod} já não existe (o pod pode ter sido recriado). Abri o namespace.',
   'sidebar.manageContexts': 'Gerir contextos…',
   'sidebar.searchPods': 'Pesquisar pod ou namespace',
   'sidebar.searchPodsHint': 'Pesquisa nos nomes dos namespaces e nos pods dos namespaces já abertos',
