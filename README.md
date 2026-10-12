@@ -91,6 +91,10 @@ Para guardar chaves de IA, o Linux precisa de um cofre de senhas ativo (GNOME Ke
 
 ![Detalhes de uma linha](docs/images/details.png)
 
+### Abas
+
+Clique em **+** acima da busca para abrir outra aba, ou faça ⌘-clique (Ctrl-clique no Windows/Linux) num pod para abri-lo direto numa aba nova. Cada aba continua recebendo o log em segundo plano. Até 8 abas.
+
 ### 3. Investigar erros
 
 - A aba **Erros** agrupa os erros e timeouts. Clique num grupo para filtrar o log por ele.
@@ -137,6 +141,7 @@ Em **Preferências** (rodapé da barra lateral): tema, idioma e Sobre.
 | ⌘F | Buscar |
 | ⌘G / ⇧⌘G | Próxima / anterior linha encontrada |
 | ⌥ + clique no nível | Mostrar só aquele nível |
+| ⌘ + clique no pod | Abrir o pod numa nova aba |
 | Esc | Limpar seleção / fechar |
 | ? | Lista de atalhos |
 

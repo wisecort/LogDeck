@@ -10,17 +10,13 @@ import { useI18n } from '../i18n'
 import { nsKey, type Navigation } from '../useNavigation'
 import { IconBookmark, IconChevron, IconClock, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
 
-export interface Selection {
-  context?: string
-  namespace?: string
-  pod?: PodInfo
-  container?: string
-}
+export type { Selection } from '../view-types'
+import type { Selection } from '../view-types'
 
 interface Props {
   nav: Navigation
   selection: Selection
-  onPod(context: string, namespace: string, pod: PodInfo): void
+  onPod(context: string, namespace: string, pod: PodInfo, inNewTab: boolean): void
   onContainer(name: string): void
   bookmarks: LogEntry[]
   onBookmark(seq: number): void
@@ -67,8 +63,11 @@ export function Sidebar(p: Props) {
         <li key={pod.name}>
           <button
             className={`node ${selected ? 'selected' : ''}`}
-            onClick={() => p.onPod(context, namespace, pod)}
-            title={t('sidebar.podTitle', { name: pod.name, status: pod.status, ready: pod.ready, restarts: pod.restarts })}
+            onClick={(e) => p.onPod(context, namespace, pod, e.metaKey || e.ctrlKey)}
+            onAuxClick={(e) => {
+              if (e.button === 1) p.onPod(context, namespace, pod, true)
+            }}
+            title={`${t('sidebar.podTitle', { name: pod.name, status: pod.status, ready: pod.ready, restarts: pod.restarts })}\n${t('sidebar.newTabHint')}`}
           >
             <span className={`dot ${podDot(pod.status)}`} />
             <span className="node-label mono">{pod.name}</span>

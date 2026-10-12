@@ -96,6 +96,32 @@ test('recent pods: the last ones opened reopen with the same container', async (
   await expect(recents.getByRole('button').first()).toContainText('portal-web')
 })
 
+test('tabs: two pods stream side by side, switch, close and add a new one', async () => {
+  await openWebPod(win)
+  const tabs = win.getByTestId('log-tab')
+  const tabList = win.getByRole('tablist', { name: 'Abas' })
+  await expect(tabs).toHaveCount(1)
+  await expect(tabs.first()).toContainText('portal-web-7d9f8c6b5-x2k4p / httpd')
+
+  // ⌘/Ctrl-click opens the worker pod in a new tab, the web tab keeps its 465 lines
+  await navTree(win).getByRole('list', { name: 'Namespaces' }).getByRole('button', { name: /portal-worker/ }).click({ modifiers: ['ControlOrMeta'] })
+  await expect(tabs).toHaveCount(2)
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('portal-worker')
+  await expect(win.getByTestId('match-count')).not.toContainText('/ 465')
+
+  await tabList.getByRole('tab', { name: /portal-web/ }).click()
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  await expect(win.locator('.statusbar')).toContainText('portal-web-7d9f8c6b5-x2k4p › httpd')
+
+  await win.getByRole('button', { name: /Fechar aba portal-worker/ }).click()
+  await expect(tabs).toHaveCount(1)
+
+  await win.getByRole('button', { name: 'Nova aba', exact: true }).click()
+  await expect(tabs).toHaveCount(2)
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('Nova aba')
+  await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
+})
+
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Expressão regular' }).click()

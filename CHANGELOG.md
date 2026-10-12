@@ -4,6 +4,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- **Abas:** vários pods ou arquivos abertos ao mesmo tempo, cada um com seu stream rodando em segundo plano; "+" abre uma aba nova e ⌘/Ctrl+clique (ou clique do meio) num pod abre direto numa aba nova; até 8 abas.
 - **Tradução completa:** mensagens de erro do kubectl, títulos dos grupos de erro do catálogo e respostas da IA seguem o idioma escolhido (pt-BR, pt-PT, inglês, espanhol); a "Estimativa da IA" é lida em qualquer um deles.
 - **Pods recentes:** os últimos 5 pods abertos aparecem em "Recentes" na barra lateral e reabrem no mesmo container; se o pod foi recriado, o app avisa e abre o namespace.
 

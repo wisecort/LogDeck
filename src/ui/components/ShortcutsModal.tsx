@@ -5,6 +5,7 @@ const KEYS: Array<[string | MessageKey, MessageKey]> = [
   ['⌘ F', 'keys.search'],
   ['⌘ G / ⇧ ⌘ G', 'keys.next'],
   ['keys.altClick', 'keys.solo'],
+  ['keys.modClick', 'keys.newTab'],
   ['Esc', 'keys.esc'],
   ['?', 'keys.help'],
 ]

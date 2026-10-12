@@ -104,6 +104,8 @@ export const ptPT: Record<MessageKey, string> = {
   'keys.search': 'Pesquisar',
   'keys.solo': 'Mostrar apenas esse nível',
 
+  'keys.modClick': '⌘ + clique no pod',
+  'keys.newTab': 'Abrir o pod num novo separador',
   'pref.title': 'Definições',
   'pref.languageNote': 'Aplica-se também às mensagens do kubectl, aos títulos dos grupos de erros e às respostas da IA.',
   'pref.tagline': 'Explorador de logs de Kubernetes/OKD para macOS, apenas de leitura.',
@@ -112,5 +114,12 @@ export const ptPT: Record<MessageKey, string> = {
 
   'sig.startup-permission': 'Permissão no arranque',
   'sig.node-etimedout': 'Tempo limite de ligação',
+  'tabs.label': 'Separadores',
+  'tabs.new': 'Novo separador',
+  'tabs.add': 'Novo separador',
+  'tabs.addHint': 'Novo separador (⌘-clique num pod também abre num novo separador)',
+  'tabs.close': 'Fechar separador {name}',
+  'tabs.limit': 'Limite de {n} separadores abertos; feche um para abrir outro.',
+  'sidebar.newTabHint': '⌘-clique: abrir num novo separador',
   'theme.meia-noite': 'Meia-noite',
 }

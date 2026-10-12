@@ -24,7 +24,9 @@ import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from 
 import { LogFileError, MAX_LOG_FILE_BYTES } from '../logs/file'
 import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
-import { useLogSession } from './useLogSession'
+import { useLogTabs } from './useLogTabs'
+import { TabBar } from './components/TabBar'
+import { MAX_TABS } from './tabs'
 import { useNavigation } from './useNavigation'
 import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
@@ -41,8 +43,6 @@ export function App() {
   const [notice, setNotice] = useState<string>()
   const onError = useCallback((m: string) => setNotice(m), [])
   const nav = useNavigation(onError)
-  const [selection, setSelection] = useState<Selection>({})
-  const [options, setOptions] = useState<LogOptions>({ tail: 1000, since: '', previous: false })
   const [now, setNow] = useState(() => Date.now())
   const [levels, setLevels] = useState<ReadonlySet<Level>>(new Set(LEVELS))
   const [search, setSearch] = useState<SearchState>(EMPTY_SEARCH)
@@ -75,8 +75,12 @@ export function App() {
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const session = useLogSession()
+  const session = useLogTabs()
   const { engine, version, status } = session
+  // Selection and log options belong to the active tab.
+  const selection: Selection = session.activeTab.selection
+  const options: LogOptions = session.activeTab.options
+  const { setSelection, setOptions } = session
   const selectedContext = nav.contexts.find((c) => c.name === selection.context)
   // What the user sees for the context: their LogDeck alias, else the short derived label.
   const contextShown = selection.context ? (nav.aliases[selection.context]?.trim() || selection.context) : undefined
@@ -123,29 +127,43 @@ export function App() {
     setCursor(undefined)
   }
 
-  const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions) => {
+  /** Tab switches restart the view state (selection, bookmarks, pause, group/time filters); presets follow the tab. */
+  const afterTabChange = () => {
+    resetView()
+    setShell(undefined)
+    const { context, namespace } = session.activeTab.selection
+    setPresets(undefined)
+    if (context && namespace) void window.logdeck.getPresets(presetKey(context, namespace)).then(setPresets)
+  }
+
+  const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions, tabId?: string) => {
     resetView()
     setRecents((prev) => {
       const next = pushRecent(prev, { context, namespace, pod: pod.name, container })
       saveRecents(next)
       return next
     })
-    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) })
+    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) }, tabId)
   }
 
-  const selectPod = async (context: string, namespace: string, pod: PodInfo, preferred?: string) => {
+  const selectPod = async (context: string, namespace: string, pod: PodInfo, preferred?: string, inNewTab = false) => {
+    let tabId: string | undefined
+    if (inNewTab) {
+      tabId = session.newTab()
+      if (!tabId) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+    }
     setShell(undefined)
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
     const opts = { ...options, previous: options.previous && pod.canPrevious }
-    setOptions(opts)
     const all = [...pod.containers, ...pod.initContainers]
     const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : undefined
+    setOptions(opts, tabId)
     if (container) {
-      setSelection({ context, namespace, pod, container })
-      openLogs(context, namespace, pod, container, opts)
+      setSelection({ context, namespace, pod, container }, tabId)
+      openLogs(context, namespace, pod, container, opts, tabId)
     } else {
-      setSelection({ context, namespace, pod })
-      void session.stop()
+      setSelection({ context, namespace, pod }, tabId)
+      void session.stop(tabId)
     }
   }
 
@@ -166,7 +184,6 @@ export function App() {
 
   const openFile = async (f: File) => {
     setShell(undefined)
-    setSelection({})
     resetView()
     try {
       await session.openFile(f)
@@ -375,7 +392,7 @@ export function App() {
         <Sidebar
           nav={nav}
           selection={selection}
-          onPod={(c, n, p) => void selectPod(c, n, p)}
+          onPod={(c, n, p, inNewTab) => void selectPod(c, n, p, undefined, inNewTab)}
           onContainer={selectContainer}
           bookmarks={bookmarkedEntries}
           onBookmark={(seq) => {
@@ -394,6 +411,22 @@ export function App() {
           {...(session.file && { fileName: session.file })}
         />
         <main className="main">
+          <TabBar
+            tabs={session.tabs}
+            active={session.activeTab.id}
+            onActivate={(id) => {
+              session.activate(id)
+              afterTabChange()
+            }}
+            onClose={(id) => {
+              void session.close(id)
+              afterTabChange()
+            }}
+            onNew={() => {
+              if (!session.newTab()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+              afterTabChange()
+            }}
+          />
           <TopBar
             search={search}
             onSearch={(s) => {

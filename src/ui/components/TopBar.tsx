@@ -11,11 +11,8 @@ export interface SearchState {
   exclude: string
 }
 
-export interface LogOptions {
-  tail: number
-  since: string
-  previous: boolean
-}
+export type { LogOptions } from '../view-types'
+import type { LogOptions } from '../view-types'
 
 interface Props {
   search: SearchState
