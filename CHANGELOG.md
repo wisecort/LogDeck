@@ -2,7 +2,7 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
-## [Não lançado]
+## [1.3.0] — 12/10/2026
 
 - **Pods de build e de deploy do OKD ocultos:** pods criados por BuildConfig (`openshift.io/build.name`) e por DeploymentConfig (`openshift.io/deployer-pod-for.name`) ficam escondidos na árvore; "+ N builds/deploys do OKD" mostra todos, com a marca `build`/`deploy`, e a escolha é lembrada.
 
