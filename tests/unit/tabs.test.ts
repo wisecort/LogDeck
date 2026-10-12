@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { activateTab, addTab, closeTab, initialTabs, MAX_TABS, tabLabel, updateTab, type TabsState } from '../../src/ui/tabs'
 
-const pod = (name: string) => ({ name, namespace: 'ns', phase: 'Running', status: 'Running', ready: '1/1', restarts: 0, containers: ['app'], initContainers: [], canPrevious: false })
+const pod = (name: string) => ({ name, namespace: 'ns', phase: 'Running', status: 'Running', ready: '1/1', restarts: 0, containers: ['app'], initContainers: [], canPrevious: false, kind: 'app' as const })
 
 describe('tabs', () => {
   it('starts with one empty active tab', () => {

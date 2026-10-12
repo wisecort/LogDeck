@@ -112,6 +112,13 @@ describe('guardrails.mjs', () => {
     expect(r.code).toBe(0)
   })
 
+  it('accepts Kubernetes/OpenShift label prefixes in fixtures but not real hosts', () => {
+    const ok = run(project({ 'tests/fixtures/pods.json': '{"labels": {"openshift.io/build.name": "x", "app.kubernetes.io/name": "y"}}\n' }))
+    expect(ok.out).not.toContain('G8-fixture-host')
+    const bad = run(project({ 'tests/fixtures/pods.json': '{"route": "portal.apps.openshift.io", "host": "x.realcompany.com.br"}\n' }))
+    expect(bad.out).toContain('G8-fixture-host')
+  })
+
   it('does not mistake Java package names for hosts in fixtures', () => {
     const r = run(project({ 'tests/fixtures/java.log': 'Caused by: java.net.SocketTimeoutException: Connect timed out\n' }))
     expect(r.out).not.toContain('G8-fixture-host')

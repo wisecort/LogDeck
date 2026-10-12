@@ -2,6 +2,10 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [1.3.0] — 12/10/2026
+
+- **Pods de build e de deploy do OKD ocultos:** pods criados por BuildConfig (`openshift.io/build.name`) e por DeploymentConfig (`openshift.io/deployer-pod-for.name`) ficam escondidos na árvore; "+ N builds/deploys do OKD" mostra todos, com a marca `build`/`deploy`, e a escolha é lembrada.
+
 ## [1.2.1] — 12/10/2026
 
 - Correção: o app do macOS baixado da internet aparecia como "danificado e não pode ser aberto". A assinatura estava incompleta (`identity: null`); agora o pacote inteiro é assinado ad-hoc (sem hardened runtime), e o macOS mostra o aviso normal de desenvolvedor não verificado, com "Abrir mesmo assim".

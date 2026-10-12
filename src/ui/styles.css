@@ -1542,3 +1542,15 @@ kbd {
   border-bottom: 1px solid var(--border);
   background: var(--bg-2);
 }
+
+/* OKD build/deployer pods */
+.pod-kind {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.build-toggle .node-label {
+  font-size: 12px;
+}

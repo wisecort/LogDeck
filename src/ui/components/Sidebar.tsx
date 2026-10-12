@@ -33,6 +33,23 @@ interface Props {
 }
 
 const MANAGE = '__manage__'
+const SHOW_BUILDS_KEY = 'logdeck.showBuildPods'
+
+function loadShowBuilds(): boolean {
+  try {
+    return localStorage.getItem(SHOW_BUILDS_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function saveShowBuilds(on: boolean): void {
+  try {
+    localStorage.setItem(SHOW_BUILDS_KEY, on ? '1' : '0')
+  } catch {
+    // ignore
+  }
+}
 
 function podDot(status: string): string {
   if (status === 'Running' || status === 'Completed') return 'ok'
@@ -45,6 +62,13 @@ export function Sidebar(p: Props) {
   const { t, k } = useI18n()
   const [managing, setManaging] = useState(false)
   const [podFilter, setPodFilter] = useState('')
+  const [showBuilds, setShowBuilds] = useState(loadShowBuilds)
+  const toggleBuilds = () => {
+    setShowBuilds((on) => {
+      saveShowBuilds(!on)
+      return !on
+    })
+  }
   const q = podFilter.trim().toLowerCase()
   const active = nav.contexts.find((c) => c.name === nav.activeContext)
   const activeNs = active ? nav.namespaces[active.name] : undefined
@@ -56,7 +80,10 @@ export function Sidebar(p: Props) {
     if (list.length === 0) return <li className="muted node">{t('sidebar.noPods')}</li>
     const shown = q && !namespace.toLowerCase().includes(q) ? list.filter((pod) => pod.name.toLowerCase().includes(q)) : list
     if (shown.length === 0) return <li className="muted node">{t('sidebar.noPodsMatch', { q: podFilter.trim() })}</li>
-    return shown.map((pod) => {
+    // OKD build and deployer pods: hidden by default, one toggle for all namespaces.
+    const extra = shown.filter((pod) => pod.kind !== 'app')
+    const visible = showBuilds ? shown : shown.filter((pod) => pod.kind === 'app')
+    const rows = visible.map((pod) => {
       const selected = selection.context === context && selection.namespace === namespace && selection.pod?.name === pod.name
       const containers = [...pod.containers, ...pod.initContainers]
       return (
@@ -71,6 +98,7 @@ export function Sidebar(p: Props) {
           >
             <span className={`dot ${podDot(pod.status)}`} />
             <span className="node-label mono">{pod.name}</span>
+            {pod.kind !== 'app' && <span className="pill pod-kind">{pod.kind}</span>}
             {pod.restarts > 0 && <span className="node-meta">↻{pod.restarts}</span>}
             {pod.createdAt !== undefined && <span className="node-meta">{formatAge(p.now - pod.createdAt)}</span>}
           </button>
@@ -89,6 +117,15 @@ export function Sidebar(p: Props) {
         </li>
       )
     })
+    if (extra.length === 0) return rows
+    return [
+      ...rows,
+      <li key="__builds">
+        <button className="node build-toggle" aria-pressed={showBuilds} onClick={toggleBuilds} title={t('sidebar.buildsHint')}>
+          <span className="node-label muted">{showBuilds ? t('sidebar.hideBuilds') : t('sidebar.showBuilds', { n: extra.length })}</span>
+        </button>
+      </li>,
+    ]
   }
 
   /** A namespace stays visible when its name or one of its loaded pods matches the search. */

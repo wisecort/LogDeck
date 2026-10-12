@@ -25,6 +25,29 @@ describe('parseNamespaces', () => {
   })
 })
 
+describe('OKD build and deployer pods', () => {
+  const pods = parsePods(PODS)
+  const kind = (name: string) => pods.find((p) => p.name === name)?.kind
+
+  it('marks pods created by a BuildConfig as build (openshift.io/build.name)', () => {
+    expect(kind('portal-web-12-build')).toBe('build')
+  })
+
+  it('marks DeploymentConfig deployer pods as deploy (openshift.io/deployer-pod-for.name)', () => {
+    expect(kind('portal-web-3-deploy')).toBe('deploy')
+  })
+
+  it('everything else is an app pod, including Jobs', () => {
+    expect(kind('portal-web-7d9f8c6b5-x2k4p')).toBe('app')
+    expect(kind('portal-migrate-29341-7xk2m')).toBe('app')
+  })
+
+  it('relies on labels/annotations, not on the name', () => {
+    const [p] = parsePods(JSON.stringify({ items: [{ metadata: { name: 'my-build', namespace: 'n' }, spec: { containers: [{ name: 'c' }] }, status: { phase: 'Running' } }] }))
+    expect(p!.kind).toBe('app')
+  })
+})
+
 describe('parsePods (F2.2, F2.3)', () => {
   const pods = parsePods(PODS)
   const byName = (prefix: string) => pods.find((p) => p.name.startsWith(prefix))!
@@ -41,6 +64,7 @@ describe('parsePods (F2.2, F2.3)', () => {
       containers: ['httpd', 'php-fpm'],
       initContainers: ['fix-permissions'],
       canPrevious: true,
+      kind: 'app',
     })
   })
 

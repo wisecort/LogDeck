@@ -25,6 +25,8 @@ const WRITE_VERBS = [
 
 const ALLOWED_FIXTURE_IP = /^(10\.0\.0\.(25[0-5]|2[0-4]\d|1?\d?\d)|127\.0\.0\.1|0\.0\.0\.0)$/
 const ALLOWED_FIXTURE_HOST = /(^|\.)example\.(internal|com|org|net)$/i
+// Kubernetes/OpenShift API-group prefixes of label/annotation keys (openshift.io/build.name, app.kubernetes.io/name).
+const LABEL_KEY_PREFIX = /^(?:[a-z0-9-]+\.)*(?:kubernetes\.io|k8s\.io|openshift\.io)$/i
 
 /**
  * Line rules. `scope` is a path prefix (relative, posix); `except` lists files
@@ -93,7 +95,8 @@ function scanFixtureLine(rel, line, n) {
     if (!ALLOWED_FIXTURE_IP.test(m[1])) report('G8-fixture-ip', rel, n, `IP fora de 10.0.0.0/24: ${m[1]}`)
   }
   for (const m of line.matchAll(/\b((?:[a-z0-9-]+\.)+(?:com|br|gov|org|net|io|cloud|local))(?![\w-]|\.[a-z0-9])/gi)) {
-    if (!ALLOWED_FIXTURE_HOST.test(m[1])) report('G8-fixture-host', rel, n, `host real: ${m[1]}`)
+    const labelKey = LABEL_KEY_PREFIX.test(m[1]) && line[m.index + m[1].length] === '/'
+    if (!ALLOWED_FIXTURE_HOST.test(m[1]) && !labelKey) report('G8-fixture-host', rel, n, `host real: ${m[1]}`)
   }
 }
 

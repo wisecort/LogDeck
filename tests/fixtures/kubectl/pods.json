@@ -3,25 +3,78 @@
   "kind": "List",
   "items": [
     {
-      "metadata": { "name": "portal-web-7d9f8c6b5-x2k4p", "namespace": "portal-hml", "creationTimestamp": "2026-10-09T03:24:00Z" },
+      "metadata": {
+        "name": "portal-web-7d9f8c6b5-x2k4p",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T03:24:00Z"
+      },
       "spec": {
-        "initContainers": [{ "name": "fix-permissions" }],
-        "containers": [{ "name": "httpd" }, { "name": "php-fpm" }]
+        "initContainers": [
+          {
+            "name": "fix-permissions"
+          }
+        ],
+        "containers": [
+          {
+            "name": "httpd"
+          },
+          {
+            "name": "php-fpm"
+          }
+        ]
       },
       "status": {
         "phase": "Running",
         "initContainerStatuses": [
-          { "name": "fix-permissions", "ready": true, "restartCount": 0, "state": { "terminated": { "reason": "Completed", "exitCode": 0 } } }
+          {
+            "name": "fix-permissions",
+            "ready": true,
+            "restartCount": 0,
+            "state": {
+              "terminated": {
+                "reason": "Completed",
+                "exitCode": 0
+              }
+            }
+          }
         ],
         "containerStatuses": [
-          { "name": "httpd", "ready": true, "restartCount": 0, "state": { "running": { "startedAt": "2026-10-09T03:24:00Z" } } },
-          { "name": "php-fpm", "ready": true, "restartCount": 1, "state": { "running": { "startedAt": "2026-10-09T03:24:00Z" } } }
+          {
+            "name": "httpd",
+            "ready": true,
+            "restartCount": 0,
+            "state": {
+              "running": {
+                "startedAt": "2026-10-09T03:24:00Z"
+              }
+            }
+          },
+          {
+            "name": "php-fpm",
+            "ready": true,
+            "restartCount": 1,
+            "state": {
+              "running": {
+                "startedAt": "2026-10-09T03:24:00Z"
+              }
+            }
+          }
         ]
       }
     },
     {
-      "metadata": { "name": "portal-worker-5c7d9b8f4-q8w2e", "namespace": "portal-hml", "creationTimestamp": "2026-10-09T02:00:00Z" },
-      "spec": { "containers": [{ "name": "worker" }] },
+      "metadata": {
+        "name": "portal-worker-5c7d9b8f4-q8w2e",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T02:00:00Z"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "worker"
+          }
+        ]
+      },
       "status": {
         "phase": "Running",
         "containerStatuses": [
@@ -29,29 +82,152 @@
             "name": "worker",
             "ready": false,
             "restartCount": 14,
-            "state": { "waiting": { "reason": "CrashLoopBackOff", "message": "back-off 5m0s restarting failed container" } },
-            "lastState": { "terminated": { "reason": "Error", "exitCode": 78 } }
+            "state": {
+              "waiting": {
+                "reason": "CrashLoopBackOff",
+                "message": "back-off 5m0s restarting failed container"
+              }
+            },
+            "lastState": {
+              "terminated": {
+                "reason": "Error",
+                "exitCode": 78
+              }
+            }
           }
         ]
       }
     },
     {
-      "metadata": { "name": "portal-migrate-29341-7xk2m", "namespace": "portal-hml", "creationTimestamp": "2026-10-09T01:00:00Z" },
-      "spec": { "containers": [{ "name": "migrate" }] },
+      "metadata": {
+        "name": "portal-migrate-29341-7xk2m",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T01:00:00Z"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "migrate"
+          }
+        ]
+      },
       "status": {
         "phase": "Succeeded",
         "containerStatuses": [
-          { "name": "migrate", "ready": false, "restartCount": 0, "state": { "terminated": { "reason": "Completed", "exitCode": 0 } } }
+          {
+            "name": "migrate",
+            "ready": false,
+            "restartCount": 0,
+            "state": {
+              "terminated": {
+                "reason": "Completed",
+                "exitCode": 0
+              }
+            }
+          }
         ]
       }
     },
     {
-      "metadata": { "name": "portal-cron-pending-abcde", "namespace": "portal-hml", "creationTimestamp": "2026-10-09T03:28:00Z" },
-      "spec": { "containers": [{ "name": "cron" }] },
+      "metadata": {
+        "name": "portal-cron-pending-abcde",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T03:28:00Z"
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "cron"
+          }
+        ]
+      },
       "status": {
         "phase": "Pending",
         "containerStatuses": [
-          { "name": "cron", "ready": false, "restartCount": 0, "state": { "waiting": { "reason": "ImagePullBackOff" } } }
+          {
+            "name": "cron",
+            "ready": false,
+            "restartCount": 0,
+            "state": {
+              "waiting": {
+                "reason": "ImagePullBackOff"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "portal-web-12-build",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T03:10:00Z",
+        "labels": {
+          "openshift.io/build.name": "portal-web-12"
+        },
+        "annotations": {
+          "openshift.io/build.name": "portal-web-12"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "sti-build"
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "git-clone"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Succeeded",
+        "containerStatuses": [
+          {
+            "name": "sti-build",
+            "ready": false,
+            "restartCount": 0,
+            "state": {
+              "terminated": {
+                "reason": "Completed",
+                "exitCode": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "portal-web-3-deploy",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T03:20:00Z",
+        "labels": {
+          "openshift.io/deployer-pod-for.name": "portal-web-3"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "deployment"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Succeeded",
+        "containerStatuses": [
+          {
+            "name": "deployment",
+            "ready": false,
+            "restartCount": 0,
+            "state": {
+              "terminated": {
+                "reason": "Completed",
+                "exitCode": 0
+              }
+            }
+          }
         ]
       }
     }

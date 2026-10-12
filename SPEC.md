@@ -75,6 +75,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 
 - **F2.1** Dado um contexto, quando selecionado, então lista namespaces (`get namespaces -o json`). Se não houver permissão de listar namespaces (comum no OKD), então usa o namespace padrão do contexto e permite digitar um namespace, validado como DNS-1123 label.
 - **F2.2** Dado um namespace, então lista pods (`get pods -o json`) com fase/status efetivo (Running, Pending, CrashLoopBackOff, ImagePullBackOff, Completed...), contagem de restarts e idade. Atualiza a cada 5 s enquanto a tela estiver visível.
+- **F2.2.1** Pods de build (BuildConfig, rótulo/anotação `openshift.io/build.name`) e de deploy (DeploymentConfig, `openshift.io/deployer-pod-for.name`) do OKD são classificados e ficam ocultos por padrão; uma linha "+ N builds/deploys do OKD" no namespace mostra todos, com marca `build`/`deploy`. A escolha vale para todos os namespaces e fica salva.
 - **F2.3** Dado um pod com mais de um container (inclui init containers), quando selecionado, então o app pede a escolha do container antes de abrir o log. Pod com um container abre direto.
 - **F2.4** Nomes recebidos do cluster são validados antes de reutilizados em argumentos: namespace e container como DNS-1123 label, pod como DNS-1123 subdomain. Nome inválido é descartado e registrado como aviso.
 

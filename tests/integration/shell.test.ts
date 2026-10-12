@@ -9,7 +9,10 @@ const TARGET: PodTarget = { context: HML, knownContexts: [HML], namespace: 'port
 const shells: PodShell[] = []
 afterEach(() => shells.splice(0).forEach((s) => s.close()))
 
-async function waitFor(cond: () => boolean, timeoutMs = 5000) {
+// ConPTY on the Windows CI runners is slow to start: give the PTY more time there.
+const PTY_TIMEOUT_MS = process.platform === 'win32' ? 15_000 : 5000
+
+async function waitFor(cond: () => boolean, timeoutMs = PTY_TIMEOUT_MS) {
   const t0 = Date.now()
   while (!cond()) {
     if (Date.now() - t0 > timeoutMs) throw new Error('waitFor timed out')
