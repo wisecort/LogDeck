@@ -50,3 +50,5 @@ jobs:
           # gitleaks is required on macOS; Linux/Windows warn and skip (same history, scanned once).
           HARNESS_REQUIRE_GITLEAKS: ${{ runner.os == 'macOS' && '1' || '0' }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          # ad-hoc signing (no secrets): sign in pull requests too, so CI checks what the release ships
+          CSC_FOR_PULL_REQUEST: 'true'

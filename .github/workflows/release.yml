@@ -45,6 +45,8 @@ jobs:
       - run: npm run ${{ matrix.script }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          # ad-hoc signing (no secrets): sign in pull requests too, so CI checks what the release ships
+          CSC_FOR_PULL_REQUEST: 'true'
 
       - name: Checksums
         run: |
