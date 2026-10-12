@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseResponse, writeCommands } from '../../src/ai/response'
+import { extractConfidence, parseResponse, writeCommands } from '../../src/ai/response'
 
 const ANSWER = [
   '## Causa provável',
@@ -47,5 +47,17 @@ describe('writeCommands (F7.5)', () => {
 
   it('does not flag read-only commands', () => {
     expect(writeCommands('kubectl get pods\nkubectl describe pod x\noc logs x --previous\nkubectl auth can-i list pods')).toEqual([])
+  })
+})
+
+describe('extractConfidence', () => {
+  it('reads the AI self-estimate when present', () => {
+    expect(extractConfidence('## Confiança\nEstimativa: 85% — evidência direta no log')).toBe(85)
+    expect(extractConfidence('Confiança estimada: 7 %')).toBe(7)
+  })
+
+  it('ignores missing or out-of-range values', () => {
+    expect(extractConfidence('sem estimativa')).toBeUndefined()
+    expect(extractConfidence('Confiança: 140%')).toBeUndefined()
   })
 })

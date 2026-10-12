@@ -57,6 +57,20 @@ describe('LogEngine', () => {
     expect(rows).toHaveLength(6)
   })
 
+  it('filters by a time range (histogram selection)', () => {
+    const e = loaded()
+    const from = Date.parse('2026-10-09T03:26:30Z')
+    const to = Date.parse('2026-10-09T03:27:30Z')
+    const rows = e.view({ levels: ALL, timeRange: [from, to], collapse: false })
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.length).toBeLessThan(e.size)
+    for (const r of rows) {
+      const t = r.entry.k8sTime ?? r.entry.logTime!
+      expect(t).toBeGreaterThanOrEqual(from)
+      expect(t).toBeLessThanOrEqual(to)
+    }
+  })
+
   it('collapses repeated lines when asked (P3)', () => {
     const e = loaded()
     const collapsed = e.view({ levels: ALL, collapse: true })

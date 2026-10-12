@@ -1,4 +1,4 @@
-import { displayTime } from './classify'
+import { timelineTime } from './classify'
 import { entryText } from './search'
 import type { LogEntry } from './types'
 
@@ -84,8 +84,7 @@ export class SignatureIndex {
     const match = matchSignature(entry)
     if (!match) return
     const key = match.id === 'generic' ? `generic:${normalizeMessage(entry.message)}` : match.id
-    // One clock for every group: kubectl's --timestamps when present (logs may lack a time zone).
-    const time = entry.k8sTime ?? displayTime(entry).time
+    const time = timelineTime(entry)
     let group = this.byKey.get(key)
     if (!group) {
       group = { ...match, key, count: 0, sample: entry.raw, seqs: [] }

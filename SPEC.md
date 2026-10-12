@@ -55,6 +55,7 @@ Toda dependência é justificada no PR (G9).
 ```
 
 - Renderer com `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true` e CSP restritiva. O preload expõe só uma API estreita e tipada (`listContexts`, `listNamespaces`, `listPods`, `startStream`, `stopStream`, `openShell`, `explain`...). O renderer **nunca** monta argumentos do kubectl.
+- Linhas de tempo (histograma, filtro de intervalo, grupos do F6) usam `timelineTime` = horário do kubectl ou, na falta, o do log.
 - `src/logs/` é TypeScript puro, sem Electron nem DOM, testável em Node. Roda na thread da UI: cada lote (~200 linhas a 2.000 l/s) custa poucos ms e o filtro só é recalculado quando muda (busca em 50k ≤ 100 ms). A única operação que pode travar, a regex do usuário, roda num Blob Worker descartável. Decisão revisada na fase 6 (o rascunho previa todo o núcleo num Web Worker).
 - Regex do usuário roda num worker descartável com orçamento de tempo (ver F5 / RNF4).
 
@@ -140,6 +141,17 @@ Implementado só depois de F1–F6 verdes no harness. Nenhum teste automático c
 - **F7.5** Resposta em português, com seções fixas: **Causa provável**, **Evidência** (linhas citadas), **Próximos passos** (somente comandos `kubectl`/`oc` de leitura: `get`, `describe`, `logs`, `events`, `top`, `auth can-i`). A resposta é exibida como texto (sem HTML). Comandos de escrita sugeridos pela IA são exibidos com aviso e sem botão de copiar.
 - **F7.6** Se a resposta trouxer alteração de código/YAML, ela aparece como **diff para revisão**. "Aplicar" exige clique, só grava num arquivo local escolhido pelo usuário via diálogo de salvar e **nunca** aplica no cluster.
 - **F7.7** Testes sem IA real: `claude` fake e `security` fake em `tests/bin/` (o `claude` registra argv e stdin e falha se faltar `--tools ""` ou `--no-session-persistence`), servidor HTTP fake em `127.0.0.1` nos formatos Chat Completions e Messages da Anthropic (inclui 401, timeout, recusa e tentativa de injeção). Teste manual com os provedores reais, fora do CI, autorizado em 12/10/2026 (texto fictício do fixture).
+
+### Interface (fase 6.5, referência: vídeo de divulgação do Logui)
+
+- **Barra lateral em árvore:** contexto → namespace → pod → container com bolinha de status, contextos de produção marcados, namespaces **favoritos**, **linhas marcadas** da sessão e **shells** abertos; rodapé com IA, atalhos (`?`) e **tema** (Escuro, Meia-noite, Claro, Sistema, Solarizado, Alto contraste).
+- **Barra de cima:** busca com contador e `Aa`/`.*` embutidos, Excluir, Presets (popover), Tempo (tail/desde/`--previous`) e "Limpar filtros".
+- **Barra de níveis:** pílula Todos e ações (volume, colapsar, quebrar linhas, exportar, topo, fim, limpar, shell); pílula **Seguindo/Pausado**, que pausa sozinha ao rolar para cima ou selecionar uma linha.
+- **Histograma de volume** empilhado por nível; arrastar filtra um intervalo. Usa o relógio do kubectl, como o painel F6.
+- **Linhas em uma linha só** (quebra opcional); selecionar abre a aba **Detalhes** (horários, campos, JSON, stack trace, Copiar, Marcar, Perguntar à IA).
+- **Painel direito com abas** Erros / Detalhes / IA. A IA aceita **pergunta livre** e **perguntas de acompanhamento**, com contexto = linha selecionada (±10 linhas), grupos marcados ou linhas visíveis no filtro; o preview com destino continua obrigatório. A "Estimativa da IA" (confiança) é exibida com aviso de que pode estar errada.
+- **Barra de status:** estado, contexto › namespace › pod › container, linhas exibidas/total, descartadas e provedor de IA.
+- Não adotados: aplicar mudança direto no código, IA lendo o repositório, merge de fontes e alertas (backlog).
 
 ## 4. Problemas reais (casos de teste)
 

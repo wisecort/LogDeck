@@ -10,3 +10,7 @@ test-results/
 .env*
 .DS_Store
 .vite/
+
+# Material de referência local (não versionar)
+output_progressive_*.mp4
+videoframe_*.png

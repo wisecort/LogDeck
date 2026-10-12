@@ -68,6 +68,32 @@ describe('ExplainService (F7.1–F7.5, G6)', () => {
     await expect(svc.explain('nope')).rejects.toThrow(/expirado ou já enviado/)
   })
 
+  it('sends the user question with the previewed logs and keeps a conversation for follow-ups', async () => {
+    const { provider, calls } = recordingProvider('## Causa provável\nresposta')
+    const svc = new ExplainService({ provider: async () => provider })
+    const p = await svc.preview(GROUPS, { question: `isso é o pm.max_children? ${PW}` })
+    expect(p.question).toBe('isso é o pm.max_children? password=[REDACTED:PASSWORD]')
+    const first = await svc.explain(p.id)
+    expect(first.conversationId).toMatch(/^[0-9a-f-]{36}$/)
+    expect(calls[0]!.user).toContain('Pergunta do usuário: isso é o pm.max_children?')
+    expect(calls[0]!.user).not.toContain('hunter2')
+
+    const follow = await svc.followUp(first.conversationId, 'e como confirmo?')
+    expect(follow.text).toContain('resposta')
+    expect(calls[1]!.user).toContain(`<logs>\n${p.text}\n</logs>`)
+    expect(calls[1]!.user).toContain('Assistente: ## Causa provável')
+    expect(calls[1]!.user.trimEnd().endsWith('Nova pergunta do usuário: e como confirmo?')).toBe(true)
+    await expect(svc.followUp('nope', 'x')).rejects.toThrow(/conversa/i)
+    await expect(svc.followUp(first.conversationId, '   ')).rejects.toThrow(/pergunta/i)
+  })
+
+  it('returns the AI confidence estimate when the answer has one', async () => {
+    const { provider } = recordingProvider('## Causa provável\nx\n## Confiança\nEstimativa: 80%')
+    const svc = new ExplainService({ provider: async () => provider })
+    const r = await svc.explain((await svc.preview(GROUPS, {})).id)
+    expect(r.confidence).toBe(80)
+  })
+
   it('expires previews', async () => {
     let now = 0
     const { provider } = recordingProvider()

@@ -1,181 +1,145 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from '../logs/search'
 import { LEVELS, type Level } from '../logs/types'
-import type { ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
 import type { ExplainGroupInput } from '../shared/ai'
+import type { AiStatus } from '../shared/ai-settings'
+import type { PodInfo } from '../shared/ipc'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
+import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
-import { ErrorsPanel } from './components/ErrorsPanel'
-import { ExplainModal } from './components/ExplainModal'
-import { LevelFilter } from './components/LevelFilter'
-import { LogList } from './components/LogList'
+import { LevelBar } from './components/LevelBar'
+import { LogList, type ScrollCommand } from './components/LogList'
 import { ProdBanner } from './components/ProdBanner'
-import { SearchBar, type SearchState } from './components/SearchBar'
+import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
-import { Sidebar } from './components/Sidebar'
-import { Toolbar, type LogOptions } from './components/Toolbar'
+import { ShortcutsModal } from './components/ShortcutsModal'
+import { Sidebar, type Selection } from './components/Sidebar'
+import { StatusBar } from './components/StatusBar'
+import { TopBar, type LogOptions, type SearchState } from './components/TopBar'
+import { VolumeChart } from './components/VolumeChart'
 import { parseTerms } from './format'
 import { browserRegexRunner } from './regex-runner'
+import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogSession } from './useLogSession'
+import { useNavigation } from './useNavigation'
 
 const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
+const AROUND_RADIUS = 10
+const MAX_AI_LINES = 200
+const EMPTY_SEARCH: SearchState = { text: '', regex: false, caseSensitive: false, exclude: '' }
 
 export function App() {
-  const [contexts, setContexts] = useState<ContextInfo[]>([])
-  const [context, setContext] = useState<string>()
-  const [namespaces, setNamespaces] = useState<NamespaceList>()
-  const [namespace, setNamespace] = useState<string>()
-  const [pods, setPods] = useState<PodInfo[]>([])
-  const [podsLoading, setPodsLoading] = useState(false)
-  const [pod, setPod] = useState<PodInfo>()
-  const [container, setContainer] = useState<string>()
-  const [options, setOptions] = useState<LogOptions>({ tail: 1000, since: '', previous: false })
   const [notice, setNotice] = useState<string>()
+  const onError = useCallback((m: string) => setNotice(m), [])
+  const nav = useNavigation(onError)
+  const [selection, setSelection] = useState<Selection>({})
+  const [options, setOptions] = useState<LogOptions>({ tail: 1000, since: '', previous: false })
   const [now, setNow] = useState(() => Date.now())
-
   const [levels, setLevels] = useState<ReadonlySet<Level>>(new Set(LEVELS))
-  const [search, setSearch] = useState<SearchState>({ text: '', regex: false, caseSensitive: false, exclude: '' })
+  const [search, setSearch] = useState<SearchState>(EMPTY_SEARCH)
   const [presets, setPresets] = useState<NamespacePresets>()
   const [collapse, setCollapse] = useState(true)
+  const [wrap, setWrap] = useState(false)
+  const [showVolume, setShowVolume] = useState(true)
+  const [timeRange, setTimeRange] = useState<readonly [number, number]>()
   const [groupKey, setGroupKey] = useState<string>()
   const [selectedGroups, setSelectedGroups] = useState<ReadonlySet<string>>(new Set())
-  // Version shown while paused; undefined = live.
   const [frozen, setFrozen] = useState<number>()
   const paused = frozen !== undefined
   const [regexMatches, setRegexMatches] = useState<ReadonlySet<number>>()
   const [regexError, setRegexError] = useState<string>()
   const [cursor, setCursor] = useState<number>()
-  const [shell, setShell] = useState<ShellTarget>()
+  const [selectedSeq, setSelectedSeq] = useState<number>()
+  const [bookmarks, setBookmarks] = useState<ReadonlySet<number>>(new Set())
+  const [command, setCommand] = useState<{ cmd: ScrollCommand; nonce: number }>()
+  const [tab, setTab] = useState<PanelTab>('erros')
+  const [aiMode, setAiMode] = useState<AiContextMode>('grupos')
+  const [aiStatus, setAiStatus] = useState<AiStatus>()
   const [aiPrefs, setAiPrefs] = useState(false)
-  const [explaining, setExplaining] = useState<{ groups: ExplainGroupInput[]; mask: boolean }>()
+  const [shortcuts, setShortcuts] = useState(false)
+  const [shell, setShell] = useState<ShellTarget>()
+  const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const session = useLogSession()
   const { engine, version, status } = session
-  const selectedContext = contexts.find((c) => c.name === context)
+  const selectedContext = nav.contexts.find((c) => c.name === selection.context)
+  const scroll = (cmd: ScrollCommand) => setCommand({ cmd, nonce: Date.now() })
 
-  // F1: contexts and kubectl presence.
+  useEffect(() => applyTheme(theme), [theme])
+
   useEffect(() => {
     void (async () => {
       const v = await window.logdeck.kubectlVersion()
-      if (!v.installed) {
-        setNotice(v.message)
-        return
-      }
+      if (!v.installed) return setNotice(v.message)
       try {
         const list = await window.logdeck.listContexts()
-        setContexts(list)
+        nav.setContexts(list)
         if (list.length === 0) setNotice('Nenhum contexto no kubeconfig (arquivo padrão do kubectl ou variável KUBECONFIG).')
       } catch (err) {
         setNotice((err as Error).message)
       }
     })()
-  }, [])
+    void window.logdeck.aiStatus().then(setAiStatus)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selectContext = async (name: string) => {
-    await session.stop()
-    setShell(undefined)
-    setContext(name)
-    setNamespace(undefined)
-    setPods([])
-    setPod(undefined)
-    setContainer(undefined)
-    setNotice(undefined)
-    try {
-      const ns = await window.logdeck.listNamespaces(name)
-      setNamespaces(ns)
-      if (!ns.canList && ns.defaultNamespace) void selectNamespace(name, ns.defaultNamespace)
-    } catch (err) {
-      setNotice((err as Error).message)
-    }
-  }
-
-  const loadPods = useCallback(async (ctx: string, ns: string) => {
-    setPodsLoading(true)
-    try {
-      setPods(await window.logdeck.listPods(ctx, ns))
-      setNow(Date.now())
-    } catch (err) {
-      setNotice((err as Error).message)
-    } finally {
-      setPodsLoading(false)
-    }
-  }, [])
-
-  const selectNamespace = async (ctx: string, ns: string) => {
-    await session.stop()
-    setNamespace(ns)
-    setPod(undefined)
-    setContainer(undefined)
-    setGroupKey(undefined)
-    setPresets(await window.logdeck.getPresets(presetKey(ctx, ns)))
-    await loadPods(ctx, ns)
-  }
-
-  // F2.2: refresh pod status every 5 s while a namespace is open.
   useEffect(() => {
+    const { context, namespace } = selection
     if (!context || !namespace) return
     const t = setInterval(() => {
-      if (!document.hidden) void loadPods(context, namespace)
+      if (!document.hidden) void nav.loadPods(context, namespace).then(() => setNow(Date.now()))
     }, POD_REFRESH_MS)
     return () => clearInterval(t)
-  }, [context, namespace, loadPods])
+  }, [selection.context, selection.namespace]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const openLogs = useCallback(
-    (p: PodInfo, c: string, o: LogOptions) => {
-      if (!context || !namespace) return
-      setFrozen(undefined)
-      setGroupKey(undefined)
-      setSelectedGroups(new Set())
-      void session.start({
-        context,
-        namespace,
-        pod: p.name,
-        container: c,
-        tail: o.tail,
-        ...(o.since && { since: o.since }),
-        ...(o.previous && { previous: true }),
-      })
-    },
-    [context, namespace, session],
-  )
+  const resetView = () => {
+    setFrozen(undefined)
+    setGroupKey(undefined)
+    setSelectedGroups(new Set())
+    setSelectedSeq(undefined)
+    setBookmarks(new Set())
+    setTimeRange(undefined)
+    setCursor(undefined)
+  }
 
-  // F2.3: single-container pods open directly; others wait for a choice.
-  const selectPod = (p: PodInfo) => {
-    setPod(p)
+  const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions) => {
+    resetView()
+    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) })
+  }
+
+  const selectPod = async (context: string, namespace: string, pod: PodInfo) => {
     setShell(undefined)
-    const opts = { ...options, previous: options.previous && p.canPrevious }
+    if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
+    const opts = { ...options, previous: options.previous && pod.canPrevious }
     setOptions(opts)
-    if (p.containers.length === 1 && p.initContainers.length === 0) {
-      setContainer(p.containers[0])
-      openLogs(p, p.containers[0]!, opts)
+    if (pod.containers.length === 1 && pod.initContainers.length === 0) {
+      setSelection({ context, namespace, pod, container: pod.containers[0]! })
+      openLogs(context, namespace, pod, pod.containers[0]!, opts)
     } else {
-      setContainer(undefined)
+      setSelection({ context, namespace, pod })
       void session.stop()
     }
   }
 
   const selectContainer = (c: string) => {
-    setContainer(c)
-    if (pod) openLogs(pod, c, options)
+    const { context, namespace, pod } = selection
+    if (!context || !namespace || !pod) return
+    setSelection({ ...selection, container: c })
+    openLogs(context, namespace, pod, c, options)
   }
 
-  const changeOptions = (o: LogOptions) => {
-    setOptions(o)
-    if (pod && container) openLogs(pod, container, o)
+  const reopen = (o: LogOptions = options) => {
+    const { context, namespace, pod, container } = selection
+    if (context && namespace && pod && container) openLogs(context, namespace, pod, container, o)
   }
 
   const savePresets = async (p: NamespacePresets) => {
-    if (!context || !namespace) return
-    setPresets(await window.logdeck.setPresets(presetKey(context, namespace), p))
+    if (!selection.context || !selection.namespace) return
+    setPresets(await window.logdeck.setPresets(presetKey(selection.context, selection.namespace), p))
   }
 
-  // F5: plain-text search compiled on the UI thread; regex goes to a worker with a time budget.
-  const excludeTerms = useMemo(
-    () => [...parseTerms(search.exclude), ...(presets ? activeTerms(presets) : [])],
-    [search.exclude, presets],
-  )
+  const excludeTerms = useMemo(() => [...parseTerms(search.exclude), ...(presets ? activeTerms(presets) : [])], [search.exclude, presets])
   const compiled = useMemo((): CompiledSearch | undefined => {
     const c = compileSearch({ text: search.regex ? '' : search.text, caseSensitive: search.caseSensitive, exclude: excludeTerms })
     return c.ok ? c : undefined
@@ -191,11 +155,7 @@ export function App() {
     if (!regexActive) return
     const t = setTimeout(() => {
       const entries = engine.entries()
-      void searchWithTimeout(
-        entries.map(entryText),
-        { text: search.text, mode: 'regex', caseSensitive: search.caseSensitive },
-        { runner: browserRegexRunner, timeoutMs: 250 },
-      ).then((r) => {
+      void searchWithTimeout(entries.map(entryText), { text: search.text, mode: 'regex', caseSensitive: search.caseSensitive }, { runner: browserRegexRunner, timeoutMs: 250 }).then((r) => {
         if (r.status === 'ok') {
           setRegexError(undefined)
           setRegexMatches(new Set(r.matches.map((i) => entries[i]!.seq)))
@@ -214,37 +174,35 @@ export function App() {
     return g ? new Set(g.seqs) : undefined
   }, [groups, groupKey])
 
-  // Paused: keep showing the last rows while the buffer keeps filling.
   const viewVersion = frozen ?? version
-  const effectiveRegex = regexActive ? (regexMatches ?? new Set<number>()) : undefined
+  const effectiveRegex = useMemo(() => (regexActive ? (regexMatches ?? new Set<number>()) : undefined), [regexActive, regexMatches])
+  const baseFilter = useMemo(
+    () => ({ levels, ...(compiled && { search: compiled }), ...(effectiveRegex && { regexMatches: effectiveRegex }), ...(groupSeqs && { groupSeqs }) }),
+    [levels, compiled, effectiveRegex, groupSeqs],
+  )
+  const histogramEntries = useMemo(
+    () => (showVolume ? engine.view({ ...baseFilter, collapse: false }).map((r) => r.entry) : []),
+    [engine, viewVersion, baseFilter, showVolume], // eslint-disable-line react-hooks/exhaustive-deps
+  )
   const rows = useMemo(
-    () =>
-      engine.view({
-        levels,
-        ...(compiled && { search: compiled }),
-        ...(effectiveRegex && { regexMatches: effectiveRegex }),
-        ...(groupSeqs && { groupSeqs }),
-        collapse,
-      }),
-    [engine, viewVersion, levels, compiled, effectiveRegex, groupSeqs, collapse], // eslint-disable-line react-hooks/exhaustive-deps
+    () => engine.view({ ...baseFilter, ...(timeRange && { timeRange }), collapse }),
+    [engine, viewVersion, baseFilter, timeRange, collapse], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const counts = useMemo(() => engine.counts, [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
+  const entriesBySeq = useMemo(() => new Map(engine.entries().map((e) => [e.seq, e])), [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
+  const selectedEntry = selectedSeq !== undefined ? entriesBySeq.get(selectedSeq) : undefined
+  const bookmarkedEntries = [...bookmarks].flatMap((s) => {
+    const e = entriesBySeq.get(s)
+    return e ? [e] : []
+  })
 
-  // F7.1: selected groups with the lines still in the buffer (oldest first).
-  const openExplain = async () => {
-    const bySeq = new Map(engine.entries().map((e) => [e.seq, e]))
-    const input = groups
-      .filter((g) => selectedGroups.has(g.key))
-      .map((g) => ({
-        title: g.title,
-        count: g.count,
-        lines: g.seqs.flatMap((seq) => {
-          const e = bySeq.get(seq)
-          return e ? [entryText(e)] : []
-        }),
-      }))
-    const { settings } = await window.logdeck.aiStatus()
-    setExplaining({ groups: input, mask: settings.maskInternalIps })
+  const filtersActive = levels.size !== LEVELS.length || search.text !== '' || search.exclude !== '' || !!timeRange || !!groupKey
+  const clearFilters = () => {
+    setLevels(new Set(LEVELS))
+    setSearch(EMPTY_SEARCH)
+    setTimeRange(undefined)
+    setGroupKey(undefined)
+    setCursor(undefined)
   }
 
   const toggleLevel = (l: Level, solo: boolean) => {
@@ -255,32 +213,76 @@ export function App() {
     setLevels(next)
   }
 
-  // ⌘F focuses search; ⌘G / ⇧⌘G walk through the matching rows.
+  const pause = () => setFrozen((f) => f ?? version)
+  const resume = () => {
+    setFrozen(undefined)
+    scroll({ kind: 'bottom' })
+  }
+  const selectEntry = (seq: number) => {
+    setSelectedSeq(seq)
+    pause()
+    setTab('detalhes')
+  }
+  const toggleBookmark = (seq: number) =>
+    setBookmarks((prev) => {
+      const next = new Set(prev)
+      if (next.has(seq)) next.delete(seq)
+      else next.add(seq)
+      return next
+    })
+
+  const exportRows = () => {
+    const text = engine
+      .view({ ...baseFilter, ...(timeRange && { timeRange }), collapse: false })
+      .map((r) => entryText(r.entry))
+      .join('\n')
+    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? 'log'}.log`)
+  }
+
+  const buildContext = (mode: AiContextMode): ExplainGroupInput[] => {
+    if (mode === 'linha' && selectedSeq !== undefined) return [aroundEntry(engine.entries(), selectedSeq, AROUND_RADIUS)]
+    if (mode === 'visiveis') return [visibleLines(rows.map((r) => r.entry), MAX_AI_LINES)]
+    return groups
+      .filter((g) => selectedGroups.has(g.key))
+      .map((g) => ({
+        title: g.title,
+        count: g.count,
+        lines: g.seqs.flatMap((seq) => {
+          const e = entriesBySeq.get(seq)
+          return e ? [entryText(e)] : []
+        }),
+      }))
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!e.metaKey) return
-      if (e.key === 'f') {
+      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement
+      if (e.metaKey && e.key === 'f') {
         e.preventDefault()
         searchRef.current?.focus()
         searchRef.current?.select()
-      } else if (e.key === 'g' && rows.length > 0) {
+      } else if (e.metaKey && e.key === 'g' && rows.length > 0) {
         e.preventDefault()
-        setCursor((c) => {
-          if (c === undefined) return e.shiftKey ? rows.length - 1 : 0
-          return (c + (e.shiftKey ? rows.length - 1 : 1)) % rows.length
-        })
+        setFrozen((f) => f ?? version)
+        setCursor((c) => (c === undefined ? (e.shiftKey ? rows.length - 1 : 0) : (c + (e.shiftKey ? rows.length - 1 : 1)) % rows.length))
+      } else if (e.key === 'Escape') {
+        setSelectedSeq(undefined)
+        setShortcuts(false)
+      } else if (e.key === '?' && !typing) {
+        setShortcuts(true)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [rows.length])
+  }, [rows.length, version])
 
+  const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
     <div className="app">
       {selectedContext?.production && <ProdBanner context={selectedContext.name} />}
       {notice && (
         <div className="notice" role="status">
-          {notice}
+          <span className="spacer">{notice}</span>
           <button className="link" onClick={() => setNotice(undefined)}>
             ×
           </button>
@@ -288,69 +290,130 @@ export function App() {
       )}
       <div className="layout">
         <Sidebar
-          contexts={contexts}
-          {...(context && { context })}
-          onContext={(n) => void selectContext(n)}
-          {...(namespaces && { namespaces })}
-          {...(namespace && { namespace })}
-          onNamespace={(n) => context && void selectNamespace(context, n)}
-          pods={pods}
-          podsLoading={podsLoading}
-          {...(pod && { pod })}
-          onPod={selectPod}
-          {...(container && { container })}
+          nav={nav}
+          selection={selection}
+          onPod={(c, n, p) => void selectPod(c, n, p)}
           onContainer={selectContainer}
+          bookmarks={bookmarkedEntries}
+          onBookmark={(seq) => {
+            selectEntry(seq)
+            scroll({ kind: 'seq', seq })
+          }}
+          shellOpen={!!shell}
+          onCloseShell={() => setShell(undefined)}
           now={now}
+          theme={theme}
+          onTheme={setTheme}
+          onAiPreferences={() => setAiPrefs(true)}
+          onShortcuts={() => setShortcuts(true)}
         />
         <main className="main">
-          <Toolbar
-            {...(status && { status })}
-            paused={paused}
-            onPause={() => setFrozen((f) => (f === undefined ? version : undefined))}
-            options={options}
-            onOptions={changeOptions}
-            canPrevious={pod?.canPrevious ?? false}
-            onReconnect={() => pod && container && openLogs(pod, container, options)}
-            dropped={engine.dropped}
-            canShell={Boolean(pod && container && !pod.initContainers.includes(container))}
-            onShell={() => context && namespace && pod && container && setShell({ context, namespace, pod: pod.name, container })}
-            onAiPreferences={() => setAiPrefs(true)}
-          />
-          <LevelFilter counts={counts} levels={levels} onToggle={toggleLevel} />
-          <SearchBar
-            value={search}
-            onChange={(v) => {
-              setSearch(v)
+          <TopBar
+            search={search}
+            onSearch={(s) => {
+              setSearch(s)
               setCursor(undefined)
             }}
             inputRef={searchRef}
-            {...(regexActive && regexError && { error: regexError })}
             matchCount={rows.length}
-            total={engine.size}
+            {...(regexActive && regexError && { error: regexError })}
+            options={options}
+            onOptions={(o) => {
+              setOptions(o)
+              reopen(o)
+            }}
+            canPrevious={selection.pod?.canPrevious ?? false}
+            canReconnect={!!selection.container}
+            onReconnect={() => reopen()}
             {...(presets && { presets })}
             onPresets={(p) => void savePresets(p)}
-            collapse={collapse}
-            onCollapse={setCollapse}
+            {...(timeRange && { timeRange })}
+            onClearTimeRange={() => setTimeRange(undefined)}
+            filtersActive={filtersActive}
+            onClearFilters={clearFilters}
           />
-          <LogList rows={rows} {...(highlightSearch && { search: highlightSearch })} {...(cursor !== undefined && { cursor })} />
+          <LevelBar
+            counts={counts}
+            levels={levels}
+            onToggle={toggleLevel}
+            onAll={() => setLevels(new Set(LEVELS))}
+            showVolume={showVolume}
+            onVolume={() => setShowVolume((v) => !v)}
+            collapse={collapse}
+            onCollapse={() => setCollapse((c) => !c)}
+            wrap={wrap}
+            onWrap={() => setWrap((w) => !w)}
+            onExport={exportRows}
+            onTop={() => {
+              pause()
+              scroll({ kind: 'top' })
+            }}
+            onBottom={resume}
+            onClear={() => {
+              engine.clear()
+              resetView()
+            }}
+            canShell={Boolean(selection.pod && selection.container && !selection.pod.initContainers.includes(selection.container))}
+            onShell={() => {
+              const { context, namespace, pod, container } = selection
+              if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
+            }}
+            paused={paused}
+            pending={0}
+            live={live}
+            onFollow={() => (paused ? resume() : pause())}
+          />
+          {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
+          <LogList
+            rows={rows}
+            {...(highlightSearch && { search: highlightSearch })}
+            {...(cursor !== undefined && { cursor })}
+            {...(selectedSeq !== undefined && { selectedSeq })}
+            bookmarks={bookmarks}
+            wrap={wrap}
+            paused={paused}
+            {...(command && { command })}
+            onSelect={selectEntry}
+            onBookmark={toggleBookmark}
+            onUserScrollUp={pause}
+            onResume={resume}
+          />
           {shell && <ShellPanel target={shell} onClose={() => setShell(undefined)} />}
         </main>
-        <ErrorsPanel
+        <RightPanel
+          tab={tab}
+          onTab={setTab}
           groups={groups}
-          {...(groupKey && { activeKey: groupKey })}
-          onSelect={setGroupKey}
-          selected={selectedGroups}
-          onToggleSelected={(k) => {
+          {...(groupKey && { activeGroup: groupKey })}
+          onGroup={setGroupKey}
+          selectedGroups={selectedGroups}
+          onToggleGroup={(k) => {
             const next = new Set(selectedGroups)
             if (next.has(k)) next.delete(k)
             else next.add(k)
             setSelectedGroups(next)
           }}
-          onExplain={() => void openExplain()}
+          {...(selectedEntry && { entry: selectedEntry })}
+          bookmarked={selectedSeq !== undefined && bookmarks.has(selectedSeq)}
+          onBookmark={toggleBookmark}
+          visibleCount={rows.length}
+          {...(aiStatus && { aiStatus })}
+          aiMode={aiMode}
+          onAiMode={setAiMode}
+          buildContext={buildContext}
+          onAiPreferences={() => setAiPrefs(true)}
         />
       </div>
-      {aiPrefs && <AiPreferences onClose={() => setAiPrefs(false)} />}
-      {explaining && <ExplainModal groups={explaining.groups} maskDefault={explaining.mask} onClose={() => setExplaining(undefined)} />}
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(aiStatus)} />
+      {aiPrefs && (
+        <AiPreferences
+          onClose={() => {
+            setAiPrefs(false)
+            void window.logdeck.aiStatus().then(setAiStatus)
+          }}
+        />
+      )}
+      {shortcuts && <ShortcutsModal onClose={() => setShortcuts(false)} />}
     </div>
   )
 }

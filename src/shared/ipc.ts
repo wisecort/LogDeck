@@ -25,7 +25,8 @@ export const IPC = {
   aiTest: 'ai:test',
   aiPreview: 'ai:preview',
   aiExplain: 'ai:explain',
-  aiSave: 'ai:save',
+  aiFollowUp: 'ai:follow-up',
+  saveText: 'file:save-text',
 } as const
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }

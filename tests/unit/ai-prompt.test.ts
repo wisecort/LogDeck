@@ -64,3 +64,26 @@ describe('buildUserMessage', () => {
     expect(msg.trimEnd().endsWith('</logs>')).toBe(true)
   })
 })
+
+describe('buildUserMessage with question and history (block B)', () => {
+  it('puts the user question outside the <logs> block', () => {
+    const msg = buildUserMessage('a log line', { question: 'por que começou às 3h?' })
+    expect(msg).toContain('Pergunta do usuário: por que começou às 3h?')
+    expect(msg.indexOf('Pergunta do usuário')).toBeGreaterThan(msg.indexOf('</logs>'))
+  })
+
+  it('replays the previous turns before a follow-up question', () => {
+    const msg = buildUserMessage('a log line', {
+      history: [{ question: 'q1', answer: 'a1' }],
+      question: 'q2',
+    })
+    expect(msg).toContain('Conversa anterior:')
+    expect(msg).toContain('Usuário: q1')
+    expect(msg).toContain('Assistente: a1')
+    expect(msg.trimEnd().endsWith('Nova pergunta do usuário: q2')).toBe(true)
+  })
+
+  it('keeps the default request when there is no question', () => {
+    expect(buildUserMessage('x')).toContain('Explique os erros abaixo')
+  })
+})

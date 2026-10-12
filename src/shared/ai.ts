@@ -15,6 +15,8 @@ export interface ExplainGroupInput {
 
 export interface PreviewResult {
   id: string
+  /** The user's question after masking, if any. */
+  question?: string
   text: string
   lines: number
   bytes: number
@@ -25,9 +27,13 @@ export interface PreviewResult {
 }
 
 export interface ExplainResult {
+  /** Use with followUp(). */
+  conversationId: string
   text: string
   blocks: ResponseBlock[]
   writeCommands: string[]
+  /** AI self-estimate (0–100); shown as "Estimativa da IA". */
+  confidence?: number
 }
 
 export type KeyServiceName = 'logdeck-anthropic-api' | 'logdeck-openai-compatible-api'

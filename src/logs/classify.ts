@@ -106,3 +106,11 @@ export function displayTime(entry: Pick<LogEntry, 'k8sTime' | 'logTime' | 'inges
   if (entry.k8sTime !== undefined) return { time: entry.k8sTime, source: 'k8s', divergent: false }
   return { time: undefined, source: 'none', divergent: false }
 }
+
+/**
+ * One clock for timelines (histogram, time-range filter, error groups): kubectl's --timestamps
+ * when present, because log times may lack a time zone (Laravel in UTC-3, P2).
+ */
+export function timelineTime(entry: Pick<LogEntry, 'k8sTime' | 'logTime'>): number | undefined {
+  return entry.k8sTime ?? entry.logTime
+}

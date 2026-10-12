@@ -42,11 +42,13 @@ export interface LogDeckApi {
   deleteAiKey(service: KeyServiceName): Promise<AiStatus>
   testAi(): Promise<string>
   /** F7.2: masked preview; nothing is sent. */
-  previewExplain(groups: ExplainGroupInput[], opts: { maskInternalIps: boolean }): Promise<PreviewResult>
+  previewExplain(groups: ExplainGroupInput[], opts: { maskInternalIps: boolean; question?: string }): Promise<PreviewResult>
   /** Sends exactly the previewed text, once. */
   explain(previewId: string): Promise<ExplainResult>
-  /** F7.6: save dialog; returns the path or null. */
-  saveSuggestion(content: string, suggestedName: string): Promise<string | null>
+  /** Follow-up question on logs already approved in the preview. */
+  followUp(conversationId: string, question: string): Promise<ExplainResult>
+  /** Save dialog for exported logs and AI suggestions; returns the path or null. */
+  saveText(content: string, suggestedName: string): Promise<string | null>
 }
 
 declare global {

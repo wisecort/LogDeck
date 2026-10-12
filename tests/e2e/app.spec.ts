@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, test } from '@playwright/test'
 import { fakeKubectlEnv } from '../helpers/fake-kubectl'
+import { HML, navTree } from '../helpers/ui'
 
 test('opens as LogDeck', async () => {
   // Fake kubectl + fake kubeconfig: tests never read ~/.kube (AGENTS.md).
@@ -14,12 +15,10 @@ test('opens as LogDeck', async () => {
   try {
     const win = await app.firstWindow()
     await expect(win).toHaveTitle('LogDeck')
-    await expect(win.getByLabel('Contexto')).toBeVisible()
+    await expect(navTree(win).getByRole('button', { name: new RegExp(HML.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })).toBeVisible()
     expect(await app.evaluate(({ app }) => app.getName())).toBe('LogDeck')
-
     // Security baseline for the renderer (SPEC §2).
     expect(await win.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined')
-    // Only the fake kubectl was used.
     await expect.poll(() => fake.calls().length).toBeGreaterThan(0)
   } finally {
     await app.close()

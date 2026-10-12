@@ -10,6 +10,8 @@ export const SYSTEM_PROMPT = [
   'Nos próximos passos, sugira apenas comandos kubectl ou oc de somente leitura (get, describe, logs, events, top, auth can-i). Não sugira comandos que alterem o cluster.',
   'Se uma mudança de código ou de configuração for necessária, mostre-a num bloco ```diff para revisão humana; ela nunca será aplicada automaticamente.',
   'Valores marcados como [REDACTED:...] foram mascarados de propósito; não tente deduzi-los.',
+  'Quando houver uma pergunta do usuário, responda a ela diretamente, mantendo as seções.',
+  'Termine com "## Confiança" e uma linha no formato "Estimativa: NN% — motivo", dizendo o quanto a evidência no log sustenta a causa provável.',
 ].join('\n')
 
 export interface PayloadGroup {
@@ -69,8 +71,25 @@ export function buildPayload(groups: readonly PayloadGroup[]): Payload {
   return { text, lines, bytes: byteLength(text), truncated: next.some((n) => n >= 0) }
 }
 
-/** User message with the payload delimited; tags inside the logs are neutralised. */
-export function buildUserMessage(payload: string): string {
+export interface Turn {
+  question?: string
+  answer: string
+}
+
+/**
+ * User message: logs delimited (tags inside them neutralised), then the user's own question and,
+ * for follow-ups, the previous turns. The question is the user's text, outside <logs>.
+ */
+export function buildUserMessage(payload: string, opts: { question?: string; history?: readonly Turn[] } = {}): string {
   const safe = payload.replace(/<(\/?)logs>/gi, '‹$1logs›')
-  return `Explique os erros abaixo, agrupados por assinatura pelo LogDeck.\n\n<logs>\n${safe}\n</logs>\n`
+  const parts = [`Explique os erros abaixo, agrupados pelo LogDeck.\n\n<logs>\n${safe}\n</logs>`]
+  const history = opts.history ?? []
+  if (history.length > 0) {
+    const lines = history.flatMap((t) => [...(t.question ? [`Usuário: ${t.question}`] : ['Usuário: (explicação geral)']), `Assistente: ${t.answer}`])
+    parts.push(`Conversa anterior:\n${lines.join('\n')}`)
+    if (opts.question) parts.push(`Nova pergunta do usuário: ${opts.question}`)
+  } else if (opts.question) {
+    parts.push(`Pergunta do usuário: ${opts.question}`)
+  }
+  return parts.join('\n\n') + '\n'
 }

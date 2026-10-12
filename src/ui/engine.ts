@@ -1,7 +1,7 @@
 // Renderer-side log model: assembly, ring buffer, error groups and the filtered view.
 // Pure TypeScript (no DOM) so it is unit-tested in Node.
 import { LogBuffer } from '../logs/buffer'
-import { LogAssembler } from '../logs/classify'
+import { LogAssembler, timelineTime } from '../logs/classify'
 import { collapseRows, type Row } from '../logs/collapse'
 import { entryText, type CompiledSearch } from '../logs/search'
 import { SignatureIndex, type SignatureGroup } from '../logs/signatures'
@@ -15,6 +15,8 @@ export interface ViewFilter {
   regexMatches?: ReadonlySet<number>
   /** Restrict to an error group from the F6 panel. */
   groupSeqs?: ReadonlySet<number>
+  /** [from, to] epoch ms, inclusive (histogram selection). */
+  timeRange?: readonly [number, number]
   collapse: boolean
 }
 
@@ -73,10 +75,14 @@ export class LogEngine {
   }
 
   view(filter: ViewFilter): Row[] {
-    const { levels, search, regexMatches, groupSeqs } = filter
+    const { levels, search, regexMatches, groupSeqs, timeRange } = filter
     const visible = this.buffer.toArray().filter((e) => {
       if (!levels.has(e.level)) return false
       if (groupSeqs && !groupSeqs.has(e.seq)) return false
+      if (timeRange) {
+        const t = timelineTime(e)
+        if (t === undefined || t < timeRange[0] || t > timeRange[1]) return false
+      }
       if (regexMatches && !regexMatches.has(e.seq)) return false
       if (!search) return true
       const text = entryText(e)

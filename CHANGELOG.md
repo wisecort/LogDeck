@@ -72,3 +72,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Guardrails: rede e SDK de IA só em `src/ai/providers/`; bloqueio de `bypassPermissions`/`acceptEdits`/`--dangerously-*`/`--tools default`; exceção justificada para a lista de verbos do detector.
 - Testes com `claude`, `security` e servidores HTTP fakes; testes manuais autorizados com o Claude Code real e a API da Anthropic (texto fictício do fixture) passaram.
 - Harness 100% verde: 512 unitários, 92 de integração, 12 E2E; cobertura de `redact.ts` 100%.
+
+### Fase 6.5 — UI/UX (referência: vídeo do Logui)
+
+- Barra lateral em árvore (contextos → namespaces → pods → containers) com status, favoritos, linhas marcadas, shells e seletor de tema.
+- Seis temas: Escuro (padrão), Meia-noite, Claro, Sistema, Solarizado e Alto contraste.
+- Barra de cima enxuta (busca com contador e `Aa`/`.*`, Excluir, Presets, Tempo, Limpar filtros); pílulas de nível com "Todos"; ações por ícone; pílula Seguindo/Pausado com pausa automática.
+- Histograma de volume por nível com filtro por intervalo (arrastar); linhas de uma linha com painel Detalhes; exportar linhas filtradas.
+- Aba IA no painel direito: pergunta livre, perguntas de acompanhamento, contexto por linha/grupos/linhas visíveis, "Estimativa da IA"; diff com números de linha e "Copiar diff".
+- Barra de status com estado, localização, contagem e provedor de IA; atalhos (`?`, `Esc`).
+- Correção: o histograma e o filtro de tempo usam o relógio do kubectl (o Laravel em UTC−3 esticava o eixo).
+- E2E: 16 cenários, incluindo detalhes, histograma, temas, marcadas, favoritos e IA com acompanhamento.

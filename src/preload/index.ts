@@ -41,7 +41,8 @@ const api: LogDeckApi = {
   testAi: () => invoke(IPC.aiTest),
   previewExplain: (groups, opts) => invoke(IPC.aiPreview, groups, opts),
   explain: (previewId) => invoke(IPC.aiExplain, previewId),
-  saveSuggestion: (content, suggestedName) => invoke(IPC.aiSave, content, suggestedName),
+  followUp: (conversationId, question) => invoke(IPC.aiFollowUp, conversationId, question),
+  saveText: (content, suggestedName) => invoke(IPC.saveText, content, suggestedName),
 }
 
 contextBridge.exposeInMainWorld('logdeck', api)

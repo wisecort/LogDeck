@@ -193,15 +193,21 @@ export function registerIpc(deps: IpcDeps): void {
   })
   handle(deps, IPC.aiTest, () => deps.explain.test())
   handle(deps, IPC.aiPreview, async (_e, groups: unknown, opts: unknown) => {
-    const mask = (opts as { maskInternalIps?: unknown } | undefined)?.maskInternalIps
-    return deps.explain.preview(groups, { maskInternalIps: mask === true })
+    const o = (opts ?? {}) as { maskInternalIps?: unknown; question?: unknown }
+    return deps.explain.preview(groups, {
+      maskInternalIps: o.maskInternalIps === true,
+      ...(typeof o.question === 'string' && { question: o.question }),
+    })
   })
   handle(deps, IPC.aiExplain, async (_e, previewId: unknown) => deps.explain.explain(str(previewId, 'preview')))
-  // F7.6: suggestions are only ever written to a local file the user picks; never applied to the cluster.
-  handle(deps, IPC.aiSave, async (_e, content: unknown, name: unknown) => {
+  handle(deps, IPC.aiFollowUp, async (_e, conversationId: unknown, question: unknown) =>
+    deps.explain.followUp(str(conversationId, 'conversa'), str(question, 'pergunta')),
+  )
+  // Exported logs and AI suggestions (F7.6) are only ever written to a local file the user picks.
+  handle(deps, IPC.saveText, async (_e, content: unknown, name: unknown) => {
     const text = str(content, 'conteúdo')
-    const defaultPath = basename(str(name, 'nome')).replace(/[^\w.-]/g, '_') || 'logdeck-sugestao.diff'
-    const { canceled, filePath } = await dialog.showSaveDialog({ title: 'Salvar sugestão para revisão', defaultPath })
+    const defaultPath = basename(str(name, 'nome')).replace(/[^\w.-]/g, '_') || 'logdeck.txt'
+    const { canceled, filePath } = await dialog.showSaveDialog({ title: 'Salvar arquivo', defaultPath })
     if (canceled || !filePath) return null
     await writeFile(filePath, text, 'utf8')
     return filePath
