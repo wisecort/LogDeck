@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { delimiter, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
+import { withPathFirst } from './path'
 
 export const FAKE_BIN = resolve(__dirname, '../bin')
 export const FIXTURES = resolve(__dirname, '../fixtures')
@@ -16,8 +17,7 @@ export function fakeKubectlEnv(extra: Record<string, string> = {}): FakeKubectlE
   const dir = mkdtempSync(join(tmpdir(), 'logdeck-fake-kubectl-'))
   const log = join(dir, 'argv.jsonl')
   const env = {
-    ...process.env,
-    PATH: `${FAKE_BIN}${delimiter}${process.env['PATH'] ?? ''}`,
+    ...withPathFirst(process.env, FAKE_BIN),
     FAKE_KUBECTL_ARGV_LOG: log,
     KUBECONFIG: join(FIXTURES, 'kubectl/kubeconfig.fake.yaml'),
     ...extra,

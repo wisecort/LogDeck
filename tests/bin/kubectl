@@ -14,7 +14,17 @@ const { appendFileSync, readFileSync } = require('node:fs')
 const { isAbsolute, join, resolve } = require('node:path')
 
 const FIXTURES = resolve(__dirname, '../fixtures')
-const argv = process.argv.slice(2)
+// As a Node script argv is [node, script, ...args]; as a Windows .exe built with Node SEA
+// (scripts/build-test-bins.mjs) the script entry may be missing.
+const argv = (() => {
+  let isSea = false
+  try {
+    isSea = require('node:sea').isSea()
+  } catch {
+    // older Node: not a SEA
+  }
+  return isSea && process.argv[1] !== process.execPath ? process.argv.slice(1) : process.argv.slice(2)
+})()
 const env = process.env
 
 if (env.FAKE_KUBECTL_ARGV_LOG) appendFileSync(env.FAKE_KUBECTL_ARGV_LOG, JSON.stringify(argv) + '\n')

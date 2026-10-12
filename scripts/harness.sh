@@ -6,8 +6,8 @@
 #   HARNESS_SKIP_INSTALL=1     skip `npm ci` (local iteration only; CI never sets it)
 #   HARNESS_REQUIRE_GITLEAKS=1 fail instead of warn when gitleaks is missing (CI)
 #
-# Runs on macOS, Linux and Windows (Git Bash). Steps that need the POSIX fakes in tests/bin
-# (integration, E2E) are skipped on Windows with a ⚠️.
+# Runs on macOS, Linux and Windows (Git Bash). On Windows the fakes in tests/bin are built as .exe
+# first (scripts/build-test-bins.mjs, Node SEA).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -91,11 +91,10 @@ build_app() {
   esac
 }
 
-posix_only() {
-  if [[ "$OS" == "win" ]]; then
-    echo "⚠️  os fakes de tests/bin são scripts POSIX; etapa ignorada no Windows"
-    STEP_WARNING="ignorada no Windows (fakes POSIX)"
-    return 0
+# Windows cannot run the "#!" fakes in tests/bin: build them as .exe first (Node SEA).
+with_fakes() {
+  if [[ "$OS" == "win" && ! -f tests/bin/kubectl.exe ]]; then
+    node scripts/build-test-bins.mjs || return 1
   fi
   "$@"
 }
@@ -129,9 +128,9 @@ step "2. Lint" npm run lint
 step "3. Typecheck" npm run typecheck
 step "4. Guardrails" node scripts/guardrails.mjs
 step "5. Testes unitários + cobertura" npm run test:unit
-step "6. Testes de integração (kubectl fake)" posix_only npm run test:integration
+step "6. Testes de integração (kubectl fake)" with_fakes npm run test:integration
 step "7. Build do app (${OS}, sem assinatura)" build_app
-step "8. E2E" posix_only e2e
+step "8. E2E" with_fakes e2e
 step "9. Auditoria de dependências" audit
 step "10. Segredos (gitleaks)" secrets
 

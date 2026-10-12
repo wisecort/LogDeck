@@ -2,8 +2,9 @@ import { existsSync, mkdtempSync, readFileSync } from 'node:fs'
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
-import { delimiter, join } from 'node:path'
+import { join } from 'node:path'
 import { FAKE_BIN } from './fake-kubectl'
+import { withPathFirst } from './path'
 
 export interface ClaudeCall {
   argv: string[]
@@ -14,7 +15,7 @@ export interface ClaudeCall {
 
 export function fakeClaudeEnv(mode = 'ok') {
   const log = join(mkdtempSync(join(tmpdir(), 'logdeck-fake-claude-')), 'calls.jsonl')
-  const env = { ...process.env, PATH: `${FAKE_BIN}${delimiter}${process.env['PATH'] ?? ''}`, FAKE_CLAUDE_LOG: log, FAKE_CLAUDE_MODE: mode }
+  const env = { ...withPathFirst(process.env, FAKE_BIN), FAKE_CLAUDE_LOG: log, FAKE_CLAUDE_MODE: mode }
   const calls = (): ClaudeCall[] =>
     existsSync(log)
       ? readFileSync(log, 'utf8')
@@ -62,10 +63,10 @@ export function fakeSecurity() {
   const dir = mkdtempSync(join(tmpdir(), 'logdeck-fake-security-'))
   const store = join(dir, 'store.json')
   const log = join(dir, 'argv.jsonl')
-  const env = { ...process.env, PATH: `${FAKE_BIN}${delimiter}${process.env['PATH'] ?? ''}`, FAKE_SECURITY_STORE: store, FAKE_SECURITY_LOG: log }
+  const env = { ...withPathFirst(process.env, FAKE_BIN), FAKE_SECURITY_STORE: store, FAKE_SECURITY_LOG: log }
   return {
     env,
-    binary: join(FAKE_BIN, 'security'),
+    binary: join(FAKE_BIN, process.platform === 'win32' ? 'security.exe' : 'security'),
     calls: (): string[][] =>
       existsSync(log)
         ? readFileSync(log, 'utf8')
