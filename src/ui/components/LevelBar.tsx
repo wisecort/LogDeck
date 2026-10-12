@@ -1,5 +1,6 @@
 import { LEVELS, type Level } from '../../logs/types'
-import { IconChart, IconDownload, IconStack, IconTerminal, IconToBottom, IconToTop, IconTrash, IconWrap } from './icons'
+import { useI18n } from '../i18n'
+import { IconChart, IconExport, IconStack, IconTerminal, IconToTop, IconTrash, IconWrap } from './icons'
 
 interface Props {
   counts: Readonly<Record<Level, number>>
@@ -14,7 +15,6 @@ interface Props {
   onWrap(): void
   onExport(): void
   onTop(): void
-  onBottom(): void
   onClear(): void
   canShell: boolean
   onShell(): void
@@ -25,19 +25,20 @@ interface Props {
 }
 
 export function LevelBar(p: Props) {
+  const { t } = useI18n()
   const allOn = p.levels.size === LEVELS.length
   return (
     <div className="levelbar">
-      <div role="group" aria-label="Níveis" style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+      <div role="group" aria-label={t('lv.levels')} style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <button className={`level-pill ${allOn ? 'on' : 'off'}`} aria-pressed={allOn} onClick={p.onAll}>
-          Todos
+          {t('lv.all')}
         </button>
         {LEVELS.map((l) => (
           <button
             key={l}
             className={`level-pill ${p.levels.has(l) ? 'on' : 'off'}`}
             aria-pressed={p.levels.has(l)}
-            title="Clique alterna; ⌥+clique mostra só este nível"
+            title={t('lv.levelHint')}
             onClick={(e) => p.onToggle(l, e.altKey)}
           >
             <span className={`dot lvl-${l}`} />
@@ -46,38 +47,35 @@ export function LevelBar(p: Props) {
         ))}
       </div>
       <span className="spacer" />
-      <button className="icon-btn" aria-label="Volume de logs" aria-pressed={p.showVolume} title="Volume de logs" onClick={p.onVolume}>
+      <button className="icon-btn" aria-label={t('lv.volume')} aria-pressed={p.showVolume} title={t('lv.volume')} onClick={p.onVolume}>
         <IconChart />
       </button>
-      <button className="icon-btn" aria-label="Colapsar repetidas" aria-pressed={p.collapse} title="Colapsar linhas repetidas (×N)" onClick={p.onCollapse}>
+      <button className="icon-btn" aria-label={t('lv.collapse')} aria-pressed={p.collapse} title={t('lv.collapseHint')} onClick={p.onCollapse}>
         <IconStack />
       </button>
-      <button className="icon-btn" aria-label="Quebrar linhas" aria-pressed={p.wrap} title="Quebrar linhas longas" onClick={p.onWrap}>
+      <button className="icon-btn" aria-label={t('lv.wrap')} aria-pressed={p.wrap} title={t('lv.wrapHint')} onClick={p.onWrap}>
         <IconWrap />
       </button>
-      <button className="icon-btn" aria-label="Exportar" title="Exportar as linhas filtradas" onClick={p.onExport}>
-        <IconDownload />
+      <button className="icon-btn" aria-label={t('lv.export')} title={t('lv.exportHint')} onClick={p.onExport}>
+        <IconExport />
       </button>
-      <button className="icon-btn" aria-label="Ir para o topo" title="Topo" onClick={p.onTop}>
+      <button className="icon-btn" aria-label={t('lv.top')} title={t('lv.top')} onClick={p.onTop}>
         <IconToTop />
       </button>
-      <button className="icon-btn" aria-label="Ir para o fim" title="Fim" onClick={p.onBottom}>
-        <IconToBottom />
-      </button>
-      <button className="icon-btn" aria-label="Limpar tela" title="Limpar as linhas exibidas (o log continua)" onClick={p.onClear}>
+      <button className="icon-btn" aria-label={t('lv.clear')} title={t('lv.clearHint')} onClick={p.onClear}>
         <IconTrash />
       </button>
-      <button className="icon-btn" aria-label="Abrir shell" title="Abre um terminal no container (ação manual)" disabled={!p.canShell} onClick={p.onShell}>
-        <IconTerminal />
+      <button className="icon-btn labeled" aria-label={t('lv.terminalLabel')} title={t('lv.terminalHint')} disabled={!p.canShell} onClick={p.onShell}>
+        <IconTerminal /> {t('lv.terminal')}
       </button>
       <button
         className={`follow-pill ${p.paused ? 'paused' : 'live'}`}
         data-testid="follow-pill"
         disabled={!p.live}
         onClick={p.onFollow}
-        title={p.paused ? 'Retomar e ir para o fim' : 'Pausar a exibição (o buffer continua)'}
+        title={p.paused ? t('lv.pausedHint') : t('lv.liveHint')}
       >
-        ● {p.paused ? `Pausado${p.pending > 0 ? ` · +${p.pending}` : ''}` : 'Seguindo'}
+        {p.paused ? `❚❚ ${t('lv.paused')}${p.pending > 0 ? ` · +${p.pending}` : ''}` : `● ${t('lv.live')}`}
       </button>
     </div>
   )

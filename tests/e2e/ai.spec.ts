@@ -14,7 +14,7 @@ test.beforeEach(async () => {
   const fake = fakeKubectlEnv({ FAKE_KUBECTL_DELAY_MS: '0' })
   claudeLog = join(mkdtempSync(join(tmpdir(), 'logdeck-e2e-claude-')), 'calls.jsonl')
   app = await electron.launch({
-    args: ['.'],
+    args: ['.', '--lang=pt-BR'],
     env: { ...(fake.env as Record<string, string>), LOGDECK_USER_DATA: mkdtempSync(join(tmpdir(), 'logdeck-e2e-')), FAKE_CLAUDE_LOG: claudeLog },
   })
   win = await app.firstWindow()

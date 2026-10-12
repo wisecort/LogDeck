@@ -5,7 +5,7 @@
   "description": "Log explorer de Kubernetes para macOS (somente leitura)",
   "private": true,
   "license": "MIT",
-  "author": "Matheus Ribeiro",
+  "author": "Matheus Corteletti (Wise)",
   "repository": "github:wisecort/LogDeck",
   "main": "out/main/index.js",
   "engines": {

@@ -92,3 +92,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Faixa de produção (G5) mais fina, só com "PRODUÇÃO".
 - Abrir log de arquivo (⌘O, botão ou arrastar para a janela), com limite de 200 MB e recusa de arquivo vazio ou binário.
 - Commits sem o trailer `Co-Authored-By` (histórico local reescrito antes do primeiro push).
+
+### Fase 6.7 — Preferências, temas e idiomas
+
+- Tela de Preferências (tema, idioma, Sobre) no rodapé da barra lateral; o seletor de tema saiu do rodapé.
+- Oito temas novos: Dracula, Nord, Monokai, Gruvbox, One Dark, Tokyo Night, Catppuccin Mocha e GitHub claro.
+- Interface em pt-BR, pt-PT, inglês e espanhol (dicionários com as mesmas chaves e placeholders, verificados por teste); menu nativo traduzido via `app:set-language`.
+- Créditos: "Feito por Matheus Corteletti — Wise" em Preferências → Sobre, no painel Sobre do macOS e no `package.json`.
+- "Seguindo" virou "Ao vivo"; botão "Terminal" com texto; ícone duplicado de "Ir para o fim" removido e exportar com ícone próprio; status "Conectado".

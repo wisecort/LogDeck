@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
-import { checkLogFile, splitLogText } from '../logs/file'
+import { checkLogFile, LogFileError, splitLogText } from '../logs/file'
 import { LogEngine } from './engine'
 
 const RENDER_MS = 100
@@ -86,10 +86,10 @@ export function useLogSession() {
       early.current.clear()
       earlyStatus.current.clear()
       const tooBig = checkLogFile(f, '')
-      if (tooBig) throw new Error(tooBig)
+      if (tooBig) throw new LogFileError(tooBig, f.name)
       const text = await f.text()
       const problem = checkLogFile(f, text)
-      if (problem) throw new Error(problem)
+      if (problem) throw new LogFileError(problem, f.name)
       engine.clear()
       setStatus(undefined)
       setFile(f.name)

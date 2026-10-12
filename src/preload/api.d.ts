@@ -51,6 +51,8 @@ export interface LogDeckApi {
   saveText(content: string, suggestedName: string): Promise<string | null>
   /** Writes plain text to the system clipboard (works without window focus). */
   copyText(text: string): Promise<void>
+  /** Interface language, so main can translate the native menu. */
+  setLanguage(lang: 'pt-BR' | 'pt-PT' | 'en' | 'es'): Promise<void>
 }
 
 declare global {

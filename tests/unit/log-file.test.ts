@@ -26,18 +26,18 @@ describe('splitLogText', () => {
 
 describe('checkLogFile', () => {
   it('accepts a normal text log', () => {
-    expect(checkLogFile({ name: 'app.log', size: 10 }, 'hello\n')).toBeUndefined()
+    expect(checkLogFile({ size: 10 }, 'hello\n')).toBeUndefined()
   })
 
   it('refuses files above the size limit', () => {
-    expect(checkLogFile({ name: 'big.log', size: MAX_LOG_FILE_BYTES + 1 }, '')).toMatch(/grande/)
+    expect(checkLogFile({ size: MAX_LOG_FILE_BYTES + 1 }, '')).toBe('tooBig')
   })
 
   it('refuses empty files', () => {
-    expect(checkLogFile({ name: 'e.log', size: 0 }, '')).toMatch(/vazio/)
+    expect(checkLogFile({ size: 0 }, '')).toBe('empty')
   })
 
   it('refuses binary content (NUL bytes) such as a .gz', () => {
-    expect(checkLogFile({ name: 'x.gz', size: 4 }, '\u001f\u008b\u0000\u0000')).toMatch(/texto/)
+    expect(checkLogFile({ size: 4 }, '\u001f\u008b\u0000\u0000')).toBe('binary')
   })
 })

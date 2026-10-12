@@ -21,6 +21,6 @@ export async function openPod(win: Page, opts: { context?: string; namespace?: s
 
 export async function openWebPod(win: Page, container = 'httpd') {
   await openPod(win, { pod: /portal-web/, container })
-  await expect(win.getByTestId('stream-status')).toContainText('Live')
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
   await expect(win.getByTestId('match-count')).toContainText('/ 465')
 }

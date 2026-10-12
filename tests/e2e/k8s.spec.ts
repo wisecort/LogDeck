@@ -15,7 +15,7 @@ function kubectlLogsProcesses(): string[] {
 
 async function launch(extra: Record<string, string> = {}): Promise<{ app: ElectronApplication; calls: () => string[][] }> {
   const fake = fakeKubectlEnv({ FAKE_KUBECTL_DELAY_MS: '0', ...extra })
-  const app = await electron.launch({ args: ['.'], env: fake.env as Record<string, string> })
+  const app = await electron.launch({ args: ['.', '--lang=pt-BR'], env: fake.env as Record<string, string> })
   return { app, calls: fake.calls }
 }
 

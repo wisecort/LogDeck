@@ -14,7 +14,7 @@ let savedClipboard = ''
 test.beforeEach(async () => {
   const fake = fakeKubectlEnv({ FAKE_KUBECTL_DELAY_MS: '0' })
   app = await electron.launch({
-    args: ['.'],
+    args: ['.', '--lang=pt-BR'],
     env: { ...(fake.env as Record<string, string>), LOGDECK_USER_DATA: mkdtempSync(join(tmpdir(), 'logdeck-e2e-')) },
   })
   win = await app.firstWindow()
@@ -136,7 +136,7 @@ test('G5: production contexts show a red banner', async () => {
 
 test('F3.2: CrashLoopBackOff pod offers --previous', async () => {
   await openPod(win, { pod: /portal-worker/ })
-  await expect(win.getByTestId('stream-status')).toContainText('Live')
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
   await win.getByRole('button', { name: /Tempo/ }).click()
   await win.getByLabel('--previous').check()
   await expect(win.getByTestId('stream-status')).toContainText('Encerrado')
@@ -145,7 +145,7 @@ test('F3.2: CrashLoopBackOff pod offers --previous', async () => {
 
 test('P5: Pod Shell runs in a real TTY (no job-control errors)', async () => {
   await openWebPod(win, 'php-fpm')
-  await win.getByRole('button', { name: 'Abrir shell' }).click()
+  await win.getByRole('button', { name: 'Abrir terminal' }).click()
   const term = win.getByTestId('shell-term')
   await expect(term).toContainText('fake-shell tty=yes')
   await expect(term).not.toContainText('Inappropriate ioctl')
@@ -153,13 +153,13 @@ test('P5: Pod Shell runs in a real TTY (no job-control errors)', async () => {
   await win.keyboard.type('echo ok')
   await win.keyboard.press('Enter')
   await expect(term).toContainText('echo ok')
-  await expect(navTree(win)).toContainText('Shells')
+  await expect(navTree(win)).toContainText('Terminais')
   await win.screenshot({ path: 'test-results/ui-shell.png' })
 })
 
 test('6.5: selecting a line pauses the view and shows its details', async () => {
   await openWebPod(win)
-  await expect(win.getByTestId('follow-pill')).toContainText('Seguindo')
+  await expect(win.getByTestId('follow-pill')).toContainText('Ao vivo')
   await win.getByLabel('Buscar').fill('AH01075')
   await rows().first().click()
   await expect(win.getByTestId('follow-pill')).toContainText('Pausado')
@@ -169,7 +169,7 @@ test('6.5: selecting a line pauses the view and shows its details', async () => 
   await expect(details).toContainText('proxy_fcgi')
   await win.screenshot({ path: 'test-results/ui-details.png' })
   await win.getByTestId('follow-pill').click()
-  await expect(win.getByTestId('follow-pill')).toContainText('Seguindo')
+  await expect(win.getByTestId('follow-pill')).toContainText('Ao vivo')
 })
 
 test('6.5: dragging on the volume chart filters a time range', async () => {
@@ -187,14 +187,38 @@ test('6.5: dragging on the volume chart filters a time range', async () => {
   await expect(win.getByTestId('match-count')).toContainText('291 / 465')
 })
 
+test('language: English, Spanish and pt-PT translate the interface and persist', async () => {
+  await openWebPod(win)
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByLabel('Idioma').selectOption('en')
+  await expect(win.locator('html')).toHaveAttribute('lang', 'en')
+  await win.getByRole('dialog', { name: 'Preferences', exact: true }).getByRole('button', { name: 'Close' }).click()
+  await expect(win.getByLabel('Search', { exact: true })).toBeVisible()
+  await expect(win.getByTestId('follow-pill')).toContainText('Live')
+  await expect(win.getByTestId('match-count')).toContainText('lines')
+  await win.screenshot({ path: 'test-results/ui-english.png' })
+
+  await win.reload()
+  await expect(win.getByRole('button', { name: 'Preferences', exact: true })).toBeVisible()
+  await win.getByRole('button', { name: 'Preferences', exact: true }).click()
+  await win.getByRole('dialog', { name: 'Preferences', exact: true }).getByLabel('Language').selectOption('es')
+  await expect(win.getByRole('dialog', { name: 'Preferencias', exact: true })).toContainText('Hecho por')
+  await win.getByRole('dialog', { name: 'Preferencias', exact: true }).getByLabel('Idioma').selectOption('pt-PT')
+  await expect(win.getByRole('button', { name: 'Definições', exact: true })).toBeVisible()
+})
+
 test('6.5: themes, bookmarks and favourite namespaces', async () => {
   await openWebPod(win)
-  for (const theme of ['claro', 'meia-noite', 'solarizado', 'alto-contraste', 'sistema', 'escuro']) {
-    await win.getByLabel('Tema').selectOption(theme)
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
+  for (const theme of ['claro', 'meia-noite', 'dracula', 'nord', 'github-claro', 'alto-contraste', 'sistema', 'escuro']) {
+    await prefs.getByLabel('Tema').selectOption(theme)
     await expect(win.locator('html')).toHaveAttribute('data-theme', theme)
   }
-  await win.getByLabel('Tema').selectOption('meia-noite')
-  await win.screenshot({ path: 'test-results/ui-theme-meia-noite.png' })
+  await prefs.getByLabel('Tema').selectOption('dracula')
+  await expect(prefs.getByTestId('about')).toContainText('Feito por Matheus Corteletti — Wise')
+  await prefs.getByRole('button', { name: 'Fechar' }).click()
+  await win.screenshot({ path: 'test-results/ui-theme-dracula.png' })
 
   const row = rows().last()
   await row.click()

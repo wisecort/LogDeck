@@ -44,6 +44,7 @@ const api: LogDeckApi = {
   followUp: (conversationId, question) => invoke(IPC.aiFollowUp, conversationId, question),
   saveText: (content, suggestedName) => invoke(IPC.saveText, content, suggestedName),
   copyText: (text) => invoke(IPC.copyText, text),
+  setLanguage: (lang) => invoke(IPC.setLanguage, lang),
 }
 
 contextBridge.exposeInMainWorld('logdeck', api)

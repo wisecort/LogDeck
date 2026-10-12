@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ExplainResult, ResponseBlock } from '../../shared/ai'
+import { useI18n } from '../i18n'
 import { IconCopy } from './icons'
 
 function TextBlock({ content }: { content: string }) {
@@ -12,6 +13,7 @@ function TextBlock({ content }: { content: string }) {
 }
 
 function CodeBlock({ block, dangerous }: { block: ResponseBlock; dangerous: readonly string[] }) {
+  const { t } = useI18n()
   const lines = block.content.split('\n')
   const isDanger = (l: string) => dangerous.some((d) => l.includes(d) || d.includes(l.trim()))
   const risky = lines.some((l) => l.trim() && isDanger(l))
@@ -26,8 +28,8 @@ function CodeBlock({ block, dangerous }: { block: ResponseBlock; dangerous: read
         ))}
       </pre>
       {!risky && (
-        <button className="icon-btn" onClick={() => void window.logdeck.copyText(block.content)} title="Copiar comandos de leitura">
-          <IconCopy /> Copiar
+        <button className="icon-btn" onClick={() => void window.logdeck.copyText(block.content)} title={t('ai.copyRead')}>
+          <IconCopy /> {t('common.copy')}
         </button>
       )}
     </div>
@@ -35,11 +37,12 @@ function CodeBlock({ block, dangerous }: { block: ResponseBlock; dangerous: read
 }
 
 function DiffBlock({ block }: { block: ResponseBlock }) {
+  const { t } = useI18n()
   const [saved, setSaved] = useState<string>()
   const ext = block.lang === 'yaml' || block.lang === 'yml' ? 'yaml' : 'diff'
   return (
     <div className="ai-diff" data-testid="ai-diff">
-      <div className="muted">Sugestão para revisão — nunca é aplicada no cluster.</div>
+      <div className="muted">{t('ai.diffNote')}</div>
       <pre className="code-box">
         {block.content.split('\n').map((l, i) => (
           <span key={i} className={l.startsWith('+') ? 'add' : l.startsWith('-') ? 'del' : undefined} style={{ display: 'block' }}>
@@ -50,23 +53,24 @@ function DiffBlock({ block }: { block: ResponseBlock }) {
       </pre>
       <span>
         <button className="icon-btn" onClick={() => void window.logdeck.copyText(block.content)}>
-          <IconCopy /> Copiar diff
+          <IconCopy /> {t('ai.copyDiff')}
         </button>
         <button onClick={() => void window.logdeck.saveText(block.content, `logdeck-sugestao.${ext}`).then((p) => p && setSaved(p))}>
-          Salvar em arquivo…
+          {t('ai.saveFile')}
         </button>
       </span>
-      {saved && <span className="muted">salvo em {saved}</span>}
+      {saved && <span className="muted">{t('ai.savedAt', { path: saved })}</span>}
     </div>
   )
 }
 
 export function AiAnswer({ result }: { result: ExplainResult }) {
+  const { t } = useI18n()
   return (
     <div className="ai-result" data-testid="ai-result">
       {result.writeCommands.length > 0 && (
         <div className="warn-box" data-testid="ai-write-warning">
-          ⚠ A resposta sugere comandos que <strong>alteram o cluster</strong>. O LogDeck é somente leitura e não os executa:
+          ⚠ {t('ai.writeWarning')}
           <ul>
             {result.writeCommands.map((c) => (
               <li key={c}>
@@ -80,8 +84,8 @@ export function AiAnswer({ result }: { result: ExplainResult }) {
         b.type === 'text' ? <TextBlock key={i} content={b.content} /> : b.type === 'diff' ? <DiffBlock key={i} block={b} /> : <CodeBlock key={i} block={b} dangerous={result.writeCommands} />,
       )}
       {result.confidence !== undefined && (
-        <div className="confidence" title="Número estimado pela própria IA a partir da evidência no log; pode estar errado.">
-          <span>Estimativa da IA</span>
+        <div className="confidence" title={t('ai.confidenceHint')}>
+          <span>{t('ai.confidence')}</span>
           <div className="confidence-bar">
             <span style={{ width: `${result.confidence}%` }} />
           </div>

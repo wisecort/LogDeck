@@ -1,30 +1,33 @@
-const KEYS: Array<[string, string]> = [
-  ['⌘ O', 'Abrir arquivo de log (ou arraste para a janela)'],
-  ['⌘ F', 'Buscar'],
-  ['⌘ G / ⇧ ⌘ G', 'Próxima / anterior linha encontrada'],
-  ['⌥ + clique no nível', 'Mostrar só aquele nível'],
-  ['Esc', 'Limpar seleção / fechar'],
-  ['?', 'Esta lista de atalhos'],
+import { useI18n, type MessageKey } from '../i18n'
+
+const KEYS: Array<[string | MessageKey, MessageKey]> = [
+  ['⌘ O', 'keys.open'],
+  ['⌘ F', 'keys.search'],
+  ['⌘ G / ⇧ ⌘ G', 'keys.next'],
+  ['keys.altClick', 'keys.solo'],
+  ['Esc', 'keys.esc'],
+  ['?', 'keys.help'],
 ]
 
 export function ShortcutsModal({ onClose }: { onClose(): void }) {
+  const { t } = useI18n()
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Atalhos" onClick={onClose}>
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={t('keys.title')} onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Atalhos</h2>
+        <h2>{t('keys.title')}</h2>
         <div className="shortcuts">
           {KEYS.map(([k, d]) => (
             <div key={k} style={{ display: 'contents' }}>
               <span>
-                <kbd>{k}</kbd>
+                <kbd>{k.startsWith('keys.') ? t(k as MessageKey) : k}</kbd>
               </span>
-              <span>{d}</span>
+              <span>{t(d)}</span>
             </div>
           ))}
         </div>
         <div className="modal-actions">
           <span className="spacer" />
-          <button onClick={onClose}>Fechar</button>
+          <button onClick={onClose}>{t('common.close')}</button>
         </div>
       </div>
     </div>

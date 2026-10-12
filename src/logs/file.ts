@@ -12,10 +12,21 @@ export function splitLogText(text: string): string[] {
   return lines
 }
 
-/** Returns an error message, or undefined when the file can be opened. `sample` = start of the content. */
-export function checkLogFile(file: { name: string; size: number }, sample: string): string | undefined {
-  if (file.size > MAX_LOG_FILE_BYTES) return `${file.name}: arquivo grande demais (limite de ${MAX_LOG_FILE_BYTES / 1024 / 1024} MB)`
-  if (file.size === 0) return `${file.name}: arquivo vazio`
-  if (sample.slice(0, SAMPLE_CHARS).includes('\u0000')) return `${file.name}: não parece texto (compactado ou binário?)`
+export type LogFileProblem = 'tooBig' | 'empty' | 'binary'
+
+/** Returns why the file cannot be opened, or undefined. `sample` = start of the content. The UI translates the code. */
+export function checkLogFile(file: { size: number }, sample: string): LogFileProblem | undefined {
+  if (file.size > MAX_LOG_FILE_BYTES) return 'tooBig'
+  if (file.size === 0) return 'empty'
+  if (sample.slice(0, SAMPLE_CHARS).includes('\u0000')) return 'binary'
   return undefined
+}
+
+export class LogFileError extends Error {
+  constructor(
+    readonly problem: LogFileProblem,
+    readonly fileName: string,
+  ) {
+    super(`${fileName}: ${problem}`)
+  }
 }

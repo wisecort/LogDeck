@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { LEVELS } from '../../logs/types'
 import type { LogEntry } from '../../logs/types'
 import { formatTime } from '../format'
+import { useI18n } from '../i18n'
 import { buildVolume } from '../volume'
 import { IconX } from './icons'
 
@@ -18,6 +19,7 @@ interface Props {
 
 /** Log volume per level over time (block D); drag to filter a time range. */
 export function VolumeChart({ entries, range, onRange, onClose }: Props) {
+  const { t, n } = useI18n()
   const v = useMemo(() => buildVolume(entries, BUCKETS), [entries])
   const barsRef = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<number>()
@@ -44,18 +46,18 @@ export function VolumeChart({ entries, range, onRange, onClose }: Props) {
   return (
     <div className="volume" data-testid="volume">
       <div className="volume-head">
-        Volume de logs — {entries.length.toLocaleString('pt-BR')} linhas
+        {t('vol.title', { n: n(entries.length) })}
         <span className="spacer" />
         <span className="muted" style={{ textTransform: 'none' }}>
-          arraste para filtrar um intervalo
+          {t('vol.drag')}
         </span>
-        <button className="icon-btn" aria-label="Fechar volume" onClick={onClose}>
+        <button className="icon-btn" aria-label={t('vol.close')} onClick={onClose}>
           <IconX />
         </button>
       </div>
       {v.buckets.length === 0 ? (
         <div className="muted" style={{ height: 64 }}>
-          Sem linhas com horário.
+          {t('vol.empty')}
         </div>
       ) : (
         <>
@@ -97,8 +99,8 @@ export function VolumeChart({ entries, range, onRange, onClose }: Props) {
             )}
             {hb && hover !== undefined && (
               <div className="volume-tip" style={{ left: `${((hover + 0.5) / v.buckets.length) * 100}%` }}>
-                {hb.total} linhas · {formatTime(hb.from)}
-                {hb.counts.ERROR + hb.counts.FATAL > 0 && <span className="error-text"> · {hb.counts.ERROR + hb.counts.FATAL} erros</span>}
+                {t('vol.tip', { n: hb.total, time: formatTime(hb.from) })}
+                {hb.counts.ERROR + hb.counts.FATAL > 0 && <span className="error-text">{t('vol.tipErrors', { n: hb.counts.ERROR + hb.counts.FATAL })}</span>}
               </div>
             )}
           </div>

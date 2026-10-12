@@ -7,6 +7,14 @@ export const THEMES = [
   { id: 'sistema', name: 'Sistema (macOS)' },
   { id: 'solarizado', name: 'Solarizado' },
   { id: 'alto-contraste', name: 'Alto contraste' },
+  { id: 'dracula', name: 'Dracula' },
+  { id: 'nord', name: 'Nord' },
+  { id: 'monokai', name: 'Monokai' },
+  { id: 'gruvbox', name: 'Gruvbox' },
+  { id: 'one-dark', name: 'One Dark' },
+  { id: 'tokyo-night', name: 'Tokyo Night' },
+  { id: 'catppuccin', name: 'Catppuccin Mocha' },
+  { id: 'github-claro', name: 'GitHub claro' },
 ] as const
 
 export type ThemeId = (typeof THEMES)[number]['id']

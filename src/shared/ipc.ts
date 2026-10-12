@@ -28,6 +28,7 @@ export const IPC = {
   aiFollowUp: 'ai:follow-up',
   saveText: 'file:save-text',
   copyText: 'clipboard:copy-text',
+  setLanguage: 'app:set-language',
 } as const
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }

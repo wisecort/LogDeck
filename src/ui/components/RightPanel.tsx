@@ -5,6 +5,7 @@ import type { LogEntry } from '../../logs/types'
 import type { ExplainGroupInput, ExplainResult, PreviewResult } from '../../shared/ai'
 import type { AiStatus } from '../../shared/ai-settings'
 import { formatDateTime } from '../format'
+import { useI18n, type Translate } from '../i18n'
 import { ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
 import { IconBookmark, IconCopy, IconGear, IconSparkle } from './icons'
@@ -32,20 +33,21 @@ interface Props {
   ticketSource: TicketSource
 }
 
-export function aiLabel(s?: AiStatus): string {
+export function aiLabel(t: Translate, s?: AiStatus): string {
   switch (s?.settings.provider) {
     case 'claude-cli':
       return `Claude Code CLI${s.settings.claudeModel ? ` · ${s.settings.claudeModel}` : ''}`
     case 'anthropic':
-      return `API da Anthropic · ${s.settings.anthropicModel}`
+      return `${t('ai.anthropic')} · ${s.settings.anthropicModel}`
     case 'openai':
-      return `${s.settings.openai.model || 'modelo?'} · ${s.settings.openai.baseUrl.replace(/^https?:\/\//, '')}`
+      return `${s.settings.openai.model || t('ai.modelMissing')} · ${s.settings.openai.baseUrl.replace(/^https?:\/\//, '')}`
     default:
-      return 'não configurada'
+      return t('ai.notConfigured')
   }
 }
 
 function ErrorsTab(p: Props) {
+  const { t } = useI18n()
   return (
     <>
       <button
@@ -55,20 +57,20 @@ function ErrorsTab(p: Props) {
           p.onAiMode('grupos')
           p.onTab('ia')
         }}
-        title={p.selectedGroups.size === 0 ? 'Marque ao menos um grupo' : 'Abre a aba IA com estes grupos'}
+        title={p.selectedGroups.size === 0 ? t('err.pickOne') : t('err.openAi')}
       >
-        ✨ Explicar esses erros{p.selectedGroups.size > 0 ? ` (${p.selectedGroups.size})` : ''}
+        {t('err.explain')}{p.selectedGroups.size > 0 ? ` (${p.selectedGroups.size})` : ''}
       </button>
       {p.activeGroup && (
         <button className="link" onClick={() => p.onGroup(undefined)}>
-          limpar filtro do grupo
+          {t('err.clearGroup')}
         </button>
       )}
-      {p.groups.length === 0 && <div className="muted">Nenhum erro agrupado até agora.</div>}
+      {p.groups.length === 0 && <div className="muted">{t('err.none')}</div>}
       <ul className="groups">
         {p.groups.map((g) => (
           <li key={g.key} className={`group ${p.activeGroup === g.key ? 'active' : ''}`} data-testid="error-group">
-            <input type="checkbox" aria-label={`Selecionar ${g.title}`} checked={p.selectedGroups.has(g.key)} onChange={() => p.onToggleGroup(g.key)} />
+            <input type="checkbox" aria-label={t('err.select', { title: g.title })} checked={p.selectedGroups.has(g.key)} onChange={() => p.onToggleGroup(g.key)} />
             <button className="group-body" onClick={() => p.onGroup(p.activeGroup === g.key ? undefined : g.key)} title={g.sample}>
               <span className="group-title">{g.title}</span>
               <span className="group-meta">
@@ -94,36 +96,49 @@ function prettyJson(raw: string): string | undefined {
   }
 }
 
+function ticketLabels(t: Translate) {
+  return {
+    file: t('ticket.file'),
+    pod: t('ticket.pod'),
+    context: t('ticket.context'),
+    k8sTime: t('ticket.k8sTime'),
+    logTime: t('ticket.logTime'),
+    level: t('ticket.level'),
+  }
+}
+
 function TicketButton({ entry, source }: { entry: LogEntry; source: TicketSource }) {
+  const { t } = useI18n()
   const [copied, setCopied] = useState<number>()
   return (
     <button
       className="icon-btn"
-      title="Copia pod, horários (UTC), nível e a linha, com senhas e tokens mascarados"
+      title={t('det.ticketHint')}
       onClick={() => {
-        void window.logdeck.copyText(ticketText(entry, source))
+        void window.logdeck.copyText(ticketText(entry, source, ticketLabels(t)))
         setCopied(entry.seq)
       }}
     >
-      <IconCopy /> {copied === entry.seq ? 'Copiado' : 'Copiar para chamado'}
+      <IconCopy /> {copied === entry.seq ? t('common.copied') : t('det.ticket')}
     </button>
   )
 }
 
 function DetailsTab(p: Props) {
+  const { t } = useI18n()
   const e = p.entry
-  if (!e) return <div className="muted">Clique numa linha do log para ver os detalhes.</div>
-  const t = displayTime(e)
+  if (!e) return <div className="muted">{t('det.empty')}</div>
+  const time = displayTime(e)
   const json = prettyJson(e.raw)
   const full = [e.raw, ...e.continuation].join('\n')
   return (
     <div data-testid="log-details" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <span className={`badge lvl-${e.level}`}>{e.level}</span>
-        <span className="mono">{formatDateTime(t.time)}</span>
+        <span className="mono">{formatDateTime(time.time)}</span>
         <span className="spacer" />
         <button className="icon-btn" aria-pressed={p.bookmarked} onClick={() => p.onBookmark(e.seq)}>
-          <IconBookmark filled={p.bookmarked} /> {p.bookmarked ? 'Marcada' : 'Marcar'}
+          <IconBookmark filled={p.bookmarked} /> {p.bookmarked ? t('det.marked') : t('det.mark')}
         </button>
         <button
           className="icon-btn"
@@ -132,20 +147,20 @@ function DetailsTab(p: Props) {
             p.onTab('ia')
           }}
         >
-          <IconSparkle /> Perguntar à IA
+          <IconSparkle /> {t('det.askAi')}
         </button>
       </div>
       <dl className="kv">
-        <dt>Formato</dt>
+        <dt>{t('det.format')}</dt>
         <dd>{e.parser}</dd>
-        <dt>Horário do log</dt>
+        <dt>{t('det.logTime')}</dt>
         <dd>{e.logTime !== undefined ? formatDateTime(e.logTime) : '—'}</dd>
-        <dt>Horário kubectl</dt>
+        <dt>{t('det.k8sTime')}</dt>
         <dd>{e.k8sTime !== undefined ? formatDateTime(e.k8sTime) : '—'}</dd>
-        {t.divergent && (
+        {time.divergent && (
           <>
-            <dt>Atenção</dt>
-            <dd className="error-text">horários divergem (fuso do app?)</dd>
+            <dt>{t('det.warning')}</dt>
+            <dd className="error-text">{t('det.diverge')}</dd>
           </>
         )}
         {Object.entries(e.fields ?? {}).map(([k, v]) => (
@@ -162,16 +177,16 @@ function DetailsTab(p: Props) {
         </>
       )}
       <div className="panel-section-title">
-        Linha <span className="spacer" />
+        {t('det.line')} <span className="spacer" />
         <button className="icon-btn" onClick={() => void window.logdeck.copyText(full)}>
-          <IconCopy /> Copiar
+          <IconCopy /> {t('common.copy')}
         </button>
         <TicketButton entry={e} source={p.ticketSource} />
       </div>
       <pre className="code-box">{e.raw}</pre>
       {e.continuation.length > 0 && (
         <>
-          <div className="panel-section-title">Stack trace ({e.continuation.length} linhas)</div>
+          <div className="panel-section-title">{t('det.stack', { n: e.continuation.length })}</div>
           <pre className="code-box">{e.continuation.join('\n')}</pre>
         </>
       )}
@@ -193,6 +208,7 @@ interface Turn {
 }
 
 function AiTab(p: Props) {
+  const { t, n } = useI18n()
   const [phase, setPhase] = useState<Phase>({ name: 'compose' })
   const [question, setQuestion] = useState('')
   const [mask, setMask] = useState(p.aiStatus?.settings.maskInternalIps ?? false)
@@ -271,50 +287,50 @@ function AiTab(p: Props) {
         <IconSparkle />
         <strong>IA</strong>
         <span className="muted" style={{ fontSize: 12 }}>
-          {aiLabel(p.aiStatus)}
+          {aiLabel(t, p.aiStatus)}
         </span>
         <span className="spacer" />
-        <button className="icon-btn" aria-label="Configurar IA" onClick={p.onAiPreferences}>
+        <button className="icon-btn" aria-label={t('ai.configure')} onClick={p.onAiPreferences}>
           <IconGear />
         </button>
       </div>
 
       {!configured && (
         <div className="destination remote" style={{ marginTop: 10 }}>
-          Nenhum provedor configurado.{' '}
+          {t('ai.noProvider')}{' '}
           <button className="link" onClick={p.onAiPreferences}>
-            Configurar IA
+            {t('ai.configure')}
           </button>
         </div>
       )}
 
       {configured && (phase.name === 'compose' || phase.name === 'loading') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-          <div className="panel-section-title">O que enviar</div>
-          <div className="ai-context" role="radiogroup" aria-label="Contexto da IA">
+          <div className="panel-section-title">{t('ai.whatToSend')}</div>
+          <div className="ai-context" role="radiogroup" aria-label={t('ai.contextLabel')}>
             <label>
               <input type="radio" name="ai-ctx" checked={p.aiMode === 'linha'} disabled={!canUse('linha')} onChange={() => p.onAiMode('linha')} />
-              Linha selecionada e as linhas ao redor
+              {t('ai.ctxLine')}
             </label>
             <label>
               <input type="radio" name="ai-ctx" checked={p.aiMode === 'grupos'} disabled={!canUse('grupos')} onChange={() => p.onAiMode('grupos')} />
-              Grupos de erro marcados ({p.selectedGroups.size})
+              {t('ai.ctxGroups', { n: p.selectedGroups.size })}
             </label>
             <label>
               <input type="radio" name="ai-ctx" checked={p.aiMode === 'visiveis'} disabled={!canUse('visiveis')} onChange={() => p.onAiMode('visiveis')} />
-              Linhas visíveis no filtro (até 200 de {p.visibleCount.toLocaleString('pt-BR')})
+              {t('ai.ctxVisible', { n: n(p.visibleCount) })}
             </label>
           </div>
           <textarea
             className="ai-question"
-            aria-label="Pergunta para a IA"
-            placeholder="O que você quer saber? (opcional) — ex.: por que começou às 3h?"
+            aria-label={t('ai.question')}
+            placeholder={t('ai.questionPh')}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
           />
           <label className="provider-option">
             <input type="checkbox" checked={mask} onChange={(e) => setMask(e.target.checked)} />
-            Mascarar IPs internos
+            {t('ai.maskIps')}
           </label>
           {error && (
             <div className="error-text" data-testid="ai-error">
@@ -322,10 +338,10 @@ function AiTab(p: Props) {
             </div>
           )}
           <button className="primary" disabled={!canUse(p.aiMode) || phase.name === 'loading'} onClick={() => void prepare()}>
-            {phase.name === 'loading' ? 'Preparando…' : 'Preparar envio'}
+            {phase.name === 'loading' ? t('ai.preparing') : t('ai.prepare')}
           </button>
           <div className="muted" style={{ fontSize: 12 }}>
-            Você vê o texto mascarado e o destino antes de qualquer envio.
+            {t('ai.previewNote')}
           </div>
         </div>
       )}
@@ -333,18 +349,18 @@ function AiTab(p: Props) {
       {(phase.name === 'preview' || phase.name === 'sending') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
           <div className={`destination ${phase.preview.local ? 'local' : 'remote'}`} data-testid="ai-destination">
-            Será enviado para: <strong>{phase.preview.destination}</strong>
-            {!phase.preview.local && <div className="muted">O texto abaixo será processado por esse provedor.</div>}
+            {t('ai.destination')} <strong>{phase.preview.destination}</strong>
+            {!phase.preview.local && <div className="muted">{t('ai.remoteNote')}</div>}
           </div>
           <div className="muted" style={{ fontSize: 12 }}>
-            {phase.preview.lines} linhas · {(phase.preview.bytes / 1024).toFixed(1)} KB · {phase.preview.redactions} valores mascarados
-            {phase.preview.truncated && ' · limitado a 200 linhas / 32 KB'}
+            {t('ai.stats', { lines: phase.preview.lines, kb: (phase.preview.bytes / 1024).toFixed(1), n: phase.preview.redactions })}
+            {phase.preview.truncated && t('ai.truncated')}
           </div>
           {phase.preview.question && <div className="turn-question">{phase.preview.question}</div>}
           <label className="provider-option">
             <input
               type="checkbox"
-              aria-label="Mascarar IPs internos"
+              aria-label={t('ai.maskIps')}
               checked={mask}
               disabled={phase.name === 'sending'}
               onChange={(e) => {
@@ -352,18 +368,18 @@ function AiTab(p: Props) {
                 void prepare(e.target.checked)
               }}
             />
-            Mascarar IPs internos
+            {t('ai.maskIps')}
           </label>
           <pre className="code-box" data-testid="ai-preview">
             {phase.preview.text}
           </pre>
           <div className="modal-actions">
             <button onClick={() => setPhase({ name: 'compose' })} disabled={phase.name === 'sending'}>
-              Voltar
+              {t('common.back')}
             </button>
             <span className="spacer" />
             <button className="primary" disabled={phase.name === 'sending'} onClick={() => void send(phase.preview)}>
-              {phase.name === 'sending' ? `Analisando… ${elapsed}s` : 'Enviar'}
+              {phase.name === 'sending' ? t('ai.analyzing', { s: elapsed }) : t('common.send')}
             </button>
           </div>
         </div>
@@ -372,22 +388,22 @@ function AiTab(p: Props) {
       {phase.name === 'conversation' && (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10, flex: 1 }}>
-            {turns.map((t, i) => (
+            {turns.map((turn, i) => (
               <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {t.question && <div className="turn-question">{t.question}</div>}
-                {t.result && <AiAnswer result={t.result} />}
-                {t.error && <div className="error-text">{t.error}</div>}
-                {!t.result && !t.error && <div className="muted">Analisando… {elapsed}s</div>}
+                {turn.question && <div className="turn-question">{turn.question}</div>}
+                {turn.result && <AiAnswer result={turn.result} />}
+                {turn.error && <div className="error-text">{turn.error}</div>}
+                {!turn.result && !turn.error && <div className="muted">{t('ai.analyzing', { s: elapsed })}</div>}
               </div>
             ))}
             <button className="link" onClick={reset} style={{ alignSelf: 'flex-start' }}>
-              Nova análise
+              {t('ai.newAnalysis')}
             </button>
           </div>
           <div className="ai-follow" style={{ margin: '10px -10px -10px' }}>
             <input
-              aria-label="Perguntar mais"
-              placeholder="Perguntar mais…"
+              aria-label={t('ai.askMore')}
+              placeholder={t('ai.askMorePh')}
               value={followUp}
               disabled={busy}
               onChange={(e) => setFollowUp(e.target.value)}
@@ -396,7 +412,7 @@ function AiTab(p: Props) {
               }}
             />
             <button className="primary" disabled={busy || !followUp.trim()} onClick={() => void ask()}>
-              Enviar pergunta
+              {t('ai.sendQuestion')}
             </button>
           </div>
         </>
@@ -407,13 +423,14 @@ function AiTab(p: Props) {
 
 /** Right column (block A): errors, entry details and AI. Tabs stay mounted to keep the AI conversation. */
 export function RightPanel(p: Props) {
+  const { t } = useI18n()
   const tabs: Array<[PanelTab, string]> = [
-    ['erros', `Erros (${p.groups.length})`],
-    ['detalhes', 'Detalhes'],
-    ['ia', 'IA'],
+    ['erros', t('rp.errors', { n: p.groups.length })],
+    ['detalhes', t('rp.details')],
+    ['ia', t('rp.ai')],
   ]
   return (
-    <aside className="panel" aria-label="Painel">
+    <aside className="panel" aria-label={t('rp.panel')}>
       <div className="tabs" role="tablist">
         {tabs.map(([id, label]) => (
           <button key={id} role="tab" className="tab" aria-selected={p.tab === id} onClick={() => p.onTab(id)}>
@@ -421,7 +438,7 @@ export function RightPanel(p: Props) {
           </button>
         ))}
       </div>
-      <div className="panel-body" role="tabpanel" hidden={p.tab !== 'erros'} aria-label="Erros e timeouts">
+      <div className="panel-body" role="tabpanel" hidden={p.tab !== 'erros'} aria-label={t('rp.errorsLabel')}>
         <ErrorsTab {...p} />
       </div>
       <div className="panel-body" role="tabpanel" hidden={p.tab !== 'detalhes'}>

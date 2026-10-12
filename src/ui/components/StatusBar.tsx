@@ -1,4 +1,5 @@
 import type { StreamStatus } from '../../shared/ipc'
+import { useI18n, type Translate } from '../i18n'
 import type { Selection } from './Sidebar'
 
 interface Props {
@@ -12,27 +13,28 @@ interface Props {
   file?: string
 }
 
-function state(status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
-  if (!status && file) return ['Arquivo', 'file']
-  if (status?.state === 'live' && paused) return ['Pausado', 'paused']
+function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
+  if (!status && file) return [t('st.file'), 'file']
+  if (status?.state === 'live' && paused) return [t('st.paused'), 'paused']
   switch (status?.state) {
     case 'live':
-      return ['Live', 'live']
+      return [t('st.live'), 'live']
     case 'connecting':
-      return ['Conectando…', 'connecting']
+      return [t('st.connecting'), 'connecting']
     case 'reconnecting':
-      return [`Reconectando (${status.attempt ?? 1}) em ${Math.round((status.retryInMs ?? 0) / 1000)}s`, 'reconnecting']
+      return [t('st.reconnecting', { n: status.attempt ?? 1, s: Math.round((status.retryInMs ?? 0) / 1000) }), 'reconnecting']
     case 'ended':
-      return ['Encerrado', 'ended']
+      return [t('st.ended'), 'ended']
     case 'error':
-      return ['Erro', 'error']
+      return [t('st.error'), 'error']
     default:
-      return ['Sem log aberto', 'ended']
+      return [t('st.none'), 'ended']
   }
 }
 
 export function StatusBar(p: Props) {
-  const [text, cls] = state(p.status, p.paused, p.file)
+  const { t, n } = useI18n()
+  const [text, cls] = state(t, p.status, p.paused, p.file)
   const where = p.file ?? [p.selection.context, p.selection.namespace, p.selection.pod?.name, p.selection.container].filter(Boolean).join(' › ')
   return (
     <footer className="statusbar">
@@ -46,11 +48,13 @@ export function StatusBar(p: Props) {
         </span>
       )}
       <span className="spacer" />
-      {p.dropped > 0 && <span className="pill warn" title="Buffer cheio: as linhas mais antigas foram descartadas">{p.dropped.toLocaleString('pt-BR')} descartadas</span>}
-      <span data-testid="match-count">
-        {p.shown.toLocaleString('pt-BR')} / {p.total.toLocaleString('pt-BR')} linhas
-      </span>
-      <span>IA: {p.aiLabel}</span>
+      {p.dropped > 0 && (
+        <span className="pill warn" title={t('st.droppedHint')}>
+          {t('st.dropped', { n: n(p.dropped) })}
+        </span>
+      )}
+      <span data-testid="match-count">{t('st.lines', { shown: n(p.shown), total: n(p.total) })}</span>
+      <span>{t('st.ai', { label: p.aiLabel })}</span>
     </footer>
   )
 }

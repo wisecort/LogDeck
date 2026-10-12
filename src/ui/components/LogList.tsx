@@ -4,6 +4,7 @@ import { displayTime } from '../../logs/classify'
 import type { Row } from '../../logs/collapse'
 import { highlight, type CompiledSearch } from '../../logs/search'
 import { formatDateTime, formatTime } from '../format'
+import { useI18n } from '../i18n'
 import { IconBookmark } from './icons'
 
 export type ScrollCommand = { kind: 'top' | 'bottom' } | { kind: 'seq'; seq: number }
@@ -30,9 +31,10 @@ interface RowProps {
 }
 
 const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked, wrap, onSelect, onBookmark }: RowProps) {
+  const { t } = useI18n()
   const { entry } = row
-  const t = displayTime(entry)
-  const both = t.divergent ? `log: ${formatDateTime(entry.logTime)} · kubectl: ${formatDateTime(entry.k8sTime)}` : undefined
+  const time = displayTime(entry)
+  const both = time.divergent ? t('log.both', { a: formatDateTime(entry.logTime), b: formatDateTime(entry.k8sTime) }) : undefined
   return (
     <div
       className={`log-row lvl-${entry.level} ${selected ? 'selected' : ''} ${cursor ? 'cursor' : ''}`}
@@ -41,9 +43,9 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
       aria-selected={selected}
       onClick={() => onSelect(entry.seq)}
     >
-      <span className="time" title={both ?? (t.source === 'k8s' ? 'horário do kubectl (--timestamps)' : 'horário do log')}>
-        {formatTime(t.time)}
-        {t.divergent && <span className="diverge" aria-label="horários divergentes"> ⚠</span>}
+      <span className="time" title={both ?? (time.source === 'k8s' ? t('log.k8sTime') : t('log.logTime'))}>
+        {formatTime(time.time)}
+        {time.divergent && <span className="diverge" aria-label={t('log.diverge')}> ⚠</span>}
       </span>
       <span className={`badge lvl-${entry.level}`}>{entry.level}</span>
       {row.count > 1 && (
@@ -60,10 +62,10 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
             </span>
           ))}
       </span>
-      {!wrap && entry.continuation.length > 0 && <span className="more">+{entry.continuation.length} linhas</span>}
+      {!wrap && entry.continuation.length > 0 && <span className="more">{t('log.more', { n: entry.continuation.length })}</span>}
       <button
         className={`icon-btn row-mark ${bookmarked ? 'on' : ''}`}
-        aria-label={bookmarked ? 'Desmarcar linha' : 'Marcar linha'}
+        aria-label={bookmarked ? t('log.unmark') : t('log.mark')}
         aria-pressed={bookmarked}
         onClick={(e) => {
           e.stopPropagation()
@@ -92,6 +94,7 @@ interface Props {
 }
 
 export function LogList(p: Props) {
+  const { t } = useI18n()
   const parentRef = useRef<HTMLDivElement>(null)
   const virtualizer = useVirtualizer({
     count: p.rows.length,
@@ -155,11 +158,11 @@ export function LogList(p: Props) {
             )
           })}
         </div>
-        {p.rows.length === 0 && <div className="empty muted">Nenhuma linha para os filtros atuais.</div>}
+        {p.rows.length === 0 && <div className="empty muted">{t('log.empty')}</div>}
       </div>
       {p.paused && p.rows.length > 0 && (
         <button className="to-bottom" onClick={p.onResume}>
-          ⤓ Seguir o fim
+          {t('log.backToLive')}
         </button>
       )}
     </div>

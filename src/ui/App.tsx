@@ -19,6 +19,9 @@ import { TopBar, type LogOptions, type SearchState } from './components/TopBar'
 import { VolumeChart } from './components/VolumeChart'
 import { parseTerms } from './format'
 import { browserRegexRunner } from './regex-runner'
+import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from './i18n'
+import { LogFileError, MAX_LOG_FILE_BYTES } from '../logs/file'
+import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogSession } from './useLogSession'
 import { useNavigation } from './useNavigation'
@@ -60,6 +63,9 @@ export function App() {
   const [shortcuts, setShortcuts] = useState(false)
   const [shell, setShell] = useState<ShellTarget>()
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
+  const [lang, setLang] = useState<Lang>(loadLanguage)
+  const [prefs, setPrefs] = useState(false)
+  const t = useMemo(() => translator(lang), [lang])
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -69,6 +75,11 @@ export function App() {
   const scroll = (cmd: ScrollCommand) => setCommand({ cmd, nonce: Date.now() })
 
   useEffect(() => applyTheme(theme), [theme])
+  useEffect(() => {
+    document.documentElement.lang = lang
+    saveLanguage(lang)
+    void window.logdeck.setLanguage(lang)
+  }, [lang])
 
   useEffect(() => {
     void (async () => {
@@ -77,7 +88,7 @@ export function App() {
       try {
         const list = await window.logdeck.listContexts()
         nav.showContexts(list)
-        if (list.length === 0) setNotice('Nenhum contexto no kubeconfig (arquivo padrão do kubectl ou variável KUBECONFIG).')
+        if (list.length === 0) setNotice(t('app.noContexts'))
       } catch (err) {
         setNotice((err as Error).message)
       }
@@ -88,10 +99,10 @@ export function App() {
   useEffect(() => {
     const { context, namespace } = selection
     if (!context || !namespace) return
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (!document.hidden) void nav.loadPods(context, namespace).then(() => setNow(Date.now()))
     }, POD_REFRESH_MS)
-    return () => clearInterval(t)
+    return () => clearInterval(timer)
   }, [selection.context, selection.namespace]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetView = () => {
@@ -137,7 +148,11 @@ export function App() {
     try {
       await session.openFile(f)
     } catch (err) {
-      setNotice((err as Error).message)
+      setNotice(
+        err instanceof LogFileError
+          ? t(`file.${err.problem}`, { name: err.fileName, mb: MAX_LOG_FILE_BYTES / 1024 / 1024 })
+          : (err as Error).message,
+      )
     }
   }
 
@@ -181,7 +196,7 @@ export function App() {
   const regexActive = search.regex && search.text !== ''
   useEffect(() => {
     if (!regexActive) return
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       const entries = engine.entries()
       void searchWithTimeout(entries.map(entryText), { text: search.text, mode: 'regex', caseSensitive: search.caseSensitive }, { runner: browserRegexRunner, timeoutMs: 250 }).then((r) => {
         if (r.status === 'ok') {
@@ -189,12 +204,12 @@ export function App() {
           setRegexMatches(new Set(r.matches.map((i) => entries[i]!.seq)))
         } else {
           setRegexMatches(new Set())
-          setRegexError(r.status === 'timeout' ? 'Regex muito custosa: busca interrompida (250 ms)' : r.message)
+          setRegexError(r.status === 'timeout' ? t('app.regexTimeout') : r.message)
         }
       })
     }, REGEX_DEBOUNCE_MS)
-    return () => clearTimeout(t)
-  }, [regexActive, search.text, search.caseSensitive, version, engine])
+    return () => clearTimeout(timer)
+  }, [regexActive, search.text, search.caseSensitive, version, engine, t])
 
   const groups = useMemo(() => engine.groups(), [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
   const groupSeqs = useMemo(() => {
@@ -309,6 +324,7 @@ export function App() {
 
   const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
+    <I18nProvider lang={lang}>
     <div className="app">
       {selectedContext?.production && <ProdBanner context={selectedContext.name} />}
       {notice && (
@@ -323,7 +339,7 @@ export function App() {
         ref={fileRef}
         type="file"
         hidden
-        aria-label="Arquivo de log"
+        aria-label={t('app.fileInput')}
         accept=".log,.txt,.json,.out,text/*"
         onChange={(e) => {
           const f = e.target.files?.[0]
@@ -345,8 +361,7 @@ export function App() {
           shellOpen={!!shell}
           onCloseShell={() => setShell(undefined)}
           now={now}
-          theme={theme}
-          onTheme={setTheme}
+          onPreferences={() => setPrefs(true)}
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}
@@ -393,7 +408,6 @@ export function App() {
               pause()
               scroll({ kind: 'top' })
             }}
-            onBottom={resume}
             onClear={() => {
               engine.clear()
               resetView()
@@ -459,7 +473,7 @@ export function App() {
           }
         />
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(aiStatus)} {...(session.file && { file: session.file })} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {
@@ -469,6 +483,8 @@ export function App() {
         />
       )}
       {shortcuts && <ShortcutsModal onClose={() => setShortcuts(false)} />}
+      {prefs && <PreferencesModal theme={theme} onTheme={setTheme} lang={lang} onLang={setLang} onClose={() => setPrefs(false)} />}
     </div>
+    </I18nProvider>
   )
 }

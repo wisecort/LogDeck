@@ -16,6 +16,12 @@ describe('app identity', () => {
     expect(pkg.license).toBe('MIT')
   })
 
+  it('credits the author (Preferências → Sobre, About panel, package.json)', async () => {
+    const { APP_AUTHOR } = await import('../../src/shared/app-info')
+    expect(APP_AUTHOR).toBe('Matheus Corteletti — Wise')
+    expect(pkg.author).toBe('Matheus Corteletti (Wise)')
+  })
+
   it('only builds for macOS (G10)', () => {
     expect(pkg.build.mac).toBeDefined()
     expect(pkg.build.win).toBeUndefined()

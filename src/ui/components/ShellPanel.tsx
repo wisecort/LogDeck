@@ -2,6 +2,7 @@ import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 import { useEffect, useRef, useState } from 'react'
+import { useI18n } from '../i18n'
 
 export interface ShellTarget {
   context: string
@@ -12,7 +13,9 @@ export interface ShellTarget {
 
 /** Pod Shell (P5): xterm.js wired to a PTY in the main process. Opened only by the user. */
 export function ShellPanel({ target, onClose }: { target: ShellTarget; onClose(): void }) {
+  const { t } = useI18n()
   const hostRef = useRef<HTMLDivElement>(null)
+  const endedText = (code: number | null) => t('sh.ended', { code: String(code) })
   const [state, setState] = useState<'opening' | 'open' | 'closed' | string>('opening')
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export function ShellPanel({ target, onClose }: { target: ShellTarget; onClose()
     })
     const offExit = window.logdeck.onShellExit((e) => {
       if (e.shellId !== shellId) return
-      term.write(`\r\n[sessão encerrada, código ${e.code}]\r\n`)
+      term.write(`\r\n${endedText(e.code)}\r\n`)
       setState('closed')
     })
     const input = term.onData((data) => {
@@ -63,15 +66,16 @@ export function ShellPanel({ target, onClose }: { target: ShellTarget; onClose()
       if (shellId) void window.logdeck.closeShell(shellId)
       term.dispose()
     }
-  }, [target])
+  }, [target]) // eslint-disable-line react-hooks/exhaustive-deps -- endedText only changes with the language
 
   return (
-    <section className="shell" aria-label="Pod Shell">
+    <section className="shell" aria-label={t('sh.label')}>
       <div className="shell-head">
         <span>
-          ⌨ Shell: {target.pod} / {target.container} <span className="muted">({state === 'open' ? 'conectado' : state === 'opening' ? 'abrindo…' : state})</span>
+          ⌨ {t('sh.title', { pod: target.pod, container: target.container })}{' '}
+          <span className="muted">({state === 'open' ? t('sh.connected') : state === 'opening' ? t('sh.opening') : state})</span>
         </span>
-        <button onClick={onClose}>Fechar</button>
+        <button onClick={onClose}>{t('common.close')}</button>
       </div>
       <div ref={hostRef} className="shell-term" data-testid="shell-term" />
     </section>

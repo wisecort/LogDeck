@@ -5,9 +5,9 @@ import type { PodInfo } from '../../shared/ipc'
 import { contextLabel } from '../context-view'
 import { ContextsModal } from './ContextsModal'
 import { formatTime } from '../format'
-import { THEMES, type ThemeId } from '../theme'
+import { useI18n } from '../i18n'
 import { nsKey, type Navigation } from '../useNavigation'
-import { IconBookmark, IconChevron, IconFile, IconGear, IconKeyboard, IconStar, IconTerminal, IconX } from './icons'
+import { IconBookmark, IconChevron, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
 
 export interface Selection {
   context?: string
@@ -26,8 +26,7 @@ interface Props {
   shellOpen: boolean
   onCloseShell(): void
   now: number
-  theme: ThemeId
-  onTheme(t: ThemeId): void
+  onPreferences(): void
   onAiPreferences(): void
   onShortcuts(): void
   onOpenFile(): void
@@ -44,6 +43,7 @@ function podDot(status: string): string {
 
 export function Sidebar(p: Props) {
   const { nav, selection } = p
+  const { t } = useI18n()
   const [managing, setManaging] = useState(false)
   const [podFilter, setPodFilter] = useState('')
   const q = podFilter.trim().toLowerCase()
@@ -53,10 +53,10 @@ export function Sidebar(p: Props) {
 
   const renderPods = (context: string, namespace: string) => {
     const list = nav.pods[nsKey(context, namespace)]
-    if (!list) return nav.loading.has(`ns:${nsKey(context, namespace)}`) ? <li className="muted node">carregando…</li> : null
-    if (list.length === 0) return <li className="muted node">nenhum pod</li>
+    if (!list) return nav.loading.has(`ns:${nsKey(context, namespace)}`) ? <li className="muted node">{t('common.loading')}</li> : null
+    if (list.length === 0) return <li className="muted node">{t('sidebar.noPods')}</li>
     const shown = q && !namespace.toLowerCase().includes(q) ? list.filter((pod) => pod.name.toLowerCase().includes(q)) : list
-    if (shown.length === 0) return <li className="muted node">nenhum pod com “{podFilter.trim()}”</li>
+    if (shown.length === 0) return <li className="muted node">{t('sidebar.noPodsMatch', { q: podFilter.trim() })}</li>
     return shown.map((pod) => {
       const selected = selection.context === context && selection.namespace === namespace && selection.pod?.name === pod.name
       const containers = [...pod.containers, ...pod.initContainers]
@@ -65,7 +65,7 @@ export function Sidebar(p: Props) {
           <button
             className={`node ${selected ? 'selected' : ''}`}
             onClick={() => p.onPod(context, namespace, pod)}
-            title={`${pod.name}\n${pod.status} · ${pod.ready} prontos · ${pod.restarts} restarts`}
+            title={t('sidebar.podTitle', { name: pod.name, status: pod.status, ready: pod.ready, restarts: pod.restarts })}
           >
             <span className={`dot ${podDot(pod.status)}`} />
             <span className="node-label mono">{pod.name}</span>
@@ -73,7 +73,7 @@ export function Sidebar(p: Props) {
             {pod.createdAt !== undefined && <span className="node-meta">{formatAge(p.now - pod.createdAt)}</span>}
           </button>
           {selected && containers.length > 1 && (
-            <ul role="group" aria-label="Containers">
+            <ul role="group" aria-label={t('sidebar.containers')}>
               {containers.map((c) => (
                 <li key={c}>
                   <button className={`node ${selection.container === c ? 'selected' : ''}`} onClick={() => p.onContainer(c)}>
@@ -106,7 +106,7 @@ export function Sidebar(p: Props) {
           </button>
           <button
             className={`icon-btn star-btn ${isFav(context, namespace) ? 'on' : ''}`}
-            aria-label={`Favoritar ${namespace}`}
+            aria-label={t('sidebar.favorite', { ns: namespace })}
             aria-pressed={isFav(context, namespace)}
             onClick={() => nav.toggleFavorite(context, namespace)}
           >
@@ -122,12 +122,12 @@ export function Sidebar(p: Props) {
     <aside className="sidebar">
       <div className={`ctx-picker ${active?.production ? 'prod' : ''}`}>
         <label className="ctx-picker-label" htmlFor="ctx-select">
-          Contexto
+          {t('sidebar.context')}
           {active?.production && <span className="pill bad">PROD</span>}
         </label>
         <select
           id="ctx-select"
-          aria-label="Contexto"
+          aria-label={t('sidebar.context')}
           value={active?.name ?? ''}
           disabled={nav.contexts.length === 0}
           title={active?.name}
@@ -140,20 +140,20 @@ export function Sidebar(p: Props) {
                 {l.title}
                 {l.subtitle && ` (${l.subtitle})`}
                 {c.production ? ' — PROD' : ''}
-                {c.current ? ' • atual' : ''}
+                {c.current ? ` • ${t('sidebar.current')}` : ''}
               </option>
             )
           })}
           <option disabled>──────────</option>
-          <option value={MANAGE}>Gerenciar contextos…</option>
+          <option value={MANAGE}>{t('sidebar.manageContexts')}</option>
         </select>
         {managing && <ContextsModal nav={nav} onClose={() => setManaging(false)} />}
       </div>
-      <nav className="sidebar-scroll" aria-label="Navegação">
+      <nav className="sidebar-scroll" aria-label={t('sidebar.navigation')}>
         {nav.favorites.length > 0 && (
           <>
             <div className="section-label">
-              <IconStar /> Favoritos
+              <IconStar /> {t('sidebar.favorites')}
             </div>
             <ul className="tree">
               {nav.favorites.map((f) => (
@@ -168,19 +168,19 @@ export function Sidebar(p: Props) {
           </>
         )}
 
-        <div className="section-label">Namespaces</div>
+        <div className="section-label">{t('sidebar.namespaces')}</div>
         {active && (
           <input
             className="ns-input pod-filter"
             type="search"
-            aria-label="Procurar pod ou namespace"
-            placeholder="Procurar pod ou namespace…"
-            title="Procura nos nomes de namespaces e nos pods dos namespaces já abertos"
+            aria-label={t('sidebar.searchPods')}
+            placeholder={`${t('sidebar.searchPods')}…`}
+            title={t('sidebar.searchPodsHint')}
             value={podFilter}
             onChange={(e) => setPodFilter(e.target.value)}
           />
         )}
-        {!active && <p className="muted node">nenhum contexto no kubeconfig</p>}
+        {!active && <p className="muted node">{t('sidebar.noContexts')}</p>}
         {active && (
           <ul className="tree" aria-label="Namespaces">
             {!activeNs && <li className="muted node">carregando…</li>}
@@ -189,8 +189,8 @@ export function Sidebar(p: Props) {
               <li>
                 <input
                   className="ns-input"
-                  aria-label={`Outro namespace em ${active.name}`}
-                  placeholder="sem permissão para listar; digite e Enter"
+                  aria-label={t('sidebar.otherNamespace', { context: active.name })}
+                  placeholder={t('sidebar.cannotList')}
                   onKeyDown={(e) => {
                     const v = (e.target as HTMLInputElement).value.trim()
                     if (e.key === 'Enter' && v) {
@@ -204,12 +204,12 @@ export function Sidebar(p: Props) {
           </ul>
         )}
 
-        <div className="section-label">Arquivo</div>
+        <div className="section-label">{t('sidebar.file')}</div>
         <ul className="tree">
           <li>
-            <button className="node" onClick={p.onOpenFile} title="Abrir um log salvo (⌘ O) ou arraste o arquivo para a janela">
+            <button className="node" onClick={p.onOpenFile} title={t('sidebar.openFileHint')}>
               <IconFile />
-              <span className="node-label">Abrir arquivo de log…</span>
+              <span className="node-label">{t('sidebar.openFile')}</span>
               <kbd>⌘O</kbd>
             </button>
           </li>
@@ -224,7 +224,7 @@ export function Sidebar(p: Props) {
 
         {p.shellOpen && selection.pod && (
           <>
-            <div className="section-label">Shells</div>
+            <div className="section-label">{t('sidebar.terminals')}</div>
             <ul className="tree">
               <li>
                 <div className="node">
@@ -232,7 +232,7 @@ export function Sidebar(p: Props) {
                   <span className="node-label mono">
                     {selection.pod.name}/{selection.container}
                   </span>
-                  <button className="icon-btn" aria-label="Fechar shell" onClick={p.onCloseShell}>
+                  <button className="icon-btn" aria-label={t('sidebar.closeTerminal')} onClick={p.onCloseShell}>
                     <IconX />
                   </button>
                 </div>
@@ -244,9 +244,9 @@ export function Sidebar(p: Props) {
         {p.bookmarks.length > 0 && (
           <>
             <div className="section-label">
-              <IconBookmark /> Marcadas ({p.bookmarks.length})
+              <IconBookmark /> {t('sidebar.bookmarks', { n: p.bookmarks.length })}
             </div>
-            <ul className="tree" aria-label="Linhas marcadas">
+            <ul className="tree" aria-label={t('sidebar.bookmarksLabel')}>
               {p.bookmarks.map((e) => (
                 <li key={e.seq}>
                   <button className="node" onClick={() => p.onBookmark(e.seq)} title={e.raw}>
@@ -261,23 +261,16 @@ export function Sidebar(p: Props) {
         )}
       </nav>
       <div className="sidebar-footer">
-        <button className="footer-item" onClick={p.onAiPreferences} aria-label="Preferências de IA">
-          <IconGear /> IA
+        <button className="footer-item" onClick={p.onPreferences} aria-label={t('sidebar.preferences')}>
+          <IconSliders /> {t('sidebar.preferences')}
         </button>
-        <button className="footer-item" onClick={p.onShortcuts} aria-label="Atalhos">
-          <IconKeyboard /> Atalhos <span className="spacer" />
+        <button className="footer-item" onClick={p.onAiPreferences} aria-label={t('sidebar.aiPreferences')}>
+          <IconGear /> {t('sidebar.ai')}
+        </button>
+        <button className="footer-item" onClick={p.onShortcuts} aria-label={t('sidebar.shortcuts')}>
+          <IconKeyboard /> {t('sidebar.shortcuts')} <span className="spacer" />
           <kbd>?</kbd>
         </button>
-        <label className="footer-item">
-          <span>Tema</span>
-          <select aria-label="Tema" value={p.theme} onChange={(e) => p.onTheme(e.target.value as ThemeId)}>
-            {THEMES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
     </aside>
   )

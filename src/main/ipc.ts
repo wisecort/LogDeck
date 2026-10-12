@@ -8,6 +8,7 @@ import type { AiStatus } from '../shared/ai-settings'
 import type { KeyServiceName } from '../shared/ai'
 import type { AiSettingsStore } from './ai-settings-store'
 import { isProductionContext } from '../k8s/contexts'
+import { isMenuLang, type MenuLang } from './menu'
 import type { K8sService } from '../k8s/service'
 import { PodShell, type ShellRegistry } from '../k8s/shell'
 import { LogStream, type StreamRegistry } from '../k8s/stream'
@@ -34,6 +35,8 @@ export interface IpcDeps {
   explain: ExplainService
   /** Only this renderer may call the API. */
   trusted: () => WebContents | undefined
+  /** Rebuilds the native menu in the interface language. */
+  onLanguage?: (lang: MenuLang) => void
 }
 
 const DEFAULT_TAIL = 1000
@@ -219,5 +222,10 @@ export function registerIpc(deps: IpcDeps): void {
     const value = str(text, 'texto')
     if (value.length > MAX_CLIPBOARD_CHARS) throw new Error('Texto grande demais para copiar')
     clipboard.writeText(value)
+  })
+
+  handle(deps, IPC.setLanguage, async (_e, lang: unknown) => {
+    if (!isMenuLang(lang)) throw new Error('idioma inválido')
+    deps.onLanguage?.(lang)
   })
 }

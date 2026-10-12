@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, Menu, session, shell } from 'electron'
+import { app, BrowserWindow, session, shell } from 'electron'
 import { ExplainService } from '../ai/explain'
 import { createProvider } from '../ai/providers'
 import { Keychain } from '../ai/providers/keychain'
@@ -7,6 +7,7 @@ import { K8sService } from '../k8s/service'
 import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
 import { registerIpc } from './ipc'
+import { buildMenu } from './menu'
 import { AiSettingsStore } from './ai-settings-store'
 import { PresetStore } from './presets-store'
 
@@ -36,28 +37,6 @@ let mainWindow: BrowserWindow | undefined
 function closeAll(): Promise<void> {
   shells.closeAll()
   return registry.stopAll()
-}
-
-function buildMenu(): void {
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate([
-      {
-        label: APP_NAME,
-        submenu: [
-          { role: 'about', label: `Sobre o ${APP_NAME}` },
-          { type: 'separator' },
-          { role: 'hide', label: `Ocultar ${APP_NAME}` },
-          { role: 'hideOthers', label: 'Ocultar outros' },
-          { role: 'unhide', label: 'Mostrar tudo' },
-          { type: 'separator' },
-          { role: 'quit', label: `Encerrar ${APP_NAME}` },
-        ],
-      },
-      { role: 'editMenu', label: 'Editar' },
-      { role: 'viewMenu', label: 'Visualizar' },
-      { role: 'windowMenu', label: 'Janela' },
-    ]),
-  )
 }
 
 function createWindow(): void {
@@ -111,8 +90,8 @@ void app.whenReady().then(() => {
   // Tests point this at a fake `security` so they never read the user's Keychain.
   const keychain = new Keychain({ ...(process.env['LOGDECK_SECURITY_BIN'] && { binary: process.env['LOGDECK_SECURITY_BIN'] }) })
   const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }) })
-  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents })
-  buildMenu()
+  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents, onLanguage: (lang) => buildMenu(APP_NAME, lang) })
+  buildMenu(APP_NAME)
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

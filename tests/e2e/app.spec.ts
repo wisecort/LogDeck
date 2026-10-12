@@ -9,7 +9,7 @@ test('opens as LogDeck', async () => {
   // Fake kubectl + fake kubeconfig: tests never read ~/.kube (AGENTS.md).
   const fake = fakeKubectlEnv()
   const app = await electron.launch({
-    args: ['.'],
+    args: ['.', '--lang=pt-BR'],
     env: { ...(fake.env as Record<string, string>), LOGDECK_USER_DATA: mkdtempSync(join(tmpdir(), 'logdeck-e2e-')) },
   })
   try {

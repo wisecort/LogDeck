@@ -32,19 +32,16 @@ export const IconChart = () => (
     <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
   </Svg>
 )
-export const IconDownload = () => (
+/** Export: document with an arrow leaving it (distinct from "go to top"). */
+export const IconExport = () => (
   <Svg>
-    <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+    <path d="M14 3v5h5M11 13l9-9M15 4h5v5" />
   </Svg>
 )
 export const IconToTop = () => (
   <Svg>
     <path d="M5 4h14M12 20V9M7 13l5-5 5 5" />
-  </Svg>
-)
-export const IconToBottom = () => (
-  <Svg>
-    <path d="M5 20h14M12 4v11M7 11l5 5 5-5" />
   </Svg>
 )
 export const IconTrash = () => (
@@ -120,5 +117,13 @@ export const IconFile = () => (
   <Svg>
     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
     <path d="M14 3v5h5M9 13h6M9 17h6" />
+  </Svg>
+)
+export const IconSliders = () => (
+  <Svg>
+    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+    <circle cx="16" cy="6" r="2" />
+    <circle cx="10" cy="12" r="2" />
+    <circle cx="18" cy="18" r="2" />
   </Svg>
 )
