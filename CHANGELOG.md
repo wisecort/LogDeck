@@ -13,6 +13,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - CI em macOS, Linux (xvfb) e Windows; `.gitattributes` mantém LF (os logs de teste dependem disso).
 - Release automática: tag `v*` gera os pacotes nos três sistemas e anexa à Release com os checksums.
 - ADR 0003.
+- Homebrew: `brew install --cask wisecort/tap/logdeck` (tap em github.com/wisecort/homebrew-tap, instala o `kubectl` junto); `make tap VERSION=x.y.z` atualiza o cask a partir dos checksums da release.
 
 ## [1.0.0] — 12/10/2026
 
