@@ -93,6 +93,8 @@ void app.whenReady().then(() => {
   const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }) })
   registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents, onLanguage: (lang) => buildMenu(APP_NAME, lang) })
   buildMenu(APP_NAME)
+  // Packaged apps get build/icon.icns from electron-builder; in `make dev` show the same icon in the Dock.
+  if (!app.isPackaged) app.dock?.setIcon(join(app.getAppPath(), 'build/icon.png'))
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

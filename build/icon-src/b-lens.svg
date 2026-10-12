@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e3b43"/>
+      <stop offset="1" stop-color="#071a24"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.75" cy="0.15" r="0.9">
+      <stop offset="0" stop-color="#2ee6b6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#2ee6b6" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="lens"><circle cx="560" cy="500" r="190"/></clipPath>
+    <filter id="soft"><feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000" flood-opacity="0.5"/></filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#glow)"/>
+  <rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="2"/>
+  <!-- dim log lines behind -->
+  <g stroke="#5f8f96" stroke-opacity="0.45" stroke-width="22" stroke-linecap="round">
+    <line x1="220" y1="300" x2="600" y2="300"/>
+    <line x1="220" y1="370" x2="740" y2="370"/>
+    <line x1="220" y1="440" x2="520" y2="440"/>
+    <line x1="220" y1="510" x2="700" y2="510"/>
+    <line x1="220" y1="580" x2="610" y2="580"/>
+    <line x1="220" y1="650" x2="760" y2="650"/>
+    <line x1="220" y1="720" x2="480" y2="720"/>
+  </g>
+  <!-- inside the lens: magnified, colored -->
+  <g clip-path="url(#lens)">
+    <circle cx="560" cy="500" r="190" fill="#0a2830"/>
+    <g stroke-linecap="round" stroke-width="34">
+      <line x1="390" y1="410" x2="760" y2="410" stroke="#2ee6b6"/>
+      <line x1="390" y1="500" x2="760" y2="500" stroke="#ff5d73"/>
+      <line x1="390" y1="590" x2="680" y2="590" stroke="#f2c14e"/>
+    </g>
+  </g>
+  <g filter="url(#soft)">
+    <circle cx="560" cy="500" r="190" fill="none" stroke="#e8fff9" stroke-width="30"/>
+    <line x1="700" y1="640" x2="810" y2="750" stroke="#e8fff9" stroke-width="56" stroke-linecap="round"/>
+  </g>
+</svg>
