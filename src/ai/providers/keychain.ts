@@ -1,9 +1,9 @@
 // API keys in the macOS Keychain via /usr/bin/security (ADR 0002). Only LogDeck items are touched.
 import { userInfo } from 'node:os'
 import { runProcess } from './process'
+import { assertKey, assertKeyService, type KeyService, type SecretStore } from './secrets'
 
-export const KEY_SERVICES = ['logdeck-anthropic-api', 'logdeck-openai-compatible-api'] as const
-export type KeyService = (typeof KEY_SERVICES)[number]
+export { KEY_SERVICES, type KeyService } from './secrets'
 
 const LABELS: Record<KeyService, string> = {
   'logdeck-anthropic-api': 'LogDeck — Anthropic API key',
@@ -17,7 +17,7 @@ export interface KeychainOptions {
   account?: string
 }
 
-export class Keychain {
+export class Keychain implements SecretStore {
   private readonly binary: string
   private readonly account: string
 
@@ -27,7 +27,7 @@ export class Keychain {
   }
 
   private check(service: string): asserts service is KeyService {
-    if (!(KEY_SERVICES as readonly string[]).includes(service)) throw new Error(`item do Keychain não permitido: ${service}`)
+    assertKeyService(service)
   }
 
   private run(args: string[]) {
@@ -50,10 +50,7 @@ export class Keychain {
   /** Note: the key is passed as an argument to `security` for a few milliseconds (ADR 0002). */
   async set(service: KeyService, key: string): Promise<void> {
     this.check(service)
-    // eslint-disable-next-line no-control-regex -- control characters are rejected on purpose
-    if (typeof key !== 'string' || key.length === 0 || key.length > 4096 || /[\u0000-\u001f\u007f]/.test(key)) {
-      throw new Error('chave inválida')
-    }
+    assertKey(key)
     const r = await this.run(['add-generic-password', '-a', this.account, '-s', service, '-l', LABELS[service], '-U', '-w', key])
     if (r.code !== 0) throw new Error(`Keychain: ${r.stderr.trim() || `código ${r.code}`}`)
   }

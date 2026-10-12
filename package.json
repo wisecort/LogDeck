@@ -1,7 +1,7 @@
 {
   "name": "logdeck",
   "productName": "LogDeck",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Log explorer de Kubernetes para macOS (somente leitura)",
   "private": true,
   "license": "MIT",
@@ -24,7 +24,11 @@
     "test:e2e": "playwright test",
     "harness": "bash scripts/harness.sh",
     "postinstall": "node scripts/fix-node-pty.mjs",
-    "release:mac": "electron-builder --mac dmg zip --arm64 --publish never"
+    "release:mac": "electron-builder --mac --publish never",
+    "package:linux": "electron-builder --linux --dir --publish never",
+    "package:win": "electron-builder --win --dir --publish never",
+    "release:linux": "electron-builder --linux --publish never",
+    "release:win": "electron-builder --win --publish never"
   },
   "build": {
     "appId": "io.github.wisecort.logdeck",
@@ -34,7 +38,8 @@
     },
     "files": [
       "out/**",
-      "package.json"
+      "package.json",
+      "build/icon.png"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
@@ -42,13 +47,15 @@
         {
           "target": "dmg",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         },
         {
           "target": "zip",
           "arch": [
-            "arm64"
+            "arm64",
+            "x64"
           ]
         }
       ],
@@ -60,7 +67,50 @@
     "dmg": {
       "title": "LogDeck ${version}"
     },
-    "artifactName": "LogDeck-${version}-${arch}.${ext}"
+    "artifactName": "LogDeck-${version}-${arch}.${ext}",
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Development",
+      "maintainer": "Matheus Corteletti <61605704+wisecort@users.noreply.github.com>",
+      "synopsis": "Explorador de logs de Kubernetes/OKD (somente leitura)",
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "LogDeck"
+    }
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.133.0",
@@ -89,5 +139,6 @@
     "typescript-eslint": "8.71.1",
     "vite": "7.3.7",
     "vitest": "5.0.4"
-  }
+  },
+  "homepage": "https://github.com/wisecort/LogDeck"
 }

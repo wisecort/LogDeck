@@ -5,9 +5,19 @@
 # Env:
 #   HARNESS_SKIP_INSTALL=1     skip `npm ci` (local iteration only; CI never sets it)
 #   HARNESS_REQUIRE_GITLEAKS=1 fail instead of warn when gitleaks is missing (CI)
+#
+# Runs on macOS, Linux and Windows (Git Bash). Steps that need the POSIX fakes in tests/bin
+# (integration, E2E) are skipped on Windows with a ⚠️.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+case "$(uname -s)" in
+  Darwin) OS=mac ;;
+  Linux) OS=linux ;;
+  MINGW* | MSYS* | CYGWIN*) OS=win ;;
+  *) OS=unknown ;;
+esac
 
 RESULTS=()
 STEP_WARNING=""
@@ -60,6 +70,44 @@ build_mac() {
   [[ "$bundle_id" == "io.github.wisecort.logdeck" ]]
 }
 
+build_linux() {
+  npm run build
+  npm run package:linux
+  [[ -x release/linux-unpacked/logdeck ]] || { echo "release/linux-unpacked/logdeck não encontrado"; return 1; }
+}
+
+build_win() {
+  npm run build
+  npm run package:win
+  [[ -f release/win-unpacked/LogDeck.exe ]] || { echo "release/win-unpacked/LogDeck.exe não encontrado"; return 1; }
+}
+
+build_app() {
+  case "$OS" in
+    mac) build_mac ;;
+    linux) build_linux ;;
+    win) build_win ;;
+    *) echo "sistema não suportado: $(uname -s)"; return 1 ;;
+  esac
+}
+
+posix_only() {
+  if [[ "$OS" == "win" ]]; then
+    echo "⚠️  os fakes de tests/bin são scripts POSIX; etapa ignorada no Windows"
+    STEP_WARNING="ignorada no Windows (fakes POSIX)"
+    return 0
+  fi
+  "$@"
+}
+
+e2e() {
+  if [[ "$OS" == "linux" && -z "${DISPLAY:-}" ]] && command -v xvfb-run >/dev/null 2>&1; then
+    xvfb-run -a npm run test:e2e
+  else
+    npm run test:e2e
+  fi
+}
+
 audit() {
   npm audit --omit=dev --audit-level=high
 }
@@ -81,9 +129,9 @@ step "2. Lint" npm run lint
 step "3. Typecheck" npm run typecheck
 step "4. Guardrails" node scripts/guardrails.mjs
 step "5. Testes unitários + cobertura" npm run test:unit
-step "6. Testes de integração (kubectl fake)" npm run test:integration
-step "7. Build do app macOS (sem assinatura)" build_mac
-step "8. E2E" npm run test:e2e
+step "6. Testes de integração (kubectl fake)" posix_only npm run test:integration
+step "7. Build do app (${OS}, sem assinatura)" build_app
+step "8. E2E" posix_only e2e
 step "9. Auditoria de dependências" audit
 step "10. Segredos (gitleaks)" secrets
 

@@ -1,7 +1,7 @@
 // Small spawn helper for provider CLIs (claude, security). argv array, never a shell (G2).
 import { spawn } from 'node:child_process'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { currentPlatform, withExtraPaths } from '../../platform/paths'
 
 export interface RunResult {
   code: number
@@ -20,9 +20,7 @@ export class ProcessTimeoutError extends Error {}
 
 /** Finder-launched apps get a minimal PATH; add where CLIs are usually installed. */
 export function cliEnv(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
-  const parts = (base['PATH'] ?? '').split(':').filter(Boolean)
-  for (const p of [join(homedir(), '.local/bin'), '/opt/homebrew/bin', '/usr/local/bin']) if (!parts.includes(p)) parts.push(p)
-  return { ...base, PATH: parts.join(':') }
+  return withExtraPaths(base, currentPlatform(), homedir())
 }
 
 export function runProcess(binary: string, args: readonly string[], opts: RunOptions = {}): Promise<RunResult> {

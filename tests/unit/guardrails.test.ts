@@ -132,12 +132,12 @@ describe('guardrails.mjs', () => {
     expect(r.out).toContain('left-pad')
   })
 
-  it('fails when electron-builder targets Windows or Linux (G10)', () => {
+  it('allows platform branches only in src/platform/ (G10, 1.1.0)', () => {
+    expect(run(project({ 'src/platform/paths.ts': "if (process.platform === 'linux') {}\n" })).code).toBe(0)
     const pkg = JSON.parse(BASE['package.json']!)
     pkg.build.linux = { target: 'AppImage' }
-    const r = run(project({ 'package.json': JSON.stringify(pkg) }))
-    expect(r.code).toBe(1)
-    expect(r.out).toContain('G10-platform')
+    pkg.build.win = { target: 'nsis' }
+    expect(run(project({ 'package.json': JSON.stringify(pkg) })).code).toBe(0)
   })
 
   it('exits with 2 in --hook mode so Claude Code sees the violation', () => {

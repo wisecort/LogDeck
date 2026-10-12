@@ -5,7 +5,7 @@
 
 ## 1. Visão
 
-O **LogDeck** é um app desktop para macOS que funciona como **log explorer de Kubernetes/OKD, somente leitura**. O usuário escolhe um contexto do kubeconfig, navega até namespace, pod e container, abre o log ao vivo e analisa por **nível** (cores e contadores) e por **texto** (ex.: `FPM`, `AH01075`, `timeout`). Um painel agrupa erros e timeouts por assinatura e, sob demanda, a IA explica os erros selecionados.
+O **LogDeck** é um app desktop para macOS, Linux e Windows (desde a 1.1.0) que funciona como **log explorer de Kubernetes/OKD, somente leitura**. O usuário escolhe um contexto do kubeconfig, navega até namespace, pod e container, abre o log ao vivo e analisa por **nível** (cores e contadores) e por **texto** (ex.: `FPM`, `AH01075`, `timeout`). Um painel agrupa erros e timeouts por assinatura e, sob demanda, a IA explica os erros selecionados.
 
 Projeto **greenfield**: o código-fonte do Logui não está disponível (é um app de terceiro, `com.marcosvidolin.logui`). O LogDeck é **inspirado no Logui**, que serviu de referência para os problemas reais P1–P5. Detalhes em [ADR 0001](docs/adr/0001-greenfield-electron-typescript.md).
 
@@ -30,7 +30,7 @@ Projeto **greenfield**: o código-fonte do Logui não está disponível (é um a
 | Lista virtualizada | `@tanstack/react-virtual` |
 | Terminal (P5) | `node-pty` + `xterm.js` |
 | IA | Claude Code CLI (`spawn`), API da Anthropic (`@anthropic-ai/sdk`) ou API compatível com OpenAI (`fetch`), sempre no processo main |
-| Build | electron-builder, alvo macOS arm64 + x64, sem assinatura |
+| Build | electron-builder, sem assinatura: macOS `.dmg`/`.zip` (arm64 e x64), Linux AppImage/`.deb`/`.rpm` (x64), Windows instalador `.exe` (x64) |
 
 Toda dependência é justificada no PR (G9).
 
@@ -131,7 +131,7 @@ Implementado só depois de F1–F6 verdes no harness. Nenhum teste automático c
   | **API compatível com OpenAI** | `POST {base}/chat/completions` com `fetch` no processo main, sem SDK; timeout de 120 s. Atalhos: Ollama (`http://localhost:11434/v1`), LM Studio (`http://localhost:1234/v1`), DeepSeek, OpenRouter, Groq e "Personalizado" (URL base + modelo) | depende do provedor; Ollama/LM Studio rodam localmente e nada sai da máquina |
 
   - HTTPS é obrigatório, exceto para `localhost`/`127.0.0.1`.
-  - Chaves de API ficam no **Keychain do macOS**, em itens próprios (`logdeck-anthropic-api`, `logdeck-openai-compatible-api`), lidos e gravados pelo `/usr/bin/security` no processo main. A chave nunca chega ao renderer, que só sabe "chave configurada: sim/não". Ollama/LM Studio não usam chave.
+  - Chaves de API ficam no **cofre do sistema**: no macOS, no **Keychain**, em itens próprios (`logdeck-anthropic-api`, `logdeck-openai-compatible-api`), lidos e gravados pelo `/usr/bin/security`; no Windows e no Linux, criptografadas com o `safeStorage` do Electron (DPAPI, libsecret ou KWallet) em `userData/secrets.json` (0600), e no Linux sem cofre de verdade (`basic_text`) a chave não é gravada. Tudo no processo main. A chave nunca chega ao renderer, que só sabe "chave configurada: sim/não". Ollama/LM Studio não usam chave.
   - "Testar provedor" envia um prompt fixo ("Responda apenas OK"), sem nenhum log.
   - Codex CLI e Gemini CLI ficam no backlog. Decisão e custos em [ADR 0002](docs/adr/0002-ai-providers.md).
 - **F7.1** O botão fica habilitado só com ao menos um grupo selecionado no F6. O payload contém só as linhas desses grupos, limitado a **200 linhas ou 32 KB** (o que vier primeiro, priorizando as mais recentes de cada grupo).
@@ -218,7 +218,7 @@ chown: changing ownership of '/var/log/php-fpm/error.log': Operation not permitt
 | RNF6 | Backpressure: buffer cheio descarta as mais antigas e mostra "N linhas descartadas"; nunca congela | `buffer.test` + integração |
 | RNF7 | Nenhum processo kubectl órfão | integração (F3.5) |
 | RNF8 | Cobertura ≥ **90%** em `src/logs/`, `src/k8s/args.ts`, `src/ai/redact.ts` | thresholds no Vitest |
-| RNF9 | macOS 13+ (arm64 e x64) | build no CI `macos-latest` |
+| RNF9 | macOS 13+ (arm64 e x64), Linux x64 (glibc, com GNOME Keyring/KWallet para guardar chaves de IA), Windows 10+ x64 | CI em `macos-latest`, `ubuntu-latest` e `windows-latest`; no Windows, integração e E2E ficam de fora (os fakes de `tests/bin` são scripts POSIX) |
 
 ## 6. Testes
 
@@ -241,7 +241,6 @@ Integração com cluster real (`kind`) é **manual**, via `make harness-integrat
 ## 7. Fora de escopo (MVP 2 → [`docs/backlog-mvp2.md`](docs/backlog-mvp2.md))
 
 - Publicação na internet, modo web, multiusuário
-- Linux, Windows, build multiplataforma
 - Qualquer escrita no cluster (scale, delete, rollout, edit, apply, patch...)
 - Assinatura/notarização Apple e auto-update
 - Logs agregados de vários pods/deployment ao mesmo tempo
@@ -265,5 +264,5 @@ Integração com cluster real (`kind`) é **manual**, via `make harness-integrat
 |---|---|---|
 | 1 | Bundle id | aprovado: `io.github.wisecort.logdeck` |
 | 2 | `kubectl version --client` no G1 | aprovado em 12/10/2026 |
-| 3 | Repositório e CI | aprovado: GitHub `wisecort/LogDeck`, GitHub Actions em `macos-latest` |
+| 3 | Repositório e CI | aprovado: GitHub `wisecort/LogDeck`, GitHub Actions em macOS, Linux e Windows; release automática ao criar tag `v*` |
 | 4 | Licença | aprovado: MIT |

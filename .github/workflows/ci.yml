@@ -14,8 +14,15 @@ concurrency:
 
 jobs:
   harness:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
         with:
@@ -26,11 +33,20 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      - name: Install gitleaks
+      - name: Install gitleaks (macOS)
+        if: runner.os == 'macOS'
         run: brew install gitleaks
 
+      - name: Linux deps for Electron E2E (xvfb, user namespaces for the Chromium sandbox)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+
       - name: Harness
-        run: make harness
+        run: bash scripts/harness.sh
         env:
-          HARNESS_REQUIRE_GITLEAKS: '1'
+          # gitleaks is required on macOS; Linux/Windows warn and skip (same history, scanned once).
+          HARNESS_REQUIRE_GITLEAKS: ${{ runner.os == 'macOS' && '1' || '0' }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'

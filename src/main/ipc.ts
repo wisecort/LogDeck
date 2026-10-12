@@ -3,7 +3,7 @@ import { basename } from 'node:path'
 import { clipboard, dialog, ipcMain, shell, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import type { ExplainService } from '../ai/explain'
 import { detectClaude } from '../ai/providers/claude-cli'
-import type { Keychain } from '../ai/providers/keychain'
+import type { SecretStore } from '../ai/providers/secrets'
 import type { AiStatus } from '../shared/ai-settings'
 import type { KeyServiceName } from '../shared/ai'
 import type { AiSettingsStore } from './ai-settings-store'
@@ -32,7 +32,7 @@ export interface IpcDeps {
   shells: ShellRegistry
   presets: PresetStore
   aiSettings: AiSettingsStore
-  keychain: Keychain
+  keychain: SecretStore
   explain: ExplainService
   /** Only this renderer may call the API. */
   trusted: () => WebContents | undefined
@@ -177,7 +177,7 @@ export function registerIpc(deps: IpcDeps): void {
     deps.shells.close(str(shellId, 'shellId'))
   })
 
-  // F7: AI. Keys go into the Keychain and never come back to the renderer.
+  // F7: AI. Keys go into the OS vault (Keychain, DPAPI, libsecret) and never come back to the renderer.
   const status = async (): Promise<AiStatus> => ({
     settings: deps.aiSettings.get(),
     claude: await detectClaude(),

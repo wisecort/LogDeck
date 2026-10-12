@@ -19,6 +19,7 @@ import { TopBar, type LogOptions, type SearchState } from './components/TopBar'
 import { VolumeChart } from './components/VolumeChart'
 import { parseTerms } from './format'
 import { browserRegexRunner } from './regex-runner'
+import { isMacUserAgent } from '../platform/keys'
 import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from './i18n'
 import { LogFileError, MAX_LOG_FILE_BYTES } from '../logs/file'
 import { PreferencesModal } from './components/PreferencesModal'
@@ -30,6 +31,8 @@ const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
 const AROUND_RADIUS = 10
 const MAX_AI_LINES = 200
+/** ⌘ on macOS, Ctrl on Windows/Linux. */
+const IS_MAC = isMacUserAgent(navigator.userAgent)
 const EMPTY_SEARCH: SearchState = { text: '', regex: false, caseSensitive: false, exclude: '' }
 
 export function App() {
@@ -302,14 +305,15 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement
-      if (e.metaKey && e.key === 'o') {
+      const mod = IS_MAC ? e.metaKey : e.ctrlKey
+      if (mod && e.key === 'o') {
         e.preventDefault()
         fileRef.current?.click()
-      } else if (e.metaKey && e.key === 'f') {
+      } else if (mod && e.key === 'f') {
         e.preventDefault()
         searchRef.current?.focus()
         searchRef.current?.select()
-      } else if (e.metaKey && e.key === 'g' && rows.length > 0) {
+      } else if (mod && e.key === 'g' && rows.length > 0) {
         e.preventDefault()
         setFrozen((f) => f ?? version)
         setCursor((c) => (c === undefined ? (e.shiftKey ? rows.length - 1 : 0) : (c + (e.shiftKey ? rows.length - 1 : 1)) % rows.length))

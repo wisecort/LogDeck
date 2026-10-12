@@ -1,7 +1,7 @@
 // Single place that spawns kubectl (G2): argv array, shell: false, allowlist checked first.
 import { spawn, type ChildProcess } from 'node:child_process'
-import { accessSync, constants } from 'node:fs'
-import { isAbsolute, join } from 'node:path'
+import { homedir } from 'node:os'
+import { currentPlatform, kubectlInstallHint, resolveExecutable as resolveIn, withExtraPaths, type Platform } from '../platform/paths'
 import { assertReadOnly } from './args'
 
 export interface KubectlOptions {
@@ -21,14 +21,11 @@ export class KubectlError extends Error {
   override name = 'KubectlError'
 }
 
-const EXTRA_PATHS = ['/opt/homebrew/bin', '/usr/local/bin']
 const DEFAULT_TIMEOUT_MS = 30_000
 
-/** Apps opened from Finder get a minimal PATH; add Homebrew so kubectl and auth plugins resolve. */
-export function kubectlEnv(base: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const parts = (base['PATH'] ?? '').split(':').filter(Boolean)
-  for (const p of EXTRA_PATHS) if (!parts.includes(p)) parts.push(p)
-  return { ...base, PATH: parts.join(':') }
+/** Apps opened from the Finder/Start menu get a minimal PATH; add the usual dirs so kubectl and auth plugins resolve. */
+export function kubectlEnv(base: NodeJS.ProcessEnv, platform: Platform = currentPlatform()): NodeJS.ProcessEnv {
+  return withExtraPaths(base, platform, base['HOME'] ?? base['USERPROFILE'] ?? homedir())
 }
 
 const MESSAGES: ReadonlyArray<[RegExp, string]> = [
@@ -40,9 +37,9 @@ const MESSAGES: ReadonlyArray<[RegExp, string]> = [
 ]
 
 /** Actionable Portuguese message for common kubectl failures (F1.5). */
-export function friendlyError(stderrOrError: string | NodeJS.ErrnoException): string {
+export function friendlyError(stderrOrError: string | NodeJS.ErrnoException, platform: Platform = currentPlatform()): string {
   if (typeof stderrOrError !== 'string') {
-    if (stderrOrError.code === 'ENOENT') return 'kubectl não encontrado. Instale com: brew install kubectl'
+    if (stderrOrError.code === 'ENOENT') return `kubectl não encontrado. Instale com: ${kubectlInstallHint(platform)}`
     stderrOrError = stderrOrError.message
   }
   const text = stderrOrError.trim()
@@ -50,19 +47,9 @@ export function friendlyError(stderrOrError: string | NodeJS.ErrnoException): st
   return hit ? `${hit[1]} (${text.split('\n')[0]})` : text
 }
 
-/** Absolute path of `name` in env.PATH (node-pty does not search the PATH we pass). */
+/** Absolute path of `name` in env PATH (node-pty does not search the PATH we pass). */
 export function resolveExecutable(name: string, env: NodeJS.ProcessEnv): string | undefined {
-  if (isAbsolute(name)) return name
-  for (const dir of (env['PATH'] ?? '').split(':').filter(Boolean)) {
-    const candidate = join(dir, name)
-    try {
-      accessSync(candidate, constants.X_OK)
-      return candidate
-    } catch {
-      // keep looking
-    }
-  }
-  return undefined
+  return resolveIn(name, env)
 }
 
 export function spawnKubectl(args: string[], opts: KubectlOptions = {}): ChildProcess {
