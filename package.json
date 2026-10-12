@@ -1,7 +1,7 @@
 {
   "name": "logdeck",
   "productName": "LogDeck",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Log explorer de Kubernetes para macOS (somente leitura)",
   "private": true,
   "license": "MIT",
@@ -23,7 +23,8 @@
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "harness": "bash scripts/harness.sh",
-    "postinstall": "node scripts/fix-node-pty.mjs"
+    "postinstall": "node scripts/fix-node-pty.mjs",
+    "release:mac": "electron-builder --mac dmg zip --arm64 --publish never"
   },
   "build": {
     "appId": "io.github.wisecort.logdeck",
@@ -38,14 +39,28 @@
     "mac": {
       "category": "public.app-category.developer-tools",
       "target": [
-        "dir",
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
       ],
       "identity": null
     },
     "asarUnpack": [
       "node_modules/node-pty/**"
-    ]
+    ],
+    "dmg": {
+      "title": "LogDeck ${version}"
+    },
+    "artifactName": "LogDeck-${version}-${arch}.${ext}"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.133.0",

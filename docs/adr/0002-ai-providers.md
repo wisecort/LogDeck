@@ -66,4 +66,3 @@ Cada provedor processa o texto mascarado num lugar diferente: Anthropic (Claude 
 ## Pendências
 
 - Testes manuais com o `claude` real e com a API da Anthropic (texto fictício do fixture): **autorizados em 12/10/2026**, executados ao fim da fase 7.
-- A chave colada no chat em 12/10/2026 deve ser revogada após os testes (ficou no histórico da conversa).
