@@ -26,7 +26,9 @@ export const ptPT: Record<MessageKey, string> = {
   'sidebar.aiPreferences': 'Definições de IA',
 
   'ctx.title': 'Gerir contextos',
-  'ctx.help': 'Os contextos ocultos desaparecem do seletor apenas no LogDeck. A aplicação nunca altera o seu kubeconfig: para remover de vez, copie o comando e execute-o no terminal.',
+  'ctx.aliasLabel': 'Nome no LogDeck para {name}',
+  'ctx.aliasPh': 'Mudar o nome (apenas no LogDeck)',
+  'ctx.help': 'Mudar o nome e ocultar aplicam-se apenas ao LogDeck. A aplicação nunca altera o seu kubeconfig: para remover de vez, copie o comando e execute-o no terminal.',
 
   'top.search': 'Pesquisar',
   'top.searchPh': 'Pesquisar logs… (⌘F)',

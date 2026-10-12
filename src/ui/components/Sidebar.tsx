@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { formatAge } from '../../k8s/pods'
 import type { LogEntry } from '../../logs/types'
 import type { PodInfo } from '../../shared/ipc'
-import { contextLabel } from '../context-view'
+import { displayLabel } from '../context-view'
 import { ContextsModal } from './ContextsModal'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
@@ -130,11 +130,11 @@ export function Sidebar(p: Props) {
           aria-label={t('sidebar.context')}
           value={active?.name ?? ''}
           disabled={nav.contexts.length === 0}
-          title={active?.name}
+          title={active ? displayLabel(active.name, nav.aliases).title : undefined}
           onChange={(e) => (e.target.value === MANAGE ? setManaging(true) : nav.selectContext(e.target.value))}
         >
           {nav.visible.map((c) => {
-            const l = contextLabel(c.name)
+            const l = displayLabel(c.name, nav.aliases)
             return (
               <option key={c.name} value={c.name} title={c.name}>
                 {l.title}

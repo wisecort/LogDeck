@@ -46,7 +46,7 @@ export const es: Record<MessageKey, string> = {
   'sidebar.preferences': 'Preferencias',
 
   'ctx.title': 'Administrar contextos',
-  'ctx.help': 'Los contextos ocultos desaparecen del selector solo en LogDeck. La app nunca modifica su kubeconfig: para eliminar uno definitivamente, copie el comando y ejecútelo en una terminal.',
+  'ctx.help': 'Renombrar y ocultar solo afectan a LogDeck. La app nunca modifica su kubeconfig: para eliminar uno definitivamente, copie el comando y ejecútelo en una terminal.',
   'ctx.filter': 'Filtrar contextos',
   'ctx.show': 'Mostrar',
   'ctx.hide': 'Ocultar',
@@ -54,6 +54,8 @@ export const es: Record<MessageKey, string> = {
   'ctx.hideLabel': 'Ocultar {name}',
   'ctx.removeCmd': 'Comando para eliminar',
   'ctx.removeCmdLabel': 'Copiar comando para eliminar {name}',
+  'ctx.aliasLabel': 'Nombre en LogDeck para {name}',
+  'ctx.aliasPh': 'Renombrar (solo en LogDeck)',
   'ctx.hiddenOne': '1 oculto',
   'ctx.hiddenMany': '{n} ocultos',
 

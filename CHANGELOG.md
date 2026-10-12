@@ -100,3 +100,4 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Interface em pt-BR, pt-PT, inglês e espanhol (dicionários com as mesmas chaves e placeholders, verificados por teste); menu nativo traduzido via `app:set-language`.
 - Créditos: "Feito por Matheus Corteletti — Wise" em Preferências → Sobre, no painel Sobre do macOS e no `package.json`.
 - "Seguindo" virou "Ao vivo"; botão "Terminal" com texto; ícone duplicado de "Ir para o fim" removido e exportar com ícone próprio; status "Conectado".
+- Renomear contextos só no LogDeck (apelido) e nomes curtos para EKS (`cluster (EKS · região)`, sem número da conta) e GKE.

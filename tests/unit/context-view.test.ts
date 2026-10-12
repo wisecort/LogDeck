@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ContextInfo } from '../../src/shared/ipc'
-import { contextLabel, deleteContextCommand, pickActiveContext, visibleContexts } from '../../src/ui/context-view'
+import { contextLabel, deleteContextCommand, displayLabel, pickActiveContext, visibleContexts } from '../../src/ui/context-view'
 
 const ctx = (name: string, current = false): ContextInfo => ({ name, cluster: 'c', current, production: /prod|prd/.test(name) })
 const HML = ctx('portal-hml/api-hml-example-internal:6443/dev', true)
@@ -55,5 +55,29 @@ describe('deleteContextCommand', () => {
   it('is only text for the user to run, with the name single-quoted', () => {
     expect(deleteContextCommand(HML.name)).toBe("kubectl config delete-context 'portal-hml/api-hml-example-internal:6443/dev'")
     expect(deleteContextCommand("a'b")).toBe("kubectl config delete-context 'a'\\''b'")
+  })
+})
+
+describe('cloud context names', () => {
+  it('EKS ARN shows the cluster name and region, never the account id', () => {
+    const l = contextLabel('arn:aws:eks:us-east-1:123456789012:cluster/demo-cluster')
+    expect(l).toEqual({ title: 'demo-cluster', subtitle: 'EKS · us-east-1' })
+    expect(JSON.stringify(l)).not.toContain('123456789012')
+  })
+
+  it('GKE names show the cluster and the zone', () => {
+    expect(contextLabel('gke_my-project_southamerica-east1-a_demo')).toEqual({ title: 'demo', subtitle: 'GKE · southamerica-east1-a' })
+  })
+})
+
+describe('displayLabel', () => {
+  const name = 'arn:aws:eks:us-east-1:123456789012:cluster/demo-cluster'
+  it('a LogDeck alias replaces the whole label', () => {
+    expect(displayLabel(name, { [name]: 'eks-cluster' })).toEqual({ title: 'eks-cluster', subtitle: '' })
+  })
+
+  it('without alias falls back to contextLabel; blank aliases are ignored', () => {
+    expect(displayLabel(name, {})).toEqual(contextLabel(name))
+    expect(displayLabel(name, { [name]: '  ' })).toEqual(contextLabel(name))
   })
 })

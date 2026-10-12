@@ -45,7 +45,7 @@ export const ptBR = {
   'sidebar.preferences': 'Preferências',
 
   'ctx.title': 'Gerenciar contextos',
-  'ctx.help': 'Contextos ocultos somem do seletor só no LogDeck. O app nunca altera o seu kubeconfig: para remover de vez, copie o comando e rode no terminal.',
+  'ctx.help': 'Renomear e ocultar valem só no LogDeck. O app nunca altera o seu kubeconfig: para remover de vez, copie o comando e rode no terminal.',
   'ctx.filter': 'Filtrar contextos',
   'ctx.show': 'Mostrar',
   'ctx.hide': 'Ocultar',
@@ -53,6 +53,8 @@ export const ptBR = {
   'ctx.hideLabel': 'Ocultar {name}',
   'ctx.removeCmd': 'Comando para remover',
   'ctx.removeCmdLabel': 'Copiar comando para remover {name}',
+  'ctx.aliasLabel': 'Nome no LogDeck para {name}',
+  'ctx.aliasPh': 'Renomear (só no LogDeck)',
   'ctx.hiddenOne': '1 oculto',
   'ctx.hiddenMany': '{n} ocultos',
 

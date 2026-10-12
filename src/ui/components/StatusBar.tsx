@@ -11,6 +11,8 @@ interface Props {
   dropped: number
   aiLabel: string
   file?: string
+  /** Context as shown to the user (alias when set). */
+  contextName?: string
 }
 
 function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
@@ -35,7 +37,7 @@ function state(t: Translate, status: StreamStatus | undefined, paused: boolean, 
 export function StatusBar(p: Props) {
   const { t, n } = useI18n()
   const [text, cls] = state(t, p.status, p.paused, p.file)
-  const where = p.file ?? [p.selection.context, p.selection.namespace, p.selection.pod?.name, p.selection.container].filter(Boolean).join(' › ')
+  const where = p.file ?? [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name, p.selection.container].filter(Boolean).join(' › ')
   return (
     <footer className="statusbar">
       <span className={`state ${cls}`} data-testid="stream-status" title={p.status?.message ?? ''}>

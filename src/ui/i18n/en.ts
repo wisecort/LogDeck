@@ -46,7 +46,7 @@ export const en: Record<MessageKey, string> = {
   'sidebar.preferences': 'Preferences',
 
   'ctx.title': 'Manage contexts',
-  'ctx.help': 'Hidden contexts disappear from the picker in LogDeck only. The app never changes your kubeconfig: to remove one for good, copy the command and run it in a terminal.',
+  'ctx.help': 'Renaming and hiding apply to LogDeck only. The app never changes your kubeconfig: to remove one for good, copy the command and run it in a terminal.',
   'ctx.filter': 'Filter contexts',
   'ctx.show': 'Show',
   'ctx.hide': 'Hide',
@@ -54,6 +54,8 @@ export const en: Record<MessageKey, string> = {
   'ctx.hideLabel': 'Hide {name}',
   'ctx.removeCmd': 'Command to remove',
   'ctx.removeCmdLabel': 'Copy command to remove {name}',
+  'ctx.aliasLabel': 'LogDeck name for {name}',
+  'ctx.aliasPh': 'Rename (LogDeck only)',
   'ctx.hiddenOne': '1 hidden',
   'ctx.hiddenMany': '{n} hidden',
 

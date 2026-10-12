@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
-import { loadActiveContext, loadHiddenContexts, pickActiveContext, saveActiveContext, saveHiddenContexts, visibleContexts } from './context-view'
+import { loadActiveContext, loadAliases, loadHiddenContexts, saveAliases, pickActiveContext, saveActiveContext, saveHiddenContexts, visibleContexts } from './context-view'
 
 export interface FavoriteNs {
   context: string
@@ -30,6 +30,17 @@ export function useNavigation(onError: (message: string) => void) {
   const [favorites, setFavorites] = useState<FavoriteNs[]>(loadFavorites)
   const [savedContext, setSavedContext] = useState<string | undefined>(loadActiveContext)
   const [hiddenContexts, setHidden] = useState<string[]>(loadHiddenContexts)
+  const [aliases, setAliases] = useState<Record<string, string>>(loadAliases)
+
+  /** Display name in LogDeck only (empty = back to the derived label); the kubeconfig is never edited (G4). */
+  const setAlias = (name: string, alias: string) => {
+    const next = { ...aliases }
+    const value = alias.trim().slice(0, 60)
+    if (value) next[name] = value
+    else delete next[name]
+    setAliases(next)
+    saveAliases(next)
+  }
   const visible = visibleContexts(contexts, hiddenContexts)
   const activeContext = pickActiveContext(visible, savedContext)
 
@@ -149,6 +160,8 @@ export function useNavigation(onError: (message: string) => void) {
     visible,
     hiddenContexts,
     toggleHidden,
+    aliases,
+    setAlias,
     loadNamespaces,
     expanded,
     expand,

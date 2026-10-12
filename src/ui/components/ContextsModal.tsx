@@ -22,6 +22,7 @@ export function ContextsModal({ nav, onClose }: { nav: Navigation; onClose(): vo
           {list.map((c) => {
             const hidden = nav.hiddenContexts.includes(c.name)
             const l = contextLabel(c.name)
+            const alias = nav.aliases[c.name] ?? ''
             return (
               <li key={c.name} className={hidden ? 'is-hidden' : ''} data-testid="ctx-row">
                 <div className="ctx-name" title={c.name}>
@@ -30,6 +31,17 @@ export function ContextsModal({ nav, onClose }: { nav: Navigation; onClose(): vo
                   {c.current && <span className="pill">{t('sidebar.current')}</span>}
                   {l.subtitle && <div className="muted mono">{l.subtitle}</div>}
                 </div>
+                <input
+                  className="ns-input alias-input"
+                  aria-label={t('ctx.aliasLabel', { name: c.name })}
+                  placeholder={t('ctx.aliasPh')}
+                  defaultValue={alias}
+                  maxLength={60}
+                  onBlur={(e) => nav.setAlias(c.name, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                  }}
+                />
                 <button aria-label={hidden ? t('ctx.showLabel', { name: c.name }) : t('ctx.hideLabel', { name: c.name })} onClick={() => nav.toggleHidden(c.name)}>
                   {hidden ? t('ctx.show') : t('ctx.hide')}
                 </button>

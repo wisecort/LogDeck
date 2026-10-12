@@ -89,12 +89,18 @@ test('context picker: current context first, switching and hiding never touch th
 
   await win.getByLabel('Contexto', { exact: true }).selectOption({ label: 'Gerenciar contextos…' })
   const dialog = win.getByRole('dialog', { name: 'Gerenciar contextos' })
+  await dialog.getByLabel(`Nome no LogDeck para ${HML}`).fill('homologacao')
+  await dialog.getByLabel(`Nome no LogDeck para ${HML}`).press('Enter')
   await dialog.getByRole('button', { name: `Ocultar ${PRD}` }).click()
   await dialog.getByRole('button', { name: `Copiar comando para remover ${PRD}` }).click()
   expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe(`kubectl config delete-context '${PRD}'`)
   await dialog.getByRole('button', { name: 'Fechar' }).click()
   await expect(win.getByLabel('Contexto', { exact: true })).toHaveValue(HML)
   await expect(win.getByLabel('Contexto', { exact: true }).locator('option', { hasText: 'portal-prd' })).toHaveCount(0)
+  await expect(win.getByLabel('Contexto', { exact: true }).locator('option:checked')).toHaveText(/^homologacao/)
+  await openPod(win, { pod: /portal-worker/ })
+  await expect(win.getByTestId('stream-status').locator('..')).toContainText('homologacao › portal-hml')
+  await expect(win.locator('.statusbar')).not.toContainText(HML)
 })
 
 test('pod search filters the tree and opens matching namespaces', async () => {

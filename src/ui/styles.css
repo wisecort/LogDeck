@@ -652,6 +652,11 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+.alias-input {
+  width: 170px;
+  flex: none;
+}
+
 .ctx-name .pill {
   margin-left: 6px;
 }

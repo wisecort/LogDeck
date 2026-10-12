@@ -72,6 +72,8 @@ export function App() {
   const session = useLogSession()
   const { engine, version, status } = session
   const selectedContext = nav.contexts.find((c) => c.name === selection.context)
+  // What the user sees for the context: their LogDeck alias, else the short derived label.
+  const contextShown = selection.context ? (nav.aliases[selection.context]?.trim() || selection.context) : undefined
   const scroll = (cmd: ScrollCommand) => setCommand({ cmd, nonce: Date.now() })
 
   useEffect(() => applyTheme(theme), [theme])
@@ -326,7 +328,7 @@ export function App() {
   return (
     <I18nProvider lang={lang}>
     <div className="app">
-      {selectedContext?.production && <ProdBanner context={selectedContext.name} />}
+      {selectedContext?.production && <ProdBanner context={contextShown ?? selectedContext.name} />}
       {notice && (
         <div className="notice" role="status">
           <span className="spacer">{notice}</span>
@@ -465,7 +467,7 @@ export function App() {
             session.file
               ? { file: session.file }
               : {
-                  ...(selection.context && { context: selection.context }),
+                  ...(contextShown && { context: contextShown }),
                   ...(selection.namespace && { namespace: selection.namespace }),
                   ...(selection.pod && { pod: selection.pod.name }),
                   ...(selection.container && { container: selection.container }),
@@ -473,7 +475,7 @@ export function App() {
           }
         />
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {
