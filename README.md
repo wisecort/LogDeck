@@ -97,7 +97,7 @@ Para guardar chaves de IA, o Linux precisa de um cofre de senhas ativo (GNOME Ke
 - Abaixo aparecem os **namespaces**. Clique para ver os pods (bolinha verde: rodando; vermelha: com problema; ↻ = restarts).
 - Clique no pod. Se ele tiver mais de um container, escolha o container.
 - Use **Procurar pod ou namespace** para filtrar a árvore e a ⭐ para favoritar namespaces.
-- No OKD/OpenShift, os pods de **build** e de **deploy** ficam escondidos. Clique em **+ N builds/deploys do OKD** para vê-los (a escolha fica salva).
+- No OKD/OpenShift, cada namespace tem a pasta **Builds e deploys** depois dos pods: o histórico de builds (status, commit, duração) e os pods de deploy. Clique num build para ver o log dele; builds antigos cujo pod o cluster já removeu aparecem esmaecidos, sem log.
 - Sem permissão para listar namespaces (comum no OKD)? Digite o nome do namespace e tecle Enter.
 
 ### 2. Acompanhar o log

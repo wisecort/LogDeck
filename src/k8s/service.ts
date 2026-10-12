@@ -2,6 +2,7 @@ import {
   buildCanIArgs,
   buildGetNamespacesArgs,
   buildGetPodsArgs,
+  buildGetBuildsArgs,
   buildVersionArgs,
   validateContextName,
   validateNamespace,
@@ -11,6 +12,7 @@ import { listContexts, type KubeContext } from './contexts'
 import { friendlyError, KubectlError, runKubectl, type KubectlOptions, type KubectlResult } from './kubectl'
 import type { NamespaceList, VersionInfo } from '../shared/ipc'
 import { parseNamespaces, parsePods, type PodSummary } from './pods'
+import { parseBuilds, type BuildSummary } from './builds'
 
 export type { NamespaceList, VersionInfo } from '../shared/ipc'
 
@@ -75,5 +77,18 @@ export class K8sService {
     const target = await this.target(context)
     validateNamespace(namespace)
     return parsePods(await this.ok(buildGetPodsArgs({ ...target, namespace })))
+  }
+
+  /** OKD/OpenShift builds of a namespace; [] on clusters without the API or without RBAC (never an error). */
+  async builds(context: string, namespace: string): Promise<BuildSummary[]> {
+    const target = await this.target(context)
+    validateNamespace(namespace)
+    const r = await this.run(buildGetBuildsArgs({ ...target, namespace }))
+    if (r.code !== 0) return []
+    try {
+      return parseBuilds(r.stdout)
+    } catch {
+      return []
+    }
   }
 }

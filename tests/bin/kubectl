@@ -75,6 +75,10 @@ if (verb === 'get') {
     process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/pods.json')))
     process.exit(0)
   }
+  if (resource === 'builds.build.openshift.io' && flag('-n') === 'portal-hml') {
+    process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/builds.json')))
+    process.exit(0)
+  }
   fail(`error: the server doesn't have a resource type "${resource}"`)
 }
 

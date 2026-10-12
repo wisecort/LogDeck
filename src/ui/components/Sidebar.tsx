@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { formatAge } from '../../k8s/pods'
 import type { LogEntry } from '../../logs/types'
-import type { PodInfo } from '../../shared/ipc'
+import type { BuildInfo, PodInfo } from '../../shared/ipc'
 import { displayLabel } from '../context-view'
 import type { RecentPod } from '../recents'
 import { ContextsModal } from './ContextsModal'
@@ -51,6 +51,17 @@ function saveShowBuilds(on: boolean): void {
   }
 }
 
+function buildDot(phase: string): string {
+  if (phase === 'Complete') return 'ok'
+  if (phase === 'Failed' || phase === 'Error' || phase === 'Cancelled') return 'bad'
+  return 'warn'
+}
+
+function formatDuration(ms: number): string {
+  const s = Math.round(ms / 1000)
+  return s >= 60 ? `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s` : `${s}s`
+}
+
 function podDot(status: string): string {
   if (status === 'Running' || status === 'Completed') return 'ok'
   if (/BackOff|Error|Failed|OOM|Init:|Terminating/.test(status)) return 'bad'
@@ -77,9 +88,11 @@ export function Sidebar(p: Props) {
   const renderPods = (context: string, namespace: string) => {
     const list = nav.pods[nsKey(context, namespace)]
     if (!list) return nav.loading.has(`ns:${nsKey(context, namespace)}`) ? <li className="muted node">{t('common.loading')}</li> : null
-    if (list.length === 0) return <li className="muted node">{t('sidebar.noPods')}</li>
-    const shown = q && !namespace.toLowerCase().includes(q) ? list.filter((pod) => pod.name.toLowerCase().includes(q)) : list
-    if (shown.length === 0) return <li className="muted node">{t('sidebar.noPodsMatch', { q: podFilter.trim() })}</li>
+    const matches = (name: string) => !q || namespace.toLowerCase().includes(q) || name.toLowerCase().includes(q)
+    const shown = list.filter((pod) => matches(pod.name))
+    const builds = (nav.builds[nsKey(context, namespace)] ?? []).filter((b) => matches(b.name))
+    if (list.length === 0 && builds.length === 0) return <li className="muted node">{t('sidebar.noPods')}</li>
+    if (shown.length === 0 && builds.length === 0) return <li className="muted node">{t('sidebar.noPodsMatch', { q: podFilter.trim() })}</li>
     // OKD build and deployer pods go to a "Builds" folder after the app pods (collapsed by default, remembered).
     const extra = shown.filter((pod) => pod.kind !== 'app')
     const row = (pod: PodInfo) => {
@@ -117,24 +130,60 @@ export function Sidebar(p: Props) {
       )
     }
     const rows = shown.filter((pod) => pod.kind === 'app').map(row)
-    if (extra.length === 0) return rows
+    // OKD Build objects first (their pod, when still there, opens the log); then deployer pods and build pods
+    // without a Build object.
+    const byName = new Map(list.map((pod) => [pod.name, pod]))
+    const buildPods = new Set(builds.map((b) => b.podName))
+    const others = extra.filter((pod) => !buildPods.has(pod.name))
+    const buildRow = (b: BuildInfo) => {
+      const pod = byName.get(b.podName)
+      const selected = !!pod && selection.namespace === namespace && selection.pod?.name === pod.name
+      const details = [b.phase + (b.reason ? ` (${b.reason})` : ''), b.strategy, b.commit && `commit ${b.commit}`, b.durationMs !== undefined && formatDuration(b.durationMs)]
+        .filter(Boolean)
+        .join(' · ')
+      return (
+        <li key={`build:${b.name}`}>
+          <button
+            className={`node build-row ${selected ? 'selected' : ''}`}
+            disabled={!pod}
+            onClick={(e) => pod && p.onPod(context, namespace, pod, e.metaKey || e.ctrlKey)}
+            title={`${b.name}\n${details}\n${pod ? t('sidebar.buildOpenLog') : t('sidebar.buildNoLog')}`}
+          >
+            <span className={`dot ${buildDot(b.phase)}`} />
+            <span className="node-label mono">{b.name}</span>
+            <span className={`node-meta ${buildDot(b.phase) === 'bad' ? 'error-text' : ''}`}>{b.phase}</span>
+            {b.startedAt !== undefined && <span className="node-meta">{formatAge(p.now - b.startedAt)}</span>}
+          </button>
+        </li>
+      )
+    }
+    const count = builds.length + others.length
+    if (count === 0) return rows.length > 0 ? rows : <li className="muted node">{t('sidebar.noPods')}</li>
     return [
-      ...rows,
+      ...(rows.length > 0 ? rows : [<li key="__nopods" className="muted node">{t('sidebar.noPods')}</li>]),
       <li key="__builds">
         <button className="node builds-folder" aria-expanded={showBuilds} onClick={toggleBuilds} title={t('sidebar.buildsHint')}>
           <IconChevron open={showBuilds} />
           <IconBuild />
           <span className="node-label">{t('sidebar.buildsFolder')}</span>
-          <span className="node-meta">{extra.length}</span>
+          <span className="node-meta">{count}</span>
         </button>
-        {showBuilds && <ul aria-label={t('sidebar.buildsFolder')}>{extra.map(row)}</ul>}
+        {showBuilds && (
+          <ul aria-label={t('sidebar.buildsFolder')}>
+            {builds.map(buildRow)}
+            {others.map(row)}
+          </ul>
+        )}
       </li>,
     ]
   }
 
   /** A namespace stays visible when its name or one of its loaded pods matches the search. */
   const nsMatches = (context: string, namespace: string) =>
-    !q || namespace.toLowerCase().includes(q) || (nav.pods[nsKey(context, namespace)] ?? []).some((pod) => pod.name.toLowerCase().includes(q))
+    !q ||
+    namespace.toLowerCase().includes(q) ||
+    (nav.pods[nsKey(context, namespace)] ?? []).some((pod) => pod.name.toLowerCase().includes(q)) ||
+    (nav.builds[nsKey(context, namespace)] ?? []).some((b) => b.name.toLowerCase().includes(q))
 
   const renderNamespace = (context: string, namespace: string) => {
     const key = nsKey(context, namespace)

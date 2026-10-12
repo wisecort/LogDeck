@@ -6,6 +6,7 @@ export const IPC = {
   contexts: 'k8s:contexts',
   namespaces: 'k8s:namespaces',
   pods: 'k8s:pods',
+  builds: 'k8s:builds',
   startLogs: 'logs:start',
   stopLogs: 'logs:stop',
   logLines: 'logs:lines',
@@ -69,6 +70,18 @@ export interface PodInfo {
   canPrevious: boolean
   /** app, or OKD build/deployer pod (hidden by default in the sidebar). */
   kind: 'app' | 'build' | 'deploy'
+}
+
+/** OKD/OpenShift Build object (history); its log lives in podName, which may be gone. */
+export interface BuildInfo {
+  name: string
+  phase: string
+  reason?: string
+  strategy?: string
+  commit?: string
+  startedAt?: number
+  durationMs?: number
+  podName: string
 }
 
 export interface StreamStatus {

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import type { ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
+import type { BuildInfo, ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
 import { loadActiveContext, loadAliases, loadHiddenContexts, saveAliases, pickActiveContext, saveActiveContext, saveHiddenContexts, visibleContexts } from './context-view'
 
 export interface FavoriteNs {
@@ -26,6 +26,7 @@ export function useNavigation(onError: (message: string) => void) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
   const [namespaces, setNamespaces] = useState<Record<string, NamespaceList>>({})
   const [pods, setPods] = useState<Record<string, PodInfo[]>>({})
+  const [builds, setBuilds] = useState<Record<string, BuildInfo[]>>({})
   const [loading, setLoading] = useState<ReadonlySet<string>>(new Set())
   const [favorites, setFavorites] = useState<FavoriteNs[]>(loadFavorites)
   const [savedContext, setSavedContext] = useState<string | undefined>(loadActiveContext)
@@ -89,6 +90,11 @@ export function useNavigation(onError: (message: string) => void) {
     async (context: string, namespace: string) => {
       const key = nsKey(context, namespace)
       mark(`ns:${key}`, true)
+      // OKD builds next to the pods; [] on plain Kubernetes, never an error
+      void window.logdeck.listBuilds(context, namespace).then(
+        (list) => setBuilds((prev) => ({ ...prev, [key]: list })),
+        () => setBuilds((prev) => ({ ...prev, [key]: [] })),
+      )
       try {
         const list = await window.logdeck.listPods(context, namespace)
         setPods((prev) => ({ ...prev, [key]: list }))
@@ -167,6 +173,7 @@ export function useNavigation(onError: (message: string) => void) {
     expand,
     namespaces,
     pods,
+    builds,
     loading,
     favorites,
     openNamespace,

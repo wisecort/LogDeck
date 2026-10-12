@@ -294,6 +294,8 @@ export const es: Record<MessageKey, string> = {
   'cmp.current': 'Actual',
   'cmp.previous': 'Contenedor anterior (--previous)',
   'sidebar.buildsFolder': 'Builds y deploys',
+  'sidebar.buildOpenLog': 'Clic para abrir el log del build',
+  'sidebar.buildNoLog': 'Log no disponible: el clúster ya eliminó el pod de este build',
   'sidebar.buildsHint': 'Pods de build (BuildConfig) y de deploy (DeploymentConfig) de OpenShift',
   'welcome.tagline': 'Logs de Kubernetes, sin drama.',
   'welcome.pods': 'Pods de Kubernetes',

@@ -147,25 +147,31 @@ test('compare with --previous: current and previous container side by side', asy
   await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
 })
 
-test('OKD build and deployer pods live in a collapsible Builds folder after the pods', async () => {
+test('OKD builds folder: Build history after the pods, log only while the build pod exists', async () => {
   const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()
   await expect(tree.getByRole('button', { name: /portal-worker/ })).toBeVisible()
-  await expect(tree.getByRole('button', { name: /portal-web-12-build/ })).toHaveCount(0)
-  await expect(tree.getByRole('button', { name: /portal-web-3-deploy/ })).toHaveCount(0)
+  await expect(tree.getByRole('button', { name: /portal-web-12/ })).toHaveCount(0)
 
-  // pods first, then a "Builds e deploys" folder with the count
-  await tree.getByRole('button', { name: /Builds e deploys/ }).click()
-  await expect(tree.getByRole('list', { name: 'Builds e deploys' }).getByRole('button')).toHaveCount(2)
-  await expect(tree.getByRole('button', { name: /portal-web-12-build/ })).toContainText('build')
-  await expect(tree.getByRole('button', { name: /portal-web-3-deploy/ })).toContainText('deploy')
+  // 2 Build objects + 1 deployer pod (the build pod of portal-web-12 is represented by its Build)
+  const folder = tree.getByRole('button', { name: /Builds e deploys/ })
+  await expect(folder).toContainText('3')
+  await folder.click()
+  const builds = tree.getByRole('list', { name: 'Builds e deploys' })
+  await expect(builds.getByRole('button')).toHaveCount(3)
+  await expect(builds.getByRole('button', { name: /portal-web-12/ })).toContainText('Complete')
+  await expect(builds.getByRole('button', { name: /portal-web-11/ })).toContainText('Failed')
+  await expect(builds.getByRole('button', { name: /portal-web-11/ })).toBeDisabled()
+  await expect(builds.getByRole('button', { name: /portal-web-3-deploy/ })).toContainText('deploy')
+
+  // the build whose pod still exists opens it
+  await builds.getByRole('button', { name: /portal-web-12/ }).click()
+  await expect(win.locator('.statusbar')).toContainText('portal-web-12-build')
 
   await win.reload()
   const tree2 = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree2.getByRole('button', { name: 'portal-hml', exact: true }).click()
-  await expect(tree2.getByRole('button', { name: /portal-web-12-build/ })).toBeVisible()
-  await tree2.getByRole('button', { name: /Builds e deploys/ }).click()
-  await expect(tree2.getByRole('button', { name: /portal-web-12-build/ })).toHaveCount(0)
+  await expect(tree2.getByRole('list', { name: 'Builds e deploys' })).toBeVisible()
 })
 
 test('welcome screen on empty tabs and the Home button brings it back', async () => {

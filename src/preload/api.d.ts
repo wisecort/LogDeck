@@ -1,4 +1,5 @@
 import type {
+  BuildInfo,
   ContextInfo,
   LogLinesEvent,
   LogStatusEvent,
@@ -20,6 +21,8 @@ export interface LogDeckApi {
   listContexts(): Promise<ContextInfo[]>
   listNamespaces(context: string): Promise<NamespaceList>
   listPods(context: string, namespace: string): Promise<PodInfo[]>
+  /** OKD/OpenShift builds; [] when the cluster has no Build API or no permission. */
+  listBuilds(context: string, namespace: string): Promise<BuildInfo[]>
   /** Returns the stream id used by the log events. */
   startLogs(request: StartLogsRequest): Promise<string>
   stopLogs(streamId: string): Promise<void>

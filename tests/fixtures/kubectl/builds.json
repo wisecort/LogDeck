@@ -1,0 +1,37 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "metadata": {
+        "name": "portal-web-11",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-02T03:00:00Z",
+        "annotations": { "openshift.io/build.pod-name": "portal-web-11-build" }
+      },
+      "spec": { "strategy": { "type": "Docker" }, "revision": { "git": { "commit": "e8907351c0ffee" } } },
+      "status": {
+        "phase": "Failed",
+        "reason": "BuildPodEvicted",
+        "startTimestamp": "2026-10-02T03:00:05Z",
+        "completionTimestamp": "2026-10-02T03:03:43Z",
+        "duration": 218000000000
+      }
+    },
+    {
+      "metadata": {
+        "name": "portal-web-12",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-09T03:10:00Z",
+        "annotations": { "openshift.io/build.pod-name": "portal-web-12-build" }
+      },
+      "spec": { "strategy": { "type": "Source" }, "revision": { "git": { "commit": "093866fabcdef" } } },
+      "status": {
+        "phase": "Complete",
+        "startTimestamp": "2026-10-09T03:10:02Z",
+        "completionTimestamp": "2026-10-09T03:17:17Z",
+        "duration": 435000000000
+      }
+    }
+  ]
+}

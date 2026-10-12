@@ -15,6 +15,8 @@ export const ptPT: Record<MessageKey, string> = {
 
   'sidebar.recents': 'Recentes',
   'recent.gone': '{pod} já não existe (o pod pode ter sido recriado). Abri o namespace.',
+  'sidebar.buildOpenLog': 'Clique para abrir o log do build',
+  'sidebar.buildNoLog': 'Log indisponível: o pod deste build já foi removido pelo cluster',
   'sidebar.manageContexts': 'Gerir contextos…',
   'sidebar.searchPods': 'Pesquisar pod ou namespace',
   'sidebar.searchPodsHint': 'Pesquisa nos nomes dos namespaces e nos pods dos namespaces já abertos',

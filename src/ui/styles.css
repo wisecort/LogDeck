@@ -2128,3 +2128,12 @@ button.primary:hover:not(:disabled) {
 .prefs-modal {
   width: min(720px, calc(100vw - 32px));
 }
+
+.build-row:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.build-row:disabled:hover {
+  background: transparent;
+}

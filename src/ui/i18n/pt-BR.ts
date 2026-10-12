@@ -293,6 +293,8 @@ export const ptBR = {
   'cmp.current': 'Atual',
   'cmp.previous': 'Container anterior (--previous)',
   'sidebar.buildsFolder': 'Builds e deploys',
+  'sidebar.buildOpenLog': 'Clique para abrir o log do build',
+  'sidebar.buildNoLog': 'Log não disponível: o pod deste build já foi removido pelo cluster',
   'sidebar.buildsHint': 'Pods de build (BuildConfig) e de deploy (DeploymentConfig) do OpenShift',
   'welcome.tagline': 'Logs de Kubernetes, sem drama.',
   'welcome.pods': 'Pods do Kubernetes',
