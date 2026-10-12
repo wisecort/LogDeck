@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [1.2.1] — 12/10/2026
+
+- Correção: o app do macOS baixado da internet aparecia como "danificado e não pode ser aberto". A assinatura estava incompleta (`identity: null`); agora o pacote inteiro é assinado ad-hoc (sem hardened runtime), e o macOS mostra o aviso normal de desenvolvedor não verificado, com "Abrir mesmo assim".
+- README: passo a passo do Homebrew (instalar, liberar a primeira abertura, atualizar, reinstalar por cima do `.dmg`, remover).
+
 ## [1.2.0] — 12/10/2026
 
 - **Windows no CI completo:** testes de integração e E2E também no Windows (os fakes viram `.exe` com o Node SEA).

@@ -1,7 +1,7 @@
 {
   "name": "logdeck",
   "productName": "LogDeck",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Log explorer de Kubernetes para macOS (somente leitura)",
   "private": true,
   "license": "MIT",
@@ -59,7 +59,8 @@
           ]
         }
       ],
-      "identity": null
+      "identity": "-",
+      "hardenedRuntime": false
     },
     "asarUnpack": [
       "node_modules/node-pty/**"
