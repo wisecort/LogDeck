@@ -4,10 +4,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
 import { fakeKubectlEnv } from '../helpers/fake-kubectl'
-import { navTree, openPod, openWebPod, PRD } from '../helpers/ui'
+import { HML, navTree, openPod, openWebPod, PRD, selectContext } from '../helpers/ui'
 
 let app: ElectronApplication
 let win: Page
+// Some tests copy to the real macOS clipboard: put the user's content back afterwards.
+let savedClipboard = ''
 
 test.beforeEach(async () => {
   const fake = fakeKubectlEnv({ FAKE_KUBECTL_DELAY_MS: '0' })
@@ -16,9 +18,11 @@ test.beforeEach(async () => {
     env: { ...(fake.env as Record<string, string>), LOGDECK_USER_DATA: mkdtempSync(join(tmpdir(), 'logdeck-e2e-')) },
   })
   win = await app.firstWindow()
+  savedClipboard = await app.evaluate(({ clipboard }) => clipboard.readText())
 })
 
 test.afterEach(async () => {
+  await app.evaluate(({ clipboard }, text) => clipboard.writeText(text), savedClipboard)
   await app.close()
 })
 
@@ -55,8 +59,11 @@ test('P3: health checks hidden by the default preset, collapsed ×121 when shown
   await expect(rows().filter({ hasText: 'checagem de disponibilidade' })).toHaveCount(0)
   await win.getByRole('button', { name: /Presets/ }).click()
   await win.getByRole('group', { name: 'Presets de exclusão' }).getByRole('button', { name: 'Ocultar health checks' }).click()
-  await win.getByTestId('log-list').evaluate((el) => el.scrollTo(0, 0))
-  await expect(rows().filter({ hasText: '×121' })).toContainText('checagem de disponibilidade')
+  // Follow mode may scroll back to the bottom right after the filter re-renders: retry the scroll.
+  await expect(async () => {
+    await win.getByTestId('log-list').evaluate((el) => el.scrollTo(0, 0))
+    await expect(rows().filter({ hasText: '×121' })).toContainText('checagem de disponibilidade', { timeout: 500 })
+  }).toPass()
   await win.getByRole('button', { name: 'Colapsar repetidas' }).click()
   await expect(rows().filter({ hasText: '×121' })).toHaveCount(0)
 })
@@ -70,10 +77,61 @@ test('F5.4: a catastrophic regex is refused and the UI stays responsive', async 
   await expect(rows().first()).toContainText(/AH0107[15]/)
 })
 
+test('context picker: current context first, switching and hiding never touch the kubeconfig', async () => {
+  const picker = win.getByLabel('Contexto', { exact: true })
+  await expect(picker).toHaveValue(HML)
+  await expect(navTree(win).getByRole('button', { name: 'portal-hml', exact: true })).toBeVisible()
+
+  await selectContext(win, PRD)
+  await expect(win.locator('.ctx-picker')).toContainText('PROD')
+  await win.reload()
+  await expect(win.getByLabel('Contexto', { exact: true })).toHaveValue(PRD)
+
+  await win.getByLabel('Contexto', { exact: true }).selectOption({ label: 'Gerenciar contextos…' })
+  const dialog = win.getByRole('dialog', { name: 'Gerenciar contextos' })
+  await dialog.getByRole('button', { name: `Ocultar ${PRD}` }).click()
+  await dialog.getByRole('button', { name: `Copiar comando para remover ${PRD}` }).click()
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe(`kubectl config delete-context '${PRD}'`)
+  await dialog.getByRole('button', { name: 'Fechar' }).click()
+  await expect(win.getByLabel('Contexto', { exact: true })).toHaveValue(HML)
+  await expect(win.getByLabel('Contexto', { exact: true }).locator('option', { hasText: 'portal-prd' })).toHaveCount(0)
+})
+
+test('pod search filters the tree and opens matching namespaces', async () => {
+  await navTree(win).getByRole('button', { name: 'portal-hml', exact: true }).click()
+  await expect(navTree(win).getByRole('button', { name: /portal-worker/ })).toBeVisible()
+  await navTree(win).getByRole('button', { name: 'portal-hml', exact: true }).click()
+  await win.getByLabel('Procurar pod ou namespace').fill('web')
+  await expect(navTree(win).getByRole('button', { name: /portal-web/ })).toBeVisible()
+  await expect(navTree(win).getByRole('button', { name: /portal-worker/ })).toHaveCount(0)
+})
+
+test('copy for ticket: pod, UTC times, level and the line', async () => {
+  await openWebPod(win)
+  await win.getByLabel('Buscar').fill('AH01075')
+  await win.getByTestId('log-row').first().click()
+  await win.getByRole('button', { name: 'Copiar para chamado' }).click()
+  const text = await app.evaluate(({ clipboard }) => clipboard.readText())
+  expect(text).toContain('Pod: portal-hml / portal-web-7d9f8c6b5-x2k4p / httpd')
+  expect(text).toMatch(/Horário \(kubectl\): 2026-10-09 \d\d:\d\d:\d\d\.\d{3} UTC/)
+  expect(text).toContain('AH01075')
+})
+
+test('opens a saved log file and refuses binary ones', async () => {
+  await win.getByLabel('Arquivo de log').setInputFiles('tests/fixtures/pod-php-apache.log')
+  await expect(win.getByTestId('stream-status')).toContainText('Arquivo')
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  await expect(navTree(win)).toContainText('pod-php-apache.log')
+  await expect(win.getByTestId('error-group').filter({ hasText: 'Timeout Apache → PHP-FPM' })).toContainText('6×')
+
+  await win.getByLabel('Arquivo de log').setInputFiles({ name: 'x.gz', mimeType: 'application/gzip', buffer: Buffer.from([0x1f, 0x8b, 0, 0]) })
+  await expect(win.getByRole('status')).toContainText('não parece texto')
+})
+
 test('G5: production contexts show a red banner', async () => {
   await openPod(win, { context: PRD, pod: /portal-worker/ })
   await expect(win.getByTestId('prod-banner')).toContainText('PRODUÇÃO')
-  await expect(navTree(win)).toContainText('PROD')
+  await expect(win.locator('.ctx-picker')).toContainText('PROD')
 })
 
 test('F3.2: CrashLoopBackOff pod offers --previous', async () => {

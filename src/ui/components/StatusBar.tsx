@@ -9,9 +9,11 @@ interface Props {
   total: number
   dropped: number
   aiLabel: string
+  file?: string
 }
 
-function state(status: StreamStatus | undefined, paused: boolean): [string, string] {
+function state(status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
+  if (!status && file) return ['Arquivo', 'file']
   if (status?.state === 'live' && paused) return ['Pausado', 'paused']
   switch (status?.state) {
     case 'live':
@@ -30,8 +32,8 @@ function state(status: StreamStatus | undefined, paused: boolean): [string, stri
 }
 
 export function StatusBar(p: Props) {
-  const [text, cls] = state(p.status, p.paused)
-  const where = [p.selection.context, p.selection.namespace, p.selection.pod?.name, p.selection.container].filter(Boolean).join(' › ')
+  const [text, cls] = state(p.status, p.paused, p.file)
+  const where = p.file ?? [p.selection.context, p.selection.namespace, p.selection.pod?.name, p.selection.container].filter(Boolean).join(' › ')
   return (
     <footer className="statusbar">
       <span className={`state ${cls}`} data-testid="stream-status" title={p.status?.message ?? ''}>

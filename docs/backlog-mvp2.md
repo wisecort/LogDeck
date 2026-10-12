@@ -13,3 +13,4 @@ Itens fora do escopo do MVP 1 (G10). Anote aqui; não implemente no MVP 1.
 | Provedor Gemini CLI | F7.0 | camada gratuita com conta Google |
 | IA com leitura do repositório de código ("linked repository") | fase 6.5 | exige regras próprias: injeção vinda do log poderia ler segredos do repositório |
 | Alertas (sino) por pico de erros | fase 6.5 | notificação do macOS |
+| Abrir `.gz` e arquivos acima de 200 MB (leitura em streaming) | fase 6.6 | hoje o arquivo é lido inteiro no renderer |

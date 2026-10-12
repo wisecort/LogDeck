@@ -83,3 +83,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Barra de status com estado, localização, contagem e provedor de IA; atalhos (`?`, `Esc`).
 - Correção: o histograma e o filtro de tempo usam o relógio do kubectl (o Laravel em UTC−3 esticava o eixo).
 - E2E: 16 cenários, incluindo detalhes, histograma, temas, marcadas, favoritos e IA com acompanhamento.
+
+### Fase 6.6 — Contextos e arquivo
+
+- Seletor de contexto único no topo da barra lateral (lembra o último); "Gerenciar contextos…" oculta contextos no LogDeck e copia o comando `kubectl config delete-context` para o usuário rodar; nomes `projeto/host:porta/usuário` aparecem encurtados.
+- Procurar pod ou namespace na árvore.
+- "Copiar para chamado" na aba Detalhes (pod, horários em UTC, nível e linha, com segredos mascarados); cópias passam pelo main (`clipboard:copy-text`), que funciona sem foco na janela.
+- Faixa de produção (G5) mais fina, só com "PRODUÇÃO".
+- Abrir log de arquivo (⌘O, botão ou arrastar para a janela), com limite de 200 MB e recusa de arquivo vazio ou binário.
+- Commits sem o trailer `Co-Authored-By` (histórico local reescrito antes do primeiro push).

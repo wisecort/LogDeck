@@ -1,4 +1,5 @@
 const KEYS: Array<[string, string]> = [
+  ['⌘ O', 'Abrir arquivo de log (ou arraste para a janela)'],
   ['⌘ F', 'Buscar'],
   ['⌘ G / ⇧ ⌘ G', 'Próxima / anterior linha encontrada'],
   ['⌥ + clique no nível', 'Mostrar só aquele nível'],

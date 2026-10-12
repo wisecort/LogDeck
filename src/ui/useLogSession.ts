@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
+import { checkLogFile, splitLogText } from '../logs/file'
 import { LogEngine } from './engine'
 
 const RENDER_MS = 100
+const FILE_CHUNK = 5000
 
-/** One live log session: engine + stream subscription, re-rendering at most every 100 ms (RNF5). */
+const yieldToUi = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+/** One log session (live stream or local file): engine + stream subscription, re-rendering at most every 100 ms (RNF5). */
 export function useLogSession() {
   // One engine per mounted session; a state slot keeps the same instance across renders.
   const [engine] = useState(() => new LogEngine())
@@ -15,6 +19,7 @@ export function useLogSession() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [version, setVersion] = useState(0)
   const [status, setStatus] = useState<StreamStatus | undefined>(undefined)
+  const [file, setFile] = useState<string>()
 
   const scheduleRender = useCallback(() => {
     timer.current ??= setTimeout(() => {
@@ -55,6 +60,7 @@ export function useLogSession() {
       early.current.clear()
       earlyStatus.current.clear()
       engine.clear()
+      setFile(undefined)
       setVersion(engine.version)
       setStatus({ state: 'connecting' })
       try {
@@ -73,5 +79,30 @@ export function useLogSession() {
     [stop, scheduleRender, engine],
   )
 
-  return { engine, version, status, start, stop }
+  /** Loads a user-picked file; throws with a friendly message when it cannot be opened. */
+  const openFile = useCallback(
+    async (f: File) => {
+      await stop()
+      early.current.clear()
+      earlyStatus.current.clear()
+      const tooBig = checkLogFile(f, '')
+      if (tooBig) throw new Error(tooBig)
+      const text = await f.text()
+      const problem = checkLogFile(f, text)
+      if (problem) throw new Error(problem)
+      engine.clear()
+      setStatus(undefined)
+      setFile(f.name)
+      const lines = splitLogText(text)
+      for (let i = 0; i < lines.length; i += FILE_CHUNK) {
+        engine.ingest(lines.slice(i, i + FILE_CHUNK))
+        setVersion(engine.version)
+        await yieldToUi()
+      }
+      setVersion(engine.version)
+    },
+    [stop, engine],
+  )
+
+  return { engine, version, status, file, start, stop, openFile }
 }

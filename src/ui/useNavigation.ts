@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
+import { loadActiveContext, loadHiddenContexts, pickActiveContext, saveActiveContext, saveHiddenContexts, visibleContexts } from './context-view'
 
 export interface FavoriteNs {
   context: string
@@ -27,6 +28,18 @@ export function useNavigation(onError: (message: string) => void) {
   const [pods, setPods] = useState<Record<string, PodInfo[]>>({})
   const [loading, setLoading] = useState<ReadonlySet<string>>(new Set())
   const [favorites, setFavorites] = useState<FavoriteNs[]>(loadFavorites)
+  const [savedContext, setSavedContext] = useState<string | undefined>(loadActiveContext)
+  const [hiddenContexts, setHidden] = useState<string[]>(loadHiddenContexts)
+  const visible = visibleContexts(contexts, hiddenContexts)
+  const activeContext = pickActiveContext(visible, savedContext)
+
+  /** Hides a context in LogDeck only; the kubeconfig is never edited (G4). */
+  const toggleHidden = (name: string) => {
+    const next = hiddenContexts.includes(name) ? hiddenContexts.filter((n) => n !== name) : [...hiddenContexts, name]
+    setHidden(next)
+    saveHiddenContexts(next)
+    ensureNamespaces(pickActiveContext(visibleContexts(contexts, next), savedContext))
+  }
 
   const mark = (key: string, on: boolean) =>
     setLoading((prev) => {
@@ -79,15 +92,30 @@ export function useNavigation(onError: (message: string) => void) {
     [onError],
   )
 
-  const toggleContext = async (context: string) => {
-    const open = !expanded.has(`ctx:${context}`)
-    expand(`ctx:${context}`, open)
-    if (open && !namespaces[context]) await loadNamespaces(context)
+  const ensureNamespaces = (context: string | undefined) => {
+    if (context && !namespaces[context]) void loadNamespaces(context)
+  }
+
+  /** Receives the kubeconfig contexts and loads the namespaces of the active one. */
+  const showContexts = (list: ContextInfo[]) => {
+    setContexts(list)
+    ensureNamespaces(pickActiveContext(visibleContexts(list, hiddenContexts), savedContext))
+  }
+
+  /** Switches the sidebar to another context; never touches the kubeconfig (G4). */
+  const selectContext = (context: string) => {
+    setSavedContext(context)
+    saveActiveContext(context)
+    ensureNamespaces(context)
   }
 
   const openNamespace = async (context: string, namespace: string, open?: boolean) => {
     const key = nsKey(context, namespace)
     const willOpen = open ?? !expanded.has(`ns:${key}`)
+    if (context !== activeContext) {
+      setSavedContext(context)
+      saveActiveContext(context)
+    }
     expand(`ctx:${context}`, true)
     expand(`ns:${key}`, willOpen)
     if (willOpen && !namespaces[context]) await loadNamespaces(context)
@@ -115,14 +143,19 @@ export function useNavigation(onError: (message: string) => void) {
 
   return {
     contexts,
-    setContexts,
+    showContexts,
+    activeContext,
+    selectContext,
+    visible,
+    hiddenContexts,
+    toggleHidden,
+    loadNamespaces,
     expanded,
     expand,
     namespaces,
     pods,
     loading,
     favorites,
-    toggleContext,
     openNamespace,
     loadPods,
     addNamespace,

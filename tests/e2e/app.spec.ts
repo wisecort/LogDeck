@@ -15,7 +15,8 @@ test('opens as LogDeck', async () => {
   try {
     const win = await app.firstWindow()
     await expect(win).toHaveTitle('LogDeck')
-    await expect(navTree(win).getByRole('button', { name: new RegExp(HML.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })).toBeVisible()
+    await expect(win.getByLabel('Contexto', { exact: true })).toHaveValue(HML)
+    await expect(navTree(win).getByRole('button', { name: 'portal-hml', exact: true })).toBeVisible()
     expect(await app.evaluate(({ app }) => app.getName())).toBe('LogDeck')
     // Security baseline for the renderer (SPEC §2).
     expect(await win.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe('undefined')

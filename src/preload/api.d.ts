@@ -49,6 +49,8 @@ export interface LogDeckApi {
   followUp(conversationId: string, question: string): Promise<ExplainResult>
   /** Save dialog for exported logs and AI suggestions; returns the path or null. */
   saveText(content: string, suggestedName: string): Promise<string | null>
+  /** Writes plain text to the system clipboard (works without window focus). */
+  copyText(text: string): Promise<void>
 }
 
 declare global {

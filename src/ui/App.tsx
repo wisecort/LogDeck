@@ -61,6 +61,7 @@ export function App() {
   const [shell, setShell] = useState<ShellTarget>()
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const searchRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   const session = useLogSession()
   const { engine, version, status } = session
@@ -75,7 +76,7 @@ export function App() {
       if (!v.installed) return setNotice(v.message)
       try {
         const list = await window.logdeck.listContexts()
-        nav.setContexts(list)
+        nav.showContexts(list)
         if (list.length === 0) setNotice('Nenhum contexto no kubeconfig (arquivo padrão do kubectl ou variável KUBECONFIG).')
       } catch (err) {
         setNotice((err as Error).message)
@@ -128,6 +129,33 @@ export function App() {
     setSelection({ ...selection, container: c })
     openLogs(context, namespace, pod, c, options)
   }
+
+  const openFile = async (f: File) => {
+    setShell(undefined)
+    setSelection({})
+    resetView()
+    try {
+      await session.openFile(f)
+    } catch (err) {
+      setNotice((err as Error).message)
+    }
+  }
+
+  // Dropping a file anywhere on the window opens it (navigation is blocked in main).
+  useEffect(() => {
+    const over = (e: DragEvent) => e.preventDefault()
+    const drop = (e: DragEvent) => {
+      e.preventDefault()
+      const f = e.dataTransfer?.files[0]
+      if (f) void openFile(f)
+    }
+    window.addEventListener('dragover', over)
+    window.addEventListener('drop', drop)
+    return () => {
+      window.removeEventListener('dragover', over)
+      window.removeEventListener('drop', drop)
+    }
+  })
 
   const reopen = (o: LogOptions = options) => {
     const { context, namespace, pod, container } = selection
@@ -236,7 +264,7 @@ export function App() {
       .view({ ...baseFilter, ...(timeRange && { timeRange }), collapse: false })
       .map((r) => entryText(r.entry))
       .join('\n')
-    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? 'log'}.log`)
+    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? session.file?.replace(/\.[^.]+$/, '') ?? 'log'}.log`)
   }
 
   const buildContext = (mode: AiContextMode): ExplainGroupInput[] => {
@@ -257,7 +285,10 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement
-      if (e.metaKey && e.key === 'f') {
+      if (e.metaKey && e.key === 'o') {
+        e.preventDefault()
+        fileRef.current?.click()
+      } else if (e.metaKey && e.key === 'f') {
         e.preventDefault()
         searchRef.current?.focus()
         searchRef.current?.select()
@@ -288,6 +319,18 @@ export function App() {
           </button>
         </div>
       )}
+      <input
+        ref={fileRef}
+        type="file"
+        hidden
+        aria-label="Arquivo de log"
+        accept=".log,.txt,.json,.out,text/*"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ''
+          if (f) void openFile(f)
+        }}
+      />
       <div className="layout">
         <Sidebar
           nav={nav}
@@ -306,6 +349,8 @@ export function App() {
           onTheme={setTheme}
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
+          onOpenFile={() => fileRef.current?.click()}
+          {...(session.file && { fileName: session.file })}
         />
         <main className="main">
           <TopBar
@@ -402,9 +447,19 @@ export function App() {
           onAiMode={setAiMode}
           buildContext={buildContext}
           onAiPreferences={() => setAiPrefs(true)}
+          ticketSource={
+            session.file
+              ? { file: session.file }
+              : {
+                  ...(selection.context && { context: selection.context }),
+                  ...(selection.namespace && { namespace: selection.namespace }),
+                  ...(selection.pod && { pod: selection.pod.name }),
+                  ...(selection.container && { container: selection.container }),
+                }
+          }
         />
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(aiStatus)} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(aiStatus)} {...(session.file && { file: session.file })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {

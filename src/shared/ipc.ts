@@ -27,6 +27,7 @@ export const IPC = {
   aiExplain: 'ai:explain',
   aiFollowUp: 'ai:follow-up',
   saveText: 'file:save-text',
+  copyText: 'clipboard:copy-text',
 } as const
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }

@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
-import { dialog, ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { clipboard, dialog, ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import type { ExplainService } from '../ai/explain'
 import { detectClaude } from '../ai/providers/claude-cli'
 import type { Keychain } from '../ai/providers/keychain'
@@ -37,6 +37,8 @@ export interface IpcDeps {
 }
 
 const DEFAULT_TAIL = 1000
+
+const MAX_CLIPBOARD_CHARS = 5_000_000
 
 function str(value: unknown, name: string): string {
   if (typeof value !== 'string') throw new Error(`${name} inválido`)
@@ -211,5 +213,11 @@ export function registerIpc(deps: IpcDeps): void {
     if (canceled || !filePath) return null
     await writeFile(filePath, text, 'utf8')
     return filePath
+  })
+
+  handle(deps, IPC.copyText, async (_e, text: unknown) => {
+    const value = str(text, 'texto')
+    if (value.length > MAX_CLIPBOARD_CHARS) throw new Error('Texto grande demais para copiar')
+    clipboard.writeText(value)
   })
 }

@@ -5,6 +5,7 @@ import type { LogEntry } from '../../logs/types'
 import type { ExplainGroupInput, ExplainResult, PreviewResult } from '../../shared/ai'
 import type { AiStatus } from '../../shared/ai-settings'
 import { formatDateTime } from '../format'
+import { ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
 import { IconBookmark, IconCopy, IconGear, IconSparkle } from './icons'
 
@@ -28,6 +29,7 @@ interface Props {
   onAiMode(m: AiContextMode): void
   buildContext(mode: AiContextMode): ExplainGroupInput[]
   onAiPreferences(): void
+  ticketSource: TicketSource
 }
 
 export function aiLabel(s?: AiStatus): string {
@@ -92,6 +94,22 @@ function prettyJson(raw: string): string | undefined {
   }
 }
 
+function TicketButton({ entry, source }: { entry: LogEntry; source: TicketSource }) {
+  const [copied, setCopied] = useState<number>()
+  return (
+    <button
+      className="icon-btn"
+      title="Copia pod, horários (UTC), nível e a linha, com senhas e tokens mascarados"
+      onClick={() => {
+        void window.logdeck.copyText(ticketText(entry, source))
+        setCopied(entry.seq)
+      }}
+    >
+      <IconCopy /> {copied === entry.seq ? 'Copiado' : 'Copiar para chamado'}
+    </button>
+  )
+}
+
 function DetailsTab(p: Props) {
   const e = p.entry
   if (!e) return <div className="muted">Clique numa linha do log para ver os detalhes.</div>
@@ -145,9 +163,10 @@ function DetailsTab(p: Props) {
       )}
       <div className="panel-section-title">
         Linha <span className="spacer" />
-        <button className="icon-btn" onClick={() => void navigator.clipboard.writeText(full)}>
+        <button className="icon-btn" onClick={() => void window.logdeck.copyText(full)}>
           <IconCopy /> Copiar
         </button>
+        <TicketButton entry={e} source={p.ticketSource} />
       </div>
       <pre className="code-box">{e.raw}</pre>
       {e.continuation.length > 0 && (

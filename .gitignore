@@ -12,5 +12,7 @@ test-results/
 .vite/
 
 # Material de referência local (não versionar)
-output_progressive_*.mp4
-videoframe_*.png
+/*.mp4
+/*.mov
+/videoframe_*.png
+/referencias/

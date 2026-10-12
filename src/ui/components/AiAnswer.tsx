@@ -26,7 +26,7 @@ function CodeBlock({ block, dangerous }: { block: ResponseBlock; dangerous: read
         ))}
       </pre>
       {!risky && (
-        <button className="icon-btn" onClick={() => void navigator.clipboard.writeText(block.content)} title="Copiar comandos de leitura">
+        <button className="icon-btn" onClick={() => void window.logdeck.copyText(block.content)} title="Copiar comandos de leitura">
           <IconCopy /> Copiar
         </button>
       )}
@@ -49,7 +49,7 @@ function DiffBlock({ block }: { block: ResponseBlock }) {
         ))}
       </pre>
       <span>
-        <button className="icon-btn" onClick={() => void navigator.clipboard.writeText(block.content)}>
+        <button className="icon-btn" onClick={() => void window.logdeck.copyText(block.content)}>
           <IconCopy /> Copiar diff
         </button>
         <button onClick={() => void window.logdeck.saveText(block.content, `logdeck-sugestao.${ext}`).then((p) => p && setSaved(p))}>

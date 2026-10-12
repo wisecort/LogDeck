@@ -12,6 +12,7 @@ Vale para qualquer IA que mexa neste repositório (Claude Code, Codex, Copilot e
 - **Teste vermelho primeiro**, depois a implementação. O commit da fase mostra o teste passando.
 - Rode `make harness` antes de dizer que terminou e mostre o resumo ✅/❌ de cada etapa. Se algo falhar, diga o que falhou, com a saída. Não diga que terminou com etapa vermelha.
 - **Uma fase = um commit**, em Conventional Commits: `feat(logs): ...`, `fix(shell): ...`, `test(parsers): ...`, `docs(runbook): ...`, `chore(ci): ...`.
+- Commits **sem** o trailer `Co-Authored-By` (decisão do autor em 12/10/2026).
 - Código, nomes de arquivos e commits em inglês. Documentação e respostas ao usuário em português.
 - Mudança fora do escopo do MVP 1 → anote em [`docs/backlog-mvp2.md`](docs/backlog-mvp2.md) e não implemente.
 - Dependência nova → justifique (nome, motivo, licença) em `docs/dependencies.md` e no PR (G9).

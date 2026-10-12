@@ -68,7 +68,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 - **F1.1** Dado um kubeconfig em `~/.kube/config` ou em `$KUBECONFIG` (lista separada por `:`), quando o app abre, então lista todos os contextos (nome, cluster, namespace padrão) e marca o contexto atual.
 - **F1.2** Quando o usuário escolhe outro contexto, então todas as chamadas seguintes passam `--context=<nome>` e **nenhum** comando `config use-context` é executado (teste: o kubectl fake registra os argv recebidos e falha se aparecer `use-context`).
 - **F1.3** A listagem usa só `kubectl config get-contexts` (saída tabular, sem credenciais). Dado um kubeconfig fake com `token`, `client-key-data` e `certificate-authority-data`, então nenhum desses valores aparece no retorno de `contexts.ts`, nos logs do app nem no IPC.
-- **F1.4** Dado um contexto com `prod` ou `prd` no nome (sem diferenciar maiúsculas), então a UI mostra uma faixa vermelha fixa "Contexto de PRODUÇÃO" enquanto ele estiver ativo (G5).
+- **F1.4** Dado um contexto com `prod` ou `prd` no nome (sem diferenciar maiúsculas), então a UI mostra uma faixa vermelha fina e fixa "PRODUÇÃO" no topo e a marca PROD no seletor de contexto enquanto ele estiver ativo (G5).
 - **F1.5** Na abertura, o app roda `kubectl version --client -o json` para detectar instalação e versão. Dado que o kubectl não está instalado, ou que o cluster responde erro de autenticação, então o app mostra mensagem acionável (ex.: `brew install kubectl`, "token expirado: rode `oc login` no terminal") sem travar.
 
 ### F2 — Navegação
@@ -151,6 +151,10 @@ Implementado só depois de F1–F6 verdes no harness. Nenhum teste automático c
 - **Linhas em uma linha só** (quebra opcional); selecionar abre a aba **Detalhes** (horários, campos, JSON, stack trace, Copiar, Marcar, Perguntar à IA).
 - **Painel direito com abas** Erros / Detalhes / IA. A IA aceita **pergunta livre** e **perguntas de acompanhamento**, com contexto = linha selecionada (±10 linhas), grupos marcados ou linhas visíveis no filtro; o preview com destino continua obrigatório. A "Estimativa da IA" (confiança) é exibida com aviso de que pode estar errada.
 - **Barra de status:** estado, contexto › namespace › pod › container, linhas exibidas/total, descartadas e provedor de IA.
+- **Seletor de contexto** no topo da barra lateral: um contexto ativo por vez (começa no contexto atual do kubeconfig, lembra o último escolhido) e a árvore mostra os namespaces dele. Nomes no estilo `oc login` (`projeto/api-host:6443/usuário`) aparecem como `projeto (host)`. A opção "Gerenciar contextos…" **oculta** contextos só no LogDeck e oferece o comando `kubectl config delete-context` para o usuário rodar no próprio terminal: o app nunca edita o kubeconfig (G1/G4).
+- **Procurar pod ou namespace:** campo acima da árvore; filtra pelos nomes dos namespaces e dos pods já carregados, abrindo os namespaces com pods encontrados.
+- **Copiar para chamado** (aba Detalhes): pod (namespace / pod / container) ou arquivo, contexto, horários em UTC (kubectl e log), nível e a linha com stack trace, com senhas e tokens mascarados pelas regras do `redact.ts` (IPs mantidos). A cópia passa pelo processo main (`clipboard:copy-text`).
+- **Abrir arquivo de log** (⌘O, botão na barra lateral ou arrastar para a janela): lê no renderer um arquivo escolhido pelo usuário (texto, até 200 MB; recusa vazio e binário/compactado), com ou sem o prefixo de `--timestamps`, e passa pelos mesmos parsers, filtros, painel F6 e IA. Nenhuma chamada ao cluster. Acima de 50k linhas valem as regras do buffer (descarta as mais antigas).
 - Não adotados: aplicar mudança direto no código, IA lendo o repositório, merge de fontes e alertas (backlog).
 
 ## 4. Problemas reais (casos de teste)
