@@ -151,3 +151,16 @@ export const IconColumns = () => (
     <path d="M12 4v16" />
   </Svg>
 )
+/** Kubernetes-ish cube (pods). */
+export const IconCube = () => (
+  <Svg size={22}>
+    <path d="M12 2 3 7v10l9 5 9-5V7z" />
+    <path d="M3 7l9 5 9-5M12 12v10" />
+  </Svg>
+)
+export const IconHistory = () => (
+  <Svg size={22}>
+    <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+    <path d="M3 3v5h5M12 7v5l3 2" />
+  </Svg>
+)

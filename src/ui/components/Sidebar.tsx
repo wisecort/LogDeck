@@ -228,6 +228,7 @@ export function Sidebar(p: Props) {
         <div className="section-label">{t('sidebar.namespaces')}</div>
         {active && (
           <input
+            id="pod-search"
             className="ns-input pod-filter"
             type="search"
             aria-label={t('sidebar.searchPods')}

@@ -26,8 +26,10 @@ import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogTabs } from './useLogTabs'
 import { TabBar } from './components/TabBar'
+import { Welcome } from './components/Welcome'
 import { MAX_TABS } from './tabs'
 import { useNavigation } from './useNavigation'
+import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
 
@@ -73,6 +75,7 @@ export function App() {
   const [lang, setLang] = useState<Lang>(loadLanguage)
   const [prefs, setPrefs] = useState(false)
   const [recents, setRecents] = useState<RecentPod[]>(loadRecents)
+  const [kubectlVersion, setKubectlVersion] = useState<string>()
   const t = useMemo(() => translator(lang), [lang])
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -99,6 +102,7 @@ export function App() {
     void (async () => {
       const v = await window.logdeck.kubectlVersion()
       if (!v.installed) return setNotice(v.message)
+      if (v.version) setKubectlVersion(v.version)
       try {
         const list = await window.logdeck.listContexts()
         nav.showContexts(list)
@@ -378,6 +382,8 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [rows.length, version])
 
+  // Empty tab: welcome screen instead of the log views, and no right panel.
+  const isEmptyTab = !selection.pod && !session.file
   const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
     <I18nProvider lang={lang}>
@@ -403,7 +409,7 @@ export function App() {
           if (f) void openFile(f)
         }}
       />
-      <div className="layout">
+      <div className={`layout ${isEmptyTab ? 'no-panel' : ''}`}>
         <Sidebar
           nav={nav}
           selection={selection}
@@ -442,6 +448,18 @@ export function App() {
               afterTabChange()
             }}
           />
+          {isEmptyTab ? (
+            <Welcome
+              contexts={nav.visible.length}
+              {...(nav.activeContext && { currentContext: displayLabel(nav.activeContext, nav.aliases).title })}
+              {...(kubectlVersion && { kubectl: kubectlVersion })}
+              {...(recents[0] && { lastRecent: recents[0] })}
+              onPods={() => document.getElementById('pod-search')?.focus()}
+              onFile={() => fileRef.current?.click()}
+              onRecent={(r) => void openRecent(r)}
+            />
+          ) : (
+            <>
           <TopBar
             search={search}
             onSearch={(s) => {
@@ -544,7 +562,10 @@ export function App() {
             )
           })()}
           {shell && <ShellPanel target={shell} onClose={() => setShell(undefined)} />}
+            </>
+          )}
         </main>
+        {!isEmptyTab && (
         <RightPanel
           tab={tab}
           onTab={setTab}
@@ -578,6 +599,7 @@ export function App() {
                 }
           }
         />
+        )}
       </div>
       <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} />
       {aiPrefs && (

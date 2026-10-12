@@ -123,5 +123,9 @@ export const ptPT: Record<MessageKey, string> = {
   'sidebar.newTabHint': '⌘-clique: abrir num novo separador',
   'lv.compareHint': 'Mostra o log do contentor anterior (--previous) ao lado do atual',
   'cmp.previous': 'Contentor anterior (--previous)',
+  'welcome.podsHint': 'Escolha um namespace e um pod na barra lateral',
+  'welcome.fileHint': 'Abra um log guardado, com ou sem ‑‑timestamps',
+  'welcome.tip': 'Dica: arraste um ficheiro de log para a janela · ? mostra os atalhos · apenas leitura, sempre',
+  'welcome.file': 'Ficheiro de log',
   'theme.meia-noite': 'Meia-noite',
 }
