@@ -1,0 +1,237 @@
+# SPEC — LogDeck MVP 1
+
+> Status: **aprovado** (fase 1) · Data: 12/10/2026 · Autor: Matheus Ribeiro
+> Leia junto com [`GUARDRAILS.md`](GUARDRAILS.md) e [`AGENTS.md`](AGENTS.md).
+
+## 1. Visão
+
+O **LogDeck** é um app desktop para macOS que funciona como **log explorer de Kubernetes/OKD, somente leitura**. O usuário escolhe um contexto do kubeconfig, navega até namespace, pod e container, abre o log ao vivo e analisa por **nível** (cores e contadores) e por **texto** (ex.: `FPM`, `AH01075`, `timeout`). Um painel agrupa erros e timeouts por assinatura e, sob demanda, a IA explica os erros selecionados.
+
+Projeto **greenfield**: o código-fonte do Logui não está disponível (é um app de terceiro, `com.marcosvidolin.logui`). O LogDeck é **inspirado no Logui**, que serviu de referência para os problemas reais P1–P5. Detalhes em [ADR 0001](docs/adr/0001-greenfield-electron-typescript.md).
+
+### 1.1 Identidade
+
+| Item | Valor |
+|---|---|
+| Nome do produto | LogDeck (janela, menu do app, Dock, `Info.plist` via electron-builder) |
+| Bundle id | `io.github.wisecort.logdeck` |
+| Binário | `logdeck` |
+| Repositório | [`wisecort/LogDeck`](https://github.com/wisecort/LogDeck) (público, CI no GitHub Actions) |
+
+### 1.2 Stack
+
+| Camada | Escolha |
+|---|---|
+| Runtime | Electron (versão estável mais recente na fase 2) |
+| Linguagem | TypeScript `strict` |
+| UI | React + Vite (electron-vite) |
+| Pacotes | npm (`npm ci`, lockfile commitado) |
+| Testes | Vitest (unit + integração, cobertura v8), Playwright `_electron` (E2E) |
+| Lista virtualizada | `@tanstack/react-virtual` |
+| Terminal (P5) | `node-pty` + `xterm.js` |
+| IA | `@anthropic-ai/sdk`, chamado apenas no processo main |
+| Build | electron-builder, alvo macOS arm64 + x64, sem assinatura |
+
+Toda dependência é justificada no PR (G9).
+
+## 2. Arquitetura
+
+```
+┌──────────────── processo main (Node) ────────────────┐
+│ src/k8s/kubectl.ts  único spawn do kubectl (array)   │
+│ src/k8s/args.ts     allowlist de verbos/flags/nomes  │
+│ src/k8s/contexts.ts contextos sem credenciais        │
+│ src/k8s/stream.ts   logs -f, reconexão, kill         │
+│ src/k8s/shell.ts    exec -it via node-pty (manual)   │
+│ src/ai/redact.ts + explain.ts  (chave no Keychain)   │
+└───────────▲──────────────── IPC tipado (preload) ────┘
+            │ lotes de linhas brutas a cada 100 ms
+┌───────────┴──────── renderer (sandbox) ──────────────┐
+│ Web Worker: src/logs/* (parsers, classify, buffer,   │
+│             search, signatures)                      │
+│ src/ui/*:   lista virtualizada, filtros, painel F6   │
+└──────────────────────────────────────────────────────┘
+```
+
+- Renderer com `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true` e CSP restritiva. O preload expõe só uma API estreita e tipada (`listContexts`, `listNamespaces`, `listPods`, `startStream`, `stopStream`, `openShell`, `explain`...). O renderer **nunca** monta argumentos do kubectl.
+- `src/logs/` é TypeScript puro, sem Electron nem DOM, testável em Node e executado num Web Worker para não bloquear a UI.
+- Regex do usuário roda num worker descartável com orçamento de tempo (ver F5 / RNF4).
+
+## 3. Funcionalidades (F1–F7)
+
+Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (unitário, integração com kubectl fake ou E2E).
+
+### F1 — Conexão ao cluster
+
+- **F1.1** Dado um kubeconfig em `~/.kube/config` ou em `$KUBECONFIG` (lista separada por `:`), quando o app abre, então lista todos os contextos (nome, cluster, namespace padrão) e marca o contexto atual.
+- **F1.2** Quando o usuário escolhe outro contexto, então todas as chamadas seguintes passam `--context=<nome>` e **nenhum** comando `config use-context` é executado (teste: o kubectl fake registra os argv recebidos e falha se aparecer `use-context`).
+- **F1.3** A listagem usa só `kubectl config get-contexts` (saída tabular, sem credenciais). Dado um kubeconfig fake com `token`, `client-key-data` e `certificate-authority-data`, então nenhum desses valores aparece no retorno de `contexts.ts`, nos logs do app nem no IPC.
+- **F1.4** Dado um contexto com `prod` ou `prd` no nome (sem diferenciar maiúsculas), então a UI mostra uma faixa vermelha fixa "Contexto de PRODUÇÃO" enquanto ele estiver ativo (G5).
+- **F1.5** Na abertura, o app roda `kubectl version --client -o json` para detectar instalação e versão. Dado que o kubectl não está instalado, ou que o cluster responde erro de autenticação, então o app mostra mensagem acionável (ex.: `brew install kubectl`, "token expirado: rode `oc login` no terminal") sem travar.
+
+### F2 — Navegação
+
+- **F2.1** Dado um contexto, quando selecionado, então lista namespaces (`get namespaces -o json`). Se não houver permissão de listar namespaces (comum no OKD), então usa o namespace padrão do contexto e permite digitar um namespace, validado como DNS-1123 label.
+- **F2.2** Dado um namespace, então lista pods (`get pods -o json`) com fase/status efetivo (Running, Pending, CrashLoopBackOff, ImagePullBackOff, Completed...), contagem de restarts e idade. Atualiza a cada 5 s enquanto a tela estiver visível.
+- **F2.3** Dado um pod com mais de um container (inclui init containers), quando selecionado, então o app pede a escolha do container antes de abrir o log. Pod com um container abre direto.
+- **F2.4** Nomes recebidos do cluster são validados antes de reutilizados em argumentos: namespace e container como DNS-1123 label, pod como DNS-1123 subdomain. Nome inválido é descartado e registrado como aviso.
+
+### F3 — Log ao vivo
+
+- **F3.1** Quando o usuário abre um container, então o app executa `kubectl logs -f --timestamps --context=… -n … <pod> -c <container>` com `--tail` (padrão 1000) e opcional `--since` (ex.: `5m`, `1h`).
+- **F3.2** Dado um pod em CrashLoopBackOff ou com restarts > 0, então a opção `--previous` fica disponível. Com ela marcada, o app roda sem `-f` e mostra o estado "Encerrado (log anterior)".
+- **F3.3** Indicador de estado: **Live**, **Reconectando (n)**, **Pausado**, **Encerrado**, **Erro**. "Pausado" congela a visualização e continua acumulando no buffer.
+- **F3.4** Dada uma queda do stream (kubectl sai sem ação do usuário), então reconecta com backoff 1 s, 2 s, 5 s, 10 s, 10 s… usando `--since-time=<último timestamp recebido>` e descarta linhas repetidas com timestamp ≤ ao último. Teste: o kubectl fake derruba a conexão e a sequência de esperas é verificada com relógio falso.
+- **F3.5** Quando o usuário troca de pod, fecha a aba ou fecha o app, então o processo kubectl recebe SIGTERM (SIGKILL após 2 s). Teste: nenhum PID filho vivo depois de `stopStream`/`app.quit`.
+- **F3.6** A saída é tratada como texto: sequências ANSI são removidas ou convertidas em estilo seguro, e nada é renderizado como HTML.
+
+### F4 — Filtro por nível (cores)
+
+- **F4.1** Níveis: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, UNKNOWN, cada um com cor fixa e contador ao vivo.
+- **F4.2** Quando o usuário clica num nível, então alterna a visibilidade dele. ⌥+clique mostra só aquele nível.
+- **F4.3** Os contadores refletem as linhas presentes no buffer (descontadas as descartadas) e batem com a soma das linhas por nível (invariante testada em `buffer.test`).
+
+### F5 — Busca por texto
+
+- **F5.1** `⌘F` foca a busca. Modo padrão: texto simples, sem diferenciar maiúsculas. Alternância para regex e para diferenciar maiúsculas.
+- **F5.2** Campo de **exclusão** separado (ex.: `checagem de disponibilidade`), aceitando vários termos.
+- **F5.3** O termo encontrado é destacado na linha por fatiamento de texto (sem HTML). `⌘G` / `⇧⌘G` navegam entre ocorrências e a contagem é exibida.
+- **F5.4** Dada uma regex catastrófica como `(a+)+$` sobre uma linha de 50 `a` seguidos de `!`, então a busca é interrompida em ≤ 250 ms, a UI continua responsiva e aparece o aviso "Regex muito custosa". Regex inválida mostra erro inline.
+
+### F6 — Painel de erros e timeouts (sem IA)
+
+- **F6.1** Linhas ERROR/FATAL e linhas de timeout (qualquer nível) são agrupadas por **assinatura**. Cada grupo mostra título, contagem, primeira e última ocorrência (timestamp do log) e uma linha de exemplo.
+- **F6.2** Catálogo inicial de assinaturas (regras escritas pela equipe, testadas):
+
+| id | Título | Detecta |
+|---|---|---|
+| `apache-phpfpm-timeout` | Timeout Apache → PHP-FPM | `AH01075` e/ou `(70007)` com `proxy_fcgi` |
+| `startup-permission` | Permissão no startup | `chown`/`chmod`/`mkdir` + `Operation not permitted`/`Permission denied` |
+| `nginx-upstream-timeout` | Timeout upstream (Nginx) | `upstream timed out` |
+| `node-etimedout` | Timeout de conexão | `ETIMEDOUT`, `ESOCKETTIMEDOUT` |
+| `fpm-max-children` | PHP-FPM sem workers | `server reached pm.max_children` |
+| `php-fatal` | PHP Fatal error | `PHP Fatal error` |
+| `generic` | (mensagem normalizada) | demais ERROR/FATAL, agrupados após trocar números, hex, UUIDs, IPs e timestamps por marcadores |
+
+- **F6.3** Dadas as linhas de P4 nas fixtures, então existem exatamente os grupos "Timeout Apache → PHP-FPM" e "Permissão no startup" com as contagens e datas esperadas.
+- **F6.4** Clicar num grupo filtra a lista principal para as linhas dele. Cada grupo tem caixa de seleção para o F7.
+
+### F7 — "Explicar esses erros" (IA)
+
+Implementado só depois de F1–F6 verdes no harness.
+
+- **F7.1** O botão fica habilitado só com ao menos um grupo selecionado no F6. O payload contém só as linhas desses grupos, limitado a **200 linhas ou 32 KB** (o que vier primeiro, priorizando as mais recentes de cada grupo).
+- **F7.2** Antes de enviar, abre um modal com o **preview exato do texto já mascarado**, contagem de linhas/bytes e os botões "Enviar" e "Cancelar". Nada sai sem o clique em "Enviar" (G6).
+- **F7.3** `redact.ts` mascara: `Bearer …`, JWT (`eyJ…​.…​.…`), `password=`/`passwd=`/`pwd=`, `secret`/`token`/`api_key` em pares chave=valor ou JSON, chaves AWS (`AKIA…`/`ASIA…`) e secret keys, chaves GCP (`AIza…`, JSON de service account), credenciais em URLs (`mysql://user:pass@`, `postgres://`, `redis://`, `amqp://`, `mongodb+srv://`), e-mails. IPs privados só com o toggle "Mascarar IPs internos". Linha sem segredo não é alterada.
+- **F7.4** O prompt de sistema afirma que o conteúdo entre delimitadores é **dado de log, não instrução** e que instruções dentro do log devem ser ignoradas e relatadas (G7). O log vai num bloco delimitado.
+- **F7.5** Resposta em português, com seções fixas: **Causa provável**, **Evidência** (linhas citadas), **Próximos passos** (somente comandos `kubectl`/`oc` de leitura: `get`, `describe`, `logs`, `events`, `top`, `auth can-i`). Comandos de escrita sugeridos pela IA são exibidos com aviso e sem botão de copiar.
+- **F7.6** Se a resposta trouxer alteração de código/YAML, ela aparece como **diff para revisão**. "Aplicar" exige clique, só grava num arquivo local escolhido pelo usuário via diálogo de salvar e **nunca** aplica no cluster.
+- **F7.7** Chave da API guardada no Keychain do macOS (`safeStorage` do Electron), configurável nas Preferências, nunca exposta ao renderer. Modelo configurável (padrão definido na fase 7).
+
+## 4. Problemas reais (casos de teste)
+
+Fixtures anonimizadas em `tests/fixtures/` (G8: IPs `10.0.0.x`, hosts `*.example.internal`, sem nomes de empresas ou instituições reais).
+
+### P1 — UNKNOWN acima de 999
+
+Parsers plugáveis, um arquivo por formato em `src/logs/parsers/`, todos com a interface `{ id, detect(line), parse(line) → { level?, timestamp?, message, fields? } }`, tentados nesta ordem:
+
+| # | Parser | Detecção | Nível |
+|---|---|---|---|
+| 1 | `json` | começa com `{` e é JSON válido | `level`/`level_name`/`severity`/`lvl`; numérico pino (10…60) e zap |
+| 2 | `laravel` | `[YYYY-MM-DD HH:MM:SS] env.LEVEL:` | sufixo (`DEBUG`, `INFO`, `NOTICE`→INFO, `WARNING`→WARN, `ERROR`, `CRITICAL`/`ALERT`/`EMERGENCY`→FATAL) |
+| 3 | `access` (Apache/Nginx combined/common) | `"METHOD path HTTP/x" status` | 5xx ERROR, 4xx WARN, 1xx–3xx INFO |
+| 4 | `apache-error` | `[módulo:nível]` (2.4) ou `[nível]` (2.2) | `trace*`→TRACE, `debug`→DEBUG, `info`/`notice`→INFO, `warn`→WARN, `error`→ERROR, `crit`/`alert`/`emerg`→FATAL |
+| 5 | `php-fpm` | `[DD-Mon-YYYY HH:MM:SS] LEVEL:` | `DEBUG`, `NOTICE`→INFO, `WARNING`→WARN, `ERROR`, `ALERT`→FATAL |
+| 6 | `nginx-error` | `YYYY/MM/DD HH:MM:SS [nível] pid#tid:` | mesma tabela do Apache |
+| 7 | `heuristic` | último recurso | palavras inteiras: `fatal`/`panic`→FATAL, `error`/`exception`/`failed`→ERROR, `warn`/`timeout`/`timed out`/`deprecated`→WARN |
+
+- **Multiline:** depois de remover o prefixo `--timestamps`, linhas que começam com espaço/tab, `#\d+ `, `at `, `Caused by:`, `Stack trace:`, `Next ` ou `... N more` são anexadas à entrada anterior (stack traces PHP/Java) e herdam o nível dela.
+- **Meta:** UNKNOWN **< 5%** das entradas de `tests/fixtures/*.log` (asserção em `classify.test`).
+
+### P2 — todas as linhas com o horário de ingestão
+
+Cada entrada guarda `k8sTime` (prefixo RFC3339Nano do `--timestamps`), `logTime` (extraído pelo parser, se houver) e `ingestTime`. A coluna de horário mostra `logTime ?? k8sTime` em horário local com milissegundos. Se `|logTime − k8sTime| > 2 s` (após normalizar fuso), um ícone mostra os dois valores no tooltip. `ingestTime` nunca é exibido como horário do log.
+
+### P3 — ruído de health check
+
+- **Presets de exclusão** salvos por `contexto + namespace` num JSON em `app.getPath('userData')` (sem nova dependência). Preset embutido "Ocultar health checks": `checagem de disponibilidade`, `kube-probe/`, `GET /healthz`, `GET /readyz`, `GET /livez`, `GET /ping`.
+- **Colapsar repetidas:** linhas consecutivas com a mesma mensagem normalizada (sem timestamps) viram uma linha com selo `×N` e intervalo de horário. Liga/desliga, ligado por padrão.
+
+### P4 — erros que o F6 deve destacar
+
+Ver F6.3. Linhas-base:
+
+```
+chown: changing ownership of '/var/log/php-fpm/error.log': Operation not permitted
+[proxy_fcgi:error] [pid 12:tid 140] (70007)The timeout specified has expired: [client 10.0.0.2:48660] AH01075: Error dispatching request to : (polling)
+```
+
+### P5 — Pod Shell sem TTY
+
+- O shell abre com `kubectl exec -it --context=… -n … <pod> -c <container> -- sh -c 'command -v bash >/dev/null && exec bash || exec sh'` dentro de um **PTY** (`node-pty`) e renderiza em `xterm.js`.
+- O resize da janela/painel é repassado ao PTY (`pty.resize(cols, rows)`) e o kubectl encaminha ao container.
+- Critério: dado o kubectl fake em modo shell, então ele recebe `-it` e um stdin TTY (`isatty(0)` verdadeiro), e a saída não contém `cannot set terminal process group` nem `no job control`.
+- O shell é aberto **apenas** por clique do usuário em "Abrir shell", com confirmação extra em contexto de produção. A IA nunca abre, lê ou digita no shell. Fechar a aba encerra o PTY e o kubectl.
+
+## 5. Requisitos não funcionais
+
+| # | Requisito | Como é verificado |
+|---|---|---|
+| RNF1 | Sustentar **2.000 linhas/s** sem travar a UI (frame > 50 ms raro) | teste de integração com kubectl fake em 2.000 l/s por 30 s; E2E mede long tasks |
+| RNF2 | Ring buffer padrão **50.000 entradas**, configurável (10k–500k) | `buffer.test` |
+| RNF3 | Memória total do app **< 500 MB** com 50k linhas | E2E lê `app.getAppMetrics()` |
+| RNF4 | Busca sobre 50k linhas em ≤ 100 ms (texto) e regex abortada em ≤ 250 ms | `search.test` |
+| RNF5 | UI atualizada em lotes a cada **100 ms** | teste do batcher com relógio falso |
+| RNF6 | Backpressure: buffer cheio descarta as mais antigas e mostra "N linhas descartadas"; nunca congela | `buffer.test` + integração |
+| RNF7 | Nenhum processo kubectl órfão | integração (F3.5) |
+| RNF8 | Cobertura ≥ **90%** em `src/logs/`, `src/k8s/args.ts`, `src/ai/redact.ts` | thresholds no Vitest |
+| RNF9 | macOS 13+ (arm64 e x64) | build no CI `macos-latest` |
+
+## 6. Testes
+
+| Arquivo | Cobre |
+|---|---|
+| `parsers.<formato>.test.ts` | cada parser de P1: linhas válidas, truncadas, multiline |
+| `classify.test.ts` | nível final, `logTime` × `k8sTime` (P2), meta UNKNOWN < 5% |
+| `args.test.ts` | aceita `get`/`logs`; rejeita `delete`, `apply`, `use-context`, `--raw`, nomes com `;`, `$()`, espaço, `../`, `-` inicial |
+| `contexts.test.ts` | kubeconfig fake sem vazar `token`/`client-key-data`/`certificate-authority-data` |
+| `buffer.test.ts` | limite, descarte, contadores consistentes |
+| `search.test.ts` | texto, regex, exclusão, `(a+)+$` com timeout |
+| `signatures.test.ts` | grupos de P4, contagem, primeira/última ocorrência |
+| `redact.test.ts` | cada padrão de F7.3 e linha limpa intacta |
+| `guardrails.test.ts` | fixture "suja" falha, "limpa" passa |
+| `tests/integration/*` | `tests/bin/kubectl` fake no `PATH`: contextos, ns, pods, `logs -f` com atraso, erro de auth, queda/reconexão, modo shell |
+| `tests/e2e/*` | contexto → namespace → pod → log ao vivo → filtrar ERROR → buscar `FPM` → F6 mostra "Timeout Apache → PHP-FPM" |
+
+Integração com cluster real (`kind`) é **manual**, via `make harness-integration`, e nunca roda no CI.
+
+## 7. Fora de escopo (MVP 2 → [`docs/backlog-mvp2.md`](docs/backlog-mvp2.md))
+
+- Publicação na internet, modo web, multiusuário
+- Linux, Windows, build multiplataforma
+- Qualquer escrita no cluster (scale, delete, rollout, edit, apply, patch...)
+- Assinatura/notarização Apple e auto-update
+- Logs agregados de vários pods/deployment ao mesmo tempo
+
+## 8. Fases
+
+| # | Fase | Entrega |
+|---|---|---|
+| 1 | Governança | identidade, SPEC, AGENTS, CLAUDE, GUARDRAILS, ADR 0001 ← **aqui** |
+| 2 | Proteções | `.claude/settings.json`, `guardrails.mjs`, `harness.sh`, Makefile, CI, pre-commit, scaffold Electron |
+| 3 | Fixtures e testes vermelhos | fixtures P1–P4, kubectl fake, todos os testes unitários |
+| 4 | Núcleo de logs | parsers, classify, buffer, search, signatures verdes |
+| 5 | K8s | args, contexts, kubectl, F1–F3 com reconexão |
+| 6 | UI | F4, F5, P3, F6, P5, E2E |
+| 7 | IA | redact + F7 |
+| 8 | Docs | README, runbook, ADRs, CHANGELOG, backlog |
+
+## 9. Decisões
+
+| # | Tema | Situação |
+|---|---|---|
+| 1 | Bundle id | aprovado: `io.github.wisecort.logdeck` |
+| 2 | `kubectl version --client` no G1 | aprovado em 12/10/2026 |
+| 3 | Repositório e CI | aprovado: GitHub `wisecort/LogDeck`, GitHub Actions em `macos-latest` |
+| 4 | Licença | aprovado: MIT |

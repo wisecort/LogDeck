@@ -1,0 +1,23 @@
+{
+  "name": "logdeck",
+  "productName": "LogDeck",
+  "version": "0.1.0",
+  "description": "Log explorer de Kubernetes para macOS (somente leitura)",
+  "private": true,
+  "license": "MIT",
+  "author": "Matheus Ribeiro",
+  "repository": "github:wisecort/LogDeck",
+  "engines": {
+    "node": ">=22"
+  },
+  "build": {
+    "appId": "io.github.wisecort.logdeck",
+    "productName": "LogDeck",
+    "executableName": "logdeck",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dir", "dmg"],
+      "identity": null
+    }
+  }
+}
