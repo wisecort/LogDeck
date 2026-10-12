@@ -1,5 +1,7 @@
 // Single place that spawns kubectl (G2): argv array, shell: false, allowlist checked first.
 import { spawn, type ChildProcess } from 'node:child_process'
+import { accessSync, constants } from 'node:fs'
+import { isAbsolute, join } from 'node:path'
 import { assertReadOnly } from './args'
 
 export interface KubectlOptions {
@@ -46,6 +48,21 @@ export function friendlyError(stderrOrError: string | NodeJS.ErrnoException): st
   const text = stderrOrError.trim()
   const hit = MESSAGES.find(([re]) => re.test(text))
   return hit ? `${hit[1]} (${text.split('\n')[0]})` : text
+}
+
+/** Absolute path of `name` in env.PATH (node-pty does not search the PATH we pass). */
+export function resolveExecutable(name: string, env: NodeJS.ProcessEnv): string | undefined {
+  if (isAbsolute(name)) return name
+  for (const dir of (env['PATH'] ?? '').split(':').filter(Boolean)) {
+    const candidate = join(dir, name)
+    try {
+      accessSync(candidate, constants.X_OK)
+      return candidate
+    } catch {
+      // keep looking
+    }
+  }
+  return undefined
 }
 
 export function spawnKubectl(args: string[], opts: KubectlOptions = {}): ChildProcess {

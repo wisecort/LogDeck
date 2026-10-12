@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IPC, type IpcResult, type LogLinesEvent, type LogStatusEvent } from '../shared/ipc'
+import { IPC, type IpcResult, type LogLinesEvent, type LogStatusEvent, type ShellDataEvent, type ShellExitEvent } from '../shared/ipc'
 import type { LogDeckApi } from './api'
 
 // Narrow, typed surface exposed to the renderer (SPEC §2). The renderer never builds kubectl argv.
@@ -26,6 +26,14 @@ const api: LogDeckApi = {
   stopLogs: (streamId) => invoke(IPC.stopLogs, streamId),
   onLogLines: (listener) => subscribe<LogLinesEvent>(IPC.logLines, listener),
   onLogStatus: (listener) => subscribe<LogStatusEvent>(IPC.logStatus, listener),
+  getPresets: (key) => invoke(IPC.getPresets, key),
+  setPresets: (key, value) => invoke(IPC.setPresets, key, value),
+  openShell: (request) => invoke(IPC.openShell, request),
+  shellInput: (shellId, data) => invoke(IPC.shellInput, shellId, data),
+  shellResize: (shellId, cols, rows) => invoke(IPC.shellResize, shellId, cols, rows),
+  closeShell: (shellId) => invoke(IPC.closeShell, shellId),
+  onShellData: (listener) => subscribe<ShellDataEvent>(IPC.shellData, listener),
+  onShellExit: (listener) => subscribe<ShellExitEvent>(IPC.shellExit, listener),
 }
 
 contextBridge.exposeInMainWorld('logdeck', api)

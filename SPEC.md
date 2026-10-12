@@ -47,14 +47,15 @@ Toda dependência é justificada no PR (G9).
 └───────────▲──────────────── IPC tipado (preload) ────┘
             │ lotes de linhas brutas a cada 100 ms
 ┌───────────┴──────── renderer (sandbox) ──────────────┐
-│ Web Worker: src/logs/* (parsers, classify, buffer,   │
-│             search, signatures)                      │
+│ src/ui/engine.ts: src/logs/* (parsers, classify,     │
+│   buffer, signatures) na thread da UI, render ≤100ms │
+│ Blob Worker descartável: só busca por regex (F5.4)   │
 │ src/ui/*:   lista virtualizada, filtros, painel F6   │
 └──────────────────────────────────────────────────────┘
 ```
 
 - Renderer com `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true` e CSP restritiva. O preload expõe só uma API estreita e tipada (`listContexts`, `listNamespaces`, `listPods`, `startStream`, `stopStream`, `openShell`, `explain`...). O renderer **nunca** monta argumentos do kubectl.
-- `src/logs/` é TypeScript puro, sem Electron nem DOM, testável em Node e executado num Web Worker para não bloquear a UI.
+- `src/logs/` é TypeScript puro, sem Electron nem DOM, testável em Node. Roda na thread da UI: cada lote (~200 linhas a 2.000 l/s) custa poucos ms e o filtro só é recalculado quando muda (busca em 50k ≤ 100 ms). A única operação que pode travar, a regex do usuário, roda num Blob Worker descartável. Decisão revisada na fase 6 (o rascunho previa todo o núcleo num Web Worker).
 - Regex do usuário roda num worker descartável com orçamento de tempo (ver F5 / RNF4).
 
 ## 3. Funcionalidades (F1–F7)
@@ -100,7 +101,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 
 ### F6 — Painel de erros e timeouts (sem IA)
 
-- **F6.1** Linhas ERROR/FATAL e linhas de timeout (qualquer nível) são agrupadas por **assinatura**. Cada grupo mostra título, contagem, primeira e última ocorrência (timestamp do log) e uma linha de exemplo.
+- **F6.1** Linhas ERROR/FATAL e linhas de timeout (qualquer nível) são agrupadas por **assinatura**. Cada grupo mostra título, contagem, primeira e última ocorrência e uma linha de exemplo. Primeira/última usam o relógio do kubectl (`--timestamps`) quando existe, para que grupos de formatos com e sem fuso sejam comparáveis; sem ele, o horário do log.
 - **F6.2** Catálogo inicial de assinaturas (regras escritas pela equipe, testadas):
 
 | id | Título | Detecta |

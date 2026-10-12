@@ -49,12 +49,21 @@ export function matchSignature(entry: LogEntry): SignatureMatch | null {
   return null
 }
 
-const NORMALIZERS: ReadonlyArray<[RegExp, string]> = [
+const TIMESTAMPS: ReadonlyArray<[RegExp, string]> = [
   [/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g, '<ts>'],
   [/\[\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)? \d{4}\]/g, '[<ts>]'],
   [/\[\d{2}\/\w{3}\/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]/g, '[<ts>]'],
   [/\[\d{2}-\w{3}-\d{4} \d{2}:\d{2}:\d{2}(?:\.\d+)?\]/g, '[<ts>]'],
   [/\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}/g, '<ts>'],
+]
+
+/** Replaces the timestamp formats known to the parsers with `<ts>`. */
+export function stripTimestamps(text: string): string {
+  return TIMESTAMPS.reduce((acc, [re, to]) => acc.replace(re, to), text)
+}
+
+const NORMALIZERS: ReadonlyArray<[RegExp, string]> = [
+  ...TIMESTAMPS,
   [/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<uuid>'],
   [/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, '<ip>'],
   [/\b0x[0-9a-f]+\b/gi, '<hex>'],
@@ -75,7 +84,8 @@ export class SignatureIndex {
     const match = matchSignature(entry)
     if (!match) return
     const key = match.id === 'generic' ? `generic:${normalizeMessage(entry.message)}` : match.id
-    const time = displayTime(entry).time
+    // One clock for every group: kubectl's --timestamps when present (logs may lack a time zone).
+    const time = entry.k8sTime ?? displayTime(entry).time
     let group = this.byKey.get(key)
     if (!group) {
       group = { ...match, key, count: 0, sample: entry.raw, seqs: [] }

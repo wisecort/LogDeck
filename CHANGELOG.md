@@ -47,3 +47,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - `stream.ts`: log ao vivo com lotes de 100 ms, reconexão 1/2/5/10 s com `--since-time` e sem linhas duplicadas, `--previous`, erros não recuperáveis sem retry, SIGTERM→SIGKILL no `stop`; `StreamRegistry` encerra tudo ao fechar janela ou app.
 - IPC tipado (`src/shared/ipc.ts`) e API do preload; o renderer não monta argumentos do kubectl e só a janela principal pode chamar.
 - E2E com kubectl fake: navegação, rejeição de entrada maliciosa vinda do renderer e nenhum kubectl órfão após fechar o app.
+
+### Fase 6 — Interface
+
+- Interface React: navegação contexto → namespace → pod → container, faixa vermelha de produção (G5), status Live/Reconectando/Pausado/Encerrado/Erro, opções `tail`/`desde`/`--previous`, pausa sem perder linhas, aviso de linhas descartadas.
+- F4: filtro por nível com contadores (clique alterna, ⌥+clique isola).
+- F5: busca texto/regex com ⌘F, ⌘G/⇧⌘G, diferenciar maiúsculas, exclusões e destaque só com texto (sem HTML); regex em Blob Worker com limite de 250 ms.
+- P3: presets de exclusão por contexto+namespace salvos em `userData` (“Ocultar health checks” ativo por padrão) e colapso de linhas repetidas (×121 no fixture).
+- F6: painel de erros e timeouts com contagem, primeira/última ocorrência, filtro por grupo e seleção (para o F7).
+- P5: Pod Shell com `node-pty` + `xterm.js`, resize repassado ao PTY, confirmação nativa em produção feita no processo main; shells encerrados ao fechar janela/app.
+- ANSI removido antes do parsing (F3.6); lista virtualizada com seguimento do fim.
+- Novas dependências: `node-pty`, `@xterm/xterm`, `@xterm/addon-fit`, `@tanstack/react-virtual` (ver `docs/dependencies.md`); postinstall corrige o bit de execução do `spawn-helper` do node-pty.
+- E2E da UI: fluxo principal (ERROR → FPM → “Timeout Apache → PHP-FPM”), P3, regex catastrófica, faixa de produção, `--previous` e shell com TTY.
+- Arquitetura: núcleo de logs na thread da UI (SPEC §2 atualizado); painel F6 usa o relógio do kubectl.
+- Correção: o E2E `app.spec` abria o app sem o kubectl fake e, com a UI nova, rodou `kubectl version --client` e `config get-contexts` reais (leitura local do kubeconfig, sem contato com cluster). Todos os E2E agora usam kubectl e kubeconfig fake, com rede de segurança no `playwright.config.ts`.

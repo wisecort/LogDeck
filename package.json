@@ -22,7 +22,8 @@
     "test:unit": "vitest run --project unit --coverage",
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
-    "harness": "bash scripts/harness.sh"
+    "harness": "bash scripts/harness.sh",
+    "postinstall": "node scripts/fix-node-pty.mjs"
   },
   "build": {
     "appId": "io.github.wisecort.logdeck",
@@ -41,9 +42,16 @@
         "dmg"
       ],
       "identity": null
-    }
+    },
+    "asarUnpack": [
+      "node_modules/node-pty/**"
+    ]
   },
   "dependencies": {
+    "@tanstack/react-virtual": "3.14.17",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
+    "node-pty": "1.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

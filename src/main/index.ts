@@ -1,8 +1,10 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, Menu, session, shell } from 'electron'
 import { K8sService } from '../k8s/service'
+import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
 import { registerIpc } from './ipc'
+import { PresetStore } from './presets-store'
 
 const APP_NAME = 'LogDeck'
 
@@ -11,6 +13,7 @@ const CSP = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
+  "worker-src 'self' blob:",
   "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'none'",
@@ -18,10 +21,18 @@ const CSP = [
 ].join('; ')
 
 app.setName(APP_NAME)
+// Tests point userData to a temp dir so they never touch the user's presets.
+if (process.env['LOGDECK_USER_DATA']) app.setPath('userData', process.env['LOGDECK_USER_DATA'])
 
 const service = new K8sService()
 const registry = new StreamRegistry()
+const shells = new ShellRegistry()
 let mainWindow: BrowserWindow | undefined
+
+function closeAll(): Promise<void> {
+  shells.closeAll()
+  return registry.stopAll()
+}
 
 function buildMenu(): void {
   Menu.setApplicationMenu(
@@ -66,11 +77,11 @@ function createWindow(): void {
   win.once('ready-to-show', () => win.show())
   // A reload or a closed window must not leave kubectl processes behind (F3.5).
   win.webContents.on('did-start-navigation', (details) => {
-    if (details.isMainFrame && !details.isSameDocument) void registry.stopAll()
+    if (details.isMainFrame && !details.isSameDocument) closeAll()
   })
   win.on('closed', () => {
     mainWindow = undefined
-    void registry.stopAll()
+    closeAll()
   })
 
   // The renderer never opens windows or navigates away; external links go to the browser.
@@ -91,7 +102,8 @@ void app.whenReady().then(() => {
       callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] } })
     })
   }
-  registerIpc({ service, registry, trusted: () => mainWindow?.webContents })
+  const presets = new PresetStore(join(app.getPath('userData'), 'presets.json'))
+  registerIpc({ service, registry, shells, presets, trusted: () => mainWindow?.webContents })
   buildMenu()
   createWindow()
   app.on('activate', () => {
@@ -103,8 +115,8 @@ app.on('window-all-closed', () => app.quit())
 
 let quitting = false
 app.on('before-quit', (event) => {
-  if (quitting || registry.size === 0) return
+  if (quitting || (registry.size === 0 && shells.size === 0)) return
   event.preventDefault()
   quitting = true
-  void registry.stopAll().finally(() => app.quit())
+  void closeAll().finally(() => app.quit())
 })

@@ -10,6 +10,14 @@ export const IPC = {
   stopLogs: 'logs:stop',
   logLines: 'logs:lines',
   logStatus: 'logs:status',
+  getPresets: 'presets:get',
+  setPresets: 'presets:set',
+  openShell: 'shell:open',
+  shellInput: 'shell:input',
+  shellResize: 'shell:resize',
+  closeShell: 'shell:close',
+  shellData: 'shell:data',
+  shellExit: 'shell:exit',
 } as const
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }
@@ -74,4 +82,23 @@ export interface LogLinesEvent {
 export interface LogStatusEvent {
   streamId: string
   status: StreamStatus
+}
+
+export interface OpenShellRequest {
+  context: string
+  namespace: string
+  pod: string
+  container: string
+  cols: number
+  rows: number
+}
+
+export interface ShellDataEvent {
+  shellId: string
+  data: string
+}
+
+export interface ShellExitEvent {
+  shellId: string
+  code: number
 }

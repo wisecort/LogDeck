@@ -1,11 +1,26 @@
-import { ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { dialog, ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { isProductionContext } from '../k8s/contexts'
 import type { K8sService } from '../k8s/service'
+import { PodShell, type ShellRegistry } from '../k8s/shell'
 import { LogStream, type StreamRegistry } from '../k8s/stream'
-import { IPC, type IpcResult, type LogLinesEvent, type LogStatusEvent, type StartLogsRequest } from '../shared/ipc'
+import {
+  IPC,
+  type IpcResult,
+  type LogLinesEvent,
+  type LogStatusEvent,
+  type OpenShellRequest,
+  type ShellDataEvent,
+  type ShellExitEvent,
+  type StartLogsRequest,
+} from '../shared/ipc'
+import type { NamespacePresets } from '../shared/presets'
+import type { PresetStore } from './presets-store'
 
 export interface IpcDeps {
   service: K8sService
   registry: StreamRegistry
+  shells: ShellRegistry
+  presets: PresetStore
   /** Only this renderer may call the API. */
   trusted: () => WebContents | undefined
 }
@@ -87,5 +102,61 @@ export function registerIpc(deps: IpcDeps): void {
 
   handle(deps, IPC.stopLogs, async (_e, streamId: unknown) => {
     await registry.stop(str(streamId, 'streamId'))
+  })
+
+  handle(deps, IPC.getPresets, async (_e, key: unknown) => deps.presets.get(str(key, 'chave')))
+  handle(deps, IPC.setPresets, async (_e, key: unknown, value: unknown) =>
+    deps.presets.set(str(key, 'chave'), value as NamespacePresets),
+  )
+
+  // Pod Shell: opened only by an explicit user action in the UI (P5); never by the AI.
+  handle(deps, IPC.openShell, async (event, raw: unknown) => {
+    const req = (raw ?? {}) as Partial<Record<keyof OpenShellRequest, unknown>>
+    const context = str(req.context, 'contexto')
+    if (service.knownContexts.length === 0) await service.contexts()
+    if (isProductionContext(context)) {
+      const answer = await dialog.showMessageBox({
+        type: 'warning',
+        buttons: ['Cancelar', 'Abrir shell'],
+        defaultId: 0,
+        cancelId: 0,
+        message: 'Abrir shell em contexto de PRODUÇÃO?',
+        detail: `Contexto: ${context}\nO shell executa comandos reais dentro do container.`,
+      })
+      if (answer.response !== 1) throw new Error('Abertura do shell cancelada')
+    }
+    const sender = event.sender
+    let shellId = ''
+    const shell = new PodShell({
+      target: {
+        context,
+        knownContexts: service.knownContexts,
+        namespace: str(req.namespace, 'namespace'),
+        pod: str(req.pod, 'pod'),
+        container: str(req.container, 'container'),
+      },
+      cols: optional(req.cols, isNumber, 'cols') ?? 80,
+      rows: optional(req.rows, isNumber, 'rows') ?? 24,
+      onData: (data) => {
+        if (!sender.isDestroyed()) sender.send(IPC.shellData, { shellId, data } satisfies ShellDataEvent)
+      },
+      onExit: (code) => {
+        if (!sender.isDestroyed()) sender.send(IPC.shellExit, { shellId, code } satisfies ShellExitEvent)
+        deps.shells.close(shellId)
+      },
+    })
+    shellId = deps.shells.add(shell)
+    return shellId
+  })
+
+  handle(deps, IPC.shellInput, async (_e, shellId: unknown, data: unknown) => {
+    deps.shells.get(str(shellId, 'shellId'))?.write(str(data, 'data'))
+  })
+  handle(deps, IPC.shellResize, async (_e, shellId: unknown, cols: unknown, rows: unknown) => {
+    if (!isNumber(cols) || !isNumber(rows)) throw new Error('tamanho inválido')
+    deps.shells.get(str(shellId, 'shellId'))?.resize(cols, rows)
+  })
+  handle(deps, IPC.closeShell, async (_e, shellId: unknown) => {
+    deps.shells.close(str(shellId, 'shellId'))
   })
 }

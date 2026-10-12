@@ -95,6 +95,12 @@ describe('SignatureIndex on the pod log (P4)', () => {
     expect(lar[0]!.count).toBe(2)
   })
 
+  it('uses the kubectl clock for first/last, not a log time without time zone (Laravel UTC-3)', () => {
+    const lar = groups.find((g) => g.sample.includes('SQLSTATE'))!
+    expect(lar.firstTime).toBe(Date.parse('2026-10-09T03:27:01.700Z'))
+    expect(lar.lastTime).toBe(Date.parse('2026-10-09T03:28:01.700Z'))
+  })
+
   it('puts each entry in at most one group and keeps seqs', () => {
     const all = groups.flatMap((g) => g.seqs)
     expect(new Set(all).size).toBe(all.length)

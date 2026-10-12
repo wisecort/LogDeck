@@ -1,3 +1,4 @@
+import { stripAnsi } from './ansi'
 import { parseLine } from './parsers'
 import { fractionToMs, utcTime } from './time'
 import type { LogEntry } from './types'
@@ -55,7 +56,9 @@ export class LogAssembler {
   }
 
   push(rawLine: string): AssembleEvent {
-    const { k8sTime, rest } = splitK8sTimestamp(rawLine)
+    const split = splitK8sTimestamp(rawLine)
+    const k8sTime = split.k8sTime
+    const rest = stripAnsi(split.rest)
     if (this.lastSeq !== undefined && isContinuation(rest)) {
       return { type: 'continuation', seq: this.lastSeq, text: rest }
     }

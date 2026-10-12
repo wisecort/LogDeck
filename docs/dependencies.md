@@ -8,6 +8,10 @@ Toda dependência do `package.json` precisa de uma linha aqui (G9). O `scripts/g
 |---|---|---|---|---|
 | `react` | 19.3.0 | MIT | UI do renderer | 2 |
 | `react-dom` | 19.3.0 | MIT | renderização do React no DOM | 2 |
+| `node-pty` | 1.1.0 | MIT | Pod Shell com pseudo-terminal real (P5); N-API, o mesmo binário serve ao Node e ao Electron. O `spawn-helper` vem sem bit de execução e `scripts/fix-node-pty.mjs` (postinstall) corrige | 6 |
+| `@xterm/xterm` | 6.0.0 | MIT | terminal no renderer para o Pod Shell | 6 |
+| `@xterm/addon-fit` | 0.11.0 | MIT | ajusta colunas/linhas do terminal ao painel e alimenta o resize do PTY | 6 |
+| `@tanstack/react-virtual` | 3.14.17 | MIT | lista virtualizada de logs (50k linhas, RNF1) | 6 |
 
 ## Desenvolvimento e build
 
