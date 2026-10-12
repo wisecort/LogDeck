@@ -3,14 +3,9 @@
 // Env: FAKE_SECURITY_STORE (path to the JSON file), FAKE_SECURITY_LOG (argv log).
 const { appendFileSync, existsSync, readFileSync, writeFileSync } = require('node:fs')
 
-// As a Node script argv is [node, script, ...args]; as a Windows .exe built with Node SEA
-// (scripts/build-test-bins.mjs) the script entry may be missing.
-const argv = (() => {
-  // Running as tests/bin/<fake>.exe instead of node.exe: there is no script entry in argv.
-  const exe = require('node:path').basename(process.execPath).toLowerCase()
-  const isSea = exe.endsWith('.exe') && exe !== 'node.exe'
-  return isSea && process.argv[1] !== process.execPath ? process.argv.slice(1) : process.argv.slice(2)
-})()
+// argv is [node, script, ...args]; the Windows .exe built with Node SEA keeps the same shape
+// ([exe, invoked name, ...args]), so slice(2) works for both.
+const argv = process.argv.slice(2)
 const file = process.env.FAKE_SECURITY_STORE
 if (process.env.FAKE_SECURITY_LOG) appendFileSync(process.env.FAKE_SECURITY_LOG, JSON.stringify(argv) + '\n')
 const store = file && existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {}
