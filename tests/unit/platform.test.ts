@@ -34,7 +34,7 @@ describe('withExtraPaths', () => {
 })
 
 describe('resolveExecutable', () => {
-  it('finds an executable in PATH (POSIX)', () => {
+  it.skipIf(process.platform === 'win32')('finds an executable in PATH (POSIX)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'ld-bin-'))
     writeFileSync(join(dir, 'kubectl'), '#!/bin/sh\n')
     chmodSync(join(dir, 'kubectl'), 0o755)

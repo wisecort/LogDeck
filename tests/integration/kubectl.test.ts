@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { UnsafeArgsError } from '../../src/k8s/args'
 import { KubectlError, runKubectl, spawnKubectl } from '../../src/k8s/kubectl'
 import { fakeKubectlEnv } from '../helpers/fake-kubectl'
+import { kubectlInstallHint } from '../../src/platform/paths'
 
 const CTX = '--context=portal-hml/api-hml-example-internal:6443/dev'
 
@@ -31,7 +32,7 @@ describe('runKubectl', () => {
 
   it('reports a missing binary with an actionable message', async () => {
     await expect(runKubectl(['config', 'get-contexts'], { binary: 'kubectl-not-installed-xyz', env: fakeKubectlEnv().env })).rejects.toThrow(
-      /brew install kubectl/,
+      new RegExp(kubectlInstallHint().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
     )
   })
 

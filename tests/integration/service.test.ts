@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { UnsafeArgsError } from '../../src/k8s/args'
 import { K8sService } from '../../src/k8s/service'
 import { fakeKubectlEnv } from '../helpers/fake-kubectl'
+import { kubectlInstallHint } from '../../src/platform/paths'
 
 const HML = 'portal-hml/api-hml-example-internal:6443/dev'
 
@@ -20,7 +21,7 @@ describe('K8sService', () => {
     const svc = new K8sService({ binary: 'kubectl-not-installed-xyz', env: fakeKubectlEnv().env })
     const v = await svc.version()
     expect(v.installed).toBe(false)
-    expect(v.message).toContain('brew install kubectl')
+    expect(v.message).toContain(kubectlInstallHint())
   })
 
   it('lists contexts and remembers them as the allowlist for --context', async () => {
