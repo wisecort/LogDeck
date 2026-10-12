@@ -134,3 +134,13 @@ describe('SignatureIndex on the pod log (P4)', () => {
     expect(i.groups()).toEqual([])
   })
 })
+
+describe('OKD build failures (F6)', () => {
+  it('groups buildah errors as "Falha no build"', () => {
+    const idx = new SignatureIndex()
+    idx.add(entry({ raw: 'error: build error: building at STEP "RUN php -m": exit status 1', level: 'ERROR' }))
+    idx.add(entry({ raw: 'ERRO: extensao PHP redis ausente na imagem base', level: 'ERROR' }))
+    const groups = idx.groups()
+    expect(groups.map((g) => [g.title, g.count])).toEqual([['Falha no build', 2]])
+  })
+})

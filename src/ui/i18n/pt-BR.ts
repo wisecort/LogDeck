@@ -278,6 +278,7 @@ export const ptBR = {
   'sig.nginx-upstream-timeout': 'Timeout upstream (Nginx)',
   'sig.node-etimedout': 'Timeout de conexão',
   'sig.fpm-max-children': 'PHP-FPM sem workers',
+  'sig.build-failed': 'Falha no build',
   'sig.php-fatal': 'PHP Fatal error',
   'tabs.label': 'Abas',
   'tabs.home': 'Início',

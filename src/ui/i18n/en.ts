@@ -279,6 +279,7 @@ export const en: Record<MessageKey, string> = {
   'sig.nginx-upstream-timeout': 'Upstream timeout (Nginx)',
   'sig.node-etimedout': 'Connection timeout',
   'sig.fpm-max-children': 'PHP-FPM out of workers',
+  'sig.build-failed': 'Build failed',
   'sig.php-fatal': 'PHP Fatal error',
   'tabs.label': 'Tabs',
   'tabs.home': 'Home',

@@ -150,7 +150,14 @@ export function App() {
       saveRecents(next)
       return next
     })
-    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) }, tabId)
+    // A finished pod (completed build, Job) is read once: following it would just reconnect over and over.
+    const once = pod.phase === 'Succeeded' || pod.phase === 'Failed'
+    void session.start(
+      { context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }), ...(once && { once: true }) },
+      tabId,
+      // OKD build pods: RUN output has no format, show it as INFO instead of UNKNOWN
+      pod.kind === 'build' ? { defaultLevel: 'INFO' } : {},
+    )
   }
 
   const selectPod = async (context: string, namespace: string, pod: PodInfo, preferred?: string, inNewTab = false) => {

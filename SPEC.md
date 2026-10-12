@@ -82,6 +82,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 ### F3 — Log ao vivo
 
 - **F3.1** Quando o usuário abre um container, então o app executa `kubectl logs -f --timestamps --context=… -n … <pod> -c <container>` com `--tail` (padrão 1000) e opcional `--since` (ex.: `5m`, `1h`).
+- **F3.1.1** Pods terminados (fase `Succeeded`/`Failed`, como builds concluídos e Jobs) são lidos uma vez, sem `-f` e sem reconexão; o status fica "Encerrado".
 - **F3.2** Dado um pod em CrashLoopBackOff ou com restarts > 0, então a opção `--previous` fica disponível. Com ela marcada, o app roda sem `-f` e mostra o estado "Encerrado (log anterior)".
 - **F3.3** Indicador de estado: **Live**, **Reconectando (n)**, **Pausado**, **Encerrado**, **Erro**. "Pausado" congela a visualização e continua acumulando no buffer.
 - **F3.4** Dada uma queda do stream (kubectl sai sem ação do usuário), então reconecta com backoff 1 s, 2 s, 5 s, 10 s, 10 s… usando `--since-time=<último timestamp recebido>` e descarta linhas repetidas com timestamp ≤ ao último. Teste: o kubectl fake derruba a conexão e a sequência de esperas é verificada com relógio falso.
@@ -90,6 +91,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 
 ### F4 — Filtro por nível (cores)
 
+- **F4.0** Logs de build do OKD (buildah/docker/s2i) têm parser próprio: `STEP n/m` e push em INFO (com campos `step` e `instruction`), camadas e cópia de blobs em DEBUG, `error: build error`/`ERRO:` em ERROR, `warning:` em WARN. Em pods de build, linhas sem formato (saída dos `RUN`) ficam INFO em vez de UNKNOWN.
 - **F4.1** Níveis: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, UNKNOWN, cada um com cor fixa e contador ao vivo.
 - **F4.2** Quando o usuário clica num nível, então alterna a visibilidade dele. ⌥+clique mostra só aquele nível.
 - **F4.3** Os contadores refletem as linhas presentes no buffer (descontadas as descartadas) e batem com a soma das linhas por nível (invariante testada em `buffer.test`).

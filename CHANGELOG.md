@@ -6,8 +6,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 - **Visual Cockpit:** tela de boas-vindas nas abas vazias (logo, cartões Pods / Arquivo / Último pod com atalhos, status do contexto e do kubectl), botão **Início** na barra de abas, indicador ao vivo pulsando, superfícies de vidro e brilho na cor de destaque.
 - **Preferências** redesenhadas: temas em miniaturas com as cores reais, idiomas em botões, cartão Sobre com logo. **Atalhos** agrupados (Geral, Busca, Mouse) com teclas desenhadas (Ctrl no Windows/Linux).
-- **Builds do OKD** numa pasta dentro do namespace, depois dos pods: o histórico de builds (`kubectl get builds.build.openshift.io`, só leitura) com status, commit, duração e idade; abre o log do container principal do build (não o `git-clone`) quando o pod ainda existe, com a lista de containers embaixo para ver as etapas de preparação; quando o cluster já removeu o pod, abre um painel com os detalhes do build (status, motivo, commit, duração) e o comando `oc describe` para copiar. Pods de deploy na mesma pasta.
+- **Builds do OKD** numa pasta dentro do namespace, depois dos pods: o histórico de builds (`kubectl get builds.build.openshift.io`, só leitura) com status, commit, duração e idade; abre o log do container principal do build quando o pod ainda existe; quando o cluster já removeu o pod, abre um painel com os detalhes do build (status, motivo, commit, duração) e o comando `oc describe` para copiar. Pods de deploy na mesma pasta.
 - **Produção (G5):** sem a faixa vermelha no topo; a marca PROD fica no seletor de contexto e na barra de status.
+- **Logs de build do OKD reconhecidos:** parser para buildah/docker/s2i (`STEP n/m`, camadas `-->`, `Copying blob`, `COMMIT`, push, `git clone`, `error: build error`, `ERRO:`), com passo e instrução em campos; a saída dos `RUN` vira INFO em vez de UNKNOWN; regra "Falha no build" no painel de erros. Abrir um build mostra só o container do build (sem as etapas de init).
+- **Pods já terminados** (builds concluídos, Jobs) são lidos uma vez, sem `-f`: antes o app ficava reconectando a cada 1–10 s.
 - Tempo esgotado do kubectl com mensagem útil e traduzida (qual comando demorou e o que verificar: VPN/rede, login do contexto).
 
 ## [1.3.0] — 12/10/2026

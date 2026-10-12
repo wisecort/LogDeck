@@ -99,6 +99,8 @@ export interface StartLogsRequest {
   tail?: number
   since?: string
   previous?: boolean
+  /** Finished container: read once without following. */
+  once?: boolean
 }
 
 export interface LogLinesEvent {

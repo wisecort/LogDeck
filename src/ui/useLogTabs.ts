@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { checkLogFile, LogFileError, splitLogText } from '../logs/file'
+import type { Level } from '../logs/types'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
 import type { LogOptions, Selection } from './view-types'
 import { LogEngine } from './engine'
@@ -100,11 +101,11 @@ export function useLogTabs() {
   }, [slots])
 
   const start = useCallback(
-    async (request: StartLogsRequest, tabId: string = stateRef.current.active) => {
+    async (request: StartLogsRequest, tabId: string = stateRef.current.active, opts: { defaultLevel?: Level } = {}) => {
       await stop(tabId)
       const s = slot(tabId)
       const generation = s.generation
-      s.engine.clear()
+      s.engine.clear(opts.defaultLevel)
       s.status = { state: 'connecting' }
       commit(updateTab(stateRef.current, tabId, { file: undefined }))
       setVersion((v) => v + 1)

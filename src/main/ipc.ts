@@ -88,6 +88,7 @@ export function registerIpc(deps: IpcDeps): void {
     const tail = optional(req.tail, isNumber, 'tail') ?? DEFAULT_TAIL
     const since = optional(req.since, isString, 'since')
     const previous = optional(req.previous, isBoolean, 'previous')
+    const once = optional(req.once, isBoolean, 'once')
     const sender = event.sender
     let streamId = ''
     const stream = new LogStream({
@@ -101,6 +102,7 @@ export function registerIpc(deps: IpcDeps): void {
       tail,
       ...(since !== undefined && { since }),
       ...(previous !== undefined && { previous }),
+      ...(once && { once: true }),
       onLines: (lines) => {
         if (!sender.isDestroyed()) sender.send(IPC.logLines, { streamId, lines } satisfies LogLinesEvent)
       },

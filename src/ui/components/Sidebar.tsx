@@ -185,7 +185,6 @@ export function Sidebar(p: Props) {
             <span className={`node-meta ${buildDot(b.phase) === 'bad' ? 'error-text' : ''}`}>{b.phase}</span>
             {b.startedAt !== undefined && <span className="node-meta">{formatAge(p.now - b.startedAt)}</span>}
           </button>
-          {selected && pod && containerList(pod)}
         </li>
       )
     }

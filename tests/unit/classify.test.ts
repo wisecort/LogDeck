@@ -195,3 +195,12 @@ describe('UNKNOWN rate on the fixture corpus (P1 goal)', () => {
     expect(unknown / total).toBeLessThan(0.05)
   })
 })
+
+describe('LogAssembler defaultLevel', () => {
+  it('uses INFO for unrecognized lines when asked (OKD build pods)', () => {
+    const a = new LogAssembler({ defaultLevel: 'INFO' })
+    const e = a.push('Installing dependencies from lock file')
+    expect(e.type === 'entry' && e.entry.level).toBe('INFO')
+    expect(new LogAssembler().push('Installing dependencies from lock file')).toMatchObject({ entry: { level: 'UNKNOWN' } })
+  })
+})

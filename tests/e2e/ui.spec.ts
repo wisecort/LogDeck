@@ -180,10 +180,14 @@ test('OKD builds folder: Build history after the pods; log while the pod exists,
   // the build whose pod still exists opens its main container (not the git-clone init step)
   await builds.getByRole('button', { name: /portal-web-12/ }).click()
   await expect(win.locator('.statusbar')).toContainText('portal-web-12-build › sti-build')
-  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
-  // and lists the containers under the build to switch to the init steps
-  await builds.getByRole('group', { name: 'Containers' }).getByRole('button', { name: /^git-clone/ }).click()
-  await expect(win.locator('.statusbar')).toContainText('portal-web-12-build › git-clone')
+  // only the build container: no init steps (git-clone…) listed under the build
+  await expect(builds.getByRole('group', { name: 'Containers' })).toHaveCount(0)
+  // a finished build is read once, without reconnecting
+  await expect(win.getByTestId('stream-status')).toContainText('Encerrado')
+  // build lines are recognized (STEP/push as INFO, layers as DEBUG, errors as ERROR), RUN output is INFO
+  await expect(win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^UNKNOWN/ })).toContainText('0')
+  await expect(win.getByTestId('error-group').filter({ hasText: 'Falha no build' })).toContainText('2×')
+  await win.screenshot({ path: 'test-results/build-log.png' })
 
   await win.reload()
   const tree2 = navTree(win).getByRole('list', { name: 'Namespaces' })

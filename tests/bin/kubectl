@@ -84,7 +84,8 @@ if (verb === 'get') {
 
 if (verb === 'logs') {
   if (mode === 'not-found') fail(`Error from server (NotFound): pods "${positional[1]}" not found`)
-  const logFile = env.FAKE_KUBECTL_LOG_FILE || 'pod-php-apache.log'
+  // OKD build pods (<build>-build) serve a buildah build log
+  const logFile = env.FAKE_KUBECTL_LOG_FILE || (positional[1]?.endsWith('-build') ? 'okd-build.log' : 'pod-php-apache.log')
   const file = has('--previous') ? join(FIXTURES, 'kubectl/previous.log') : isAbsolute(logFile) ? logFile : join(FIXTURES, logFile)
   const TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z /
   let lines = readFileSync(file, 'utf8').split('\n').filter(Boolean)

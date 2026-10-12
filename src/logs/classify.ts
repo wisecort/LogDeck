@@ -1,7 +1,7 @@
 import { stripAnsi } from './ansi'
 import { parseLine } from './parsers'
 import { fractionToMs, utcTime } from './time'
-import type { LogEntry } from './types'
+import type { Level, LogEntry } from './types'
 
 /** Log time and k8s time further apart than this are both shown (P2). */
 export const DIVERGENCE_MS = 2000
@@ -42,6 +42,8 @@ export type AssembleEvent =
 export interface AssembleOptions {
   now?: () => number
   startSeq?: number
+  /** Level for lines no parser recognizes (INFO for OKD build pods, whose RUN output has no format). */
+  defaultLevel?: Level
 }
 
 /** Streaming line → entry assembler (parsing, timestamps, multiline). */
@@ -49,10 +51,12 @@ export class LogAssembler {
   private nextSeq: number
   private lastSeq: number | undefined
   private readonly now: () => number
+  private readonly defaultLevel: Level
 
   constructor(opts: AssembleOptions = {}) {
     this.nextSeq = opts.startSeq ?? 1
     this.now = opts.now ?? Date.now
+    this.defaultLevel = opts.defaultLevel ?? 'UNKNOWN'
   }
 
   push(rawLine: string): AssembleEvent {
@@ -67,7 +71,7 @@ export class LogAssembler {
       seq: this.nextSeq++,
       raw: rest,
       message: parsed.message,
-      level: parsed.level ?? 'UNKNOWN',
+      level: parsed.level ?? this.defaultLevel,
       parser: parsed.parser,
       ingestTime: this.now(),
       continuation: [],

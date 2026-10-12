@@ -1,6 +1,7 @@
 import type { LineParser, ParsedLine } from '../types'
 import { accessParser } from './access'
 import { apacheErrorParser } from './apache-error'
+import { buildParser } from './build'
 import { heuristicParser } from './heuristic'
 import { jsonParser } from './json'
 import { laravelParser } from './laravel'
@@ -15,6 +16,7 @@ export const PARSERS: readonly LineParser[] = [
   apacheErrorParser,
   phpFpmParser,
   nginxErrorParser,
+  buildParser,
   heuristicParser,
 ]
 
