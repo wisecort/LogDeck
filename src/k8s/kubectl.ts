@@ -3,6 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { homedir } from 'node:os'
 import { currentPlatform, kubectlInstallHint, resolveExecutable as resolveIn, withExtraPaths, type Platform } from '../platform/paths'
 import { assertReadOnly } from './args'
+import { messagesLanguage, PATTERNS, texts } from './messages'
 
 export interface KubectlOptions {
   /** Binary name or path; default `kubectl` resolved from PATH. */
@@ -28,23 +29,16 @@ export function kubectlEnv(base: NodeJS.ProcessEnv, platform: Platform = current
   return withExtraPaths(base, platform, base['HOME'] ?? base['USERPROFILE'] ?? homedir())
 }
 
-const MESSAGES: ReadonlyArray<[RegExp, string]> = [
-  [/Unauthorized|must be logged in|token has expired|provide credentials/i, 'Sessão expirada ou sem login. Rode `oc login` (OKD) ou renove as credenciais do contexto no terminal.'],
-  [/Forbidden|forbidden/, 'Sem permissão para esta ação no cluster (RBAC).'],
-  [/Unable to connect|no such host|connection refused|i\/o timeout|handshake timeout|EOF$/i, 'Cluster inacessível. Verifique VPN/rede e o endereço do contexto.'],
-  [/NotFound|not found/i, 'Recurso não encontrado (o pod pode ter sido removido ou recriado).'],
-  [/context .* does not exist/i, 'Contexto não existe no kubeconfig.'],
-]
-
-/** Actionable Portuguese message for common kubectl failures (F1.5). */
-export function friendlyError(stderrOrError: string | NodeJS.ErrnoException, platform: Platform = currentPlatform()): string {
+/** Actionable message for common kubectl failures (F1.5), in the interface language. */
+export function friendlyError(stderrOrError: string | NodeJS.ErrnoException, platform: Platform = currentPlatform(), lang: string = messagesLanguage()): string {
+  const tx = texts(lang)
   if (typeof stderrOrError !== 'string') {
-    if (stderrOrError.code === 'ENOENT') return `kubectl não encontrado. Instale com: ${kubectlInstallHint(platform)}`
+    if (stderrOrError.code === 'ENOENT') return tx.missing.replace('{hint}', kubectlInstallHint(platform))
     stderrOrError = stderrOrError.message
   }
   const text = stderrOrError.trim()
-  const hit = MESSAGES.find(([re]) => re.test(text))
-  return hit ? `${hit[1]} (${text.split('\n')[0]})` : text
+  const hit = PATTERNS.find(([re]) => re.test(text))
+  return hit ? `${tx[hit[1]]} (${text.split('\n')[0]})` : text
 }
 
 /** Absolute path of `name` in env PATH (node-pty does not search the PATH we pass). */

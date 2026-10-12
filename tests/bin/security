@@ -3,6 +3,8 @@
 // Env: FAKE_SECURITY_STORE (path to the JSON file), FAKE_SECURITY_LOG (argv log).
 const { appendFileSync, existsSync, readFileSync, writeFileSync } = require('node:fs')
 
+// argv is [node, script, ...args]; the Windows .exe built with Node SEA keeps the same shape
+// ([exe, invoked name, ...args]), so slice(2) works for both.
 const argv = process.argv.slice(2)
 const file = process.env.FAKE_SECURITY_STORE
 if (process.env.FAKE_SECURITY_LOG) appendFileSync(process.env.FAKE_SECURITY_LOG, JSON.stringify(argv) + '\n')

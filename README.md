@@ -14,7 +14,8 @@ Explorador de logs de Kubernetes/OKD para **macOS, Linux e Windows**, **somente 
 - **Histograma de volume** por nível: arraste sobre as barras para filtrar um intervalo de tempo.
 - **Painel de erros e timeouts**: agrupa erros repetidos (timeout Apache → PHP-FPM, `max_children`, permissão, conexão com banco…) com contagem e período.
 - **Detalhes da linha**: horários do log e do kubectl, campos, JSON formatado, stack trace, **Copiar para chamado** (com senhas e tokens mascarados).
-- **Container anterior** (`--previous`) para investigar CrashLoopBackOff.
+- **Container anterior** (`--previous`) para investigar CrashLoopBackOff, inclusive **lado a lado** com o log atual.
+- **Abas** e **pods recentes** para alternar entre vários pods.
 - **Terminal no container**, aberto só quando você clica.
 - **Abrir arquivo de log** salvo (⌘O ou arrastando para a janela).
 - **IA opcional** para explicar erros, com preview do texto mascarado e do destino antes de qualquer envio.
@@ -86,10 +87,15 @@ Para guardar chaves de IA, o Linux precisa de um cofre de senhas ativo (GNOME Ke
 - **Buscar** (⌘F): texto, `Aa` para diferenciar maiúsculas e `.*` para regex. ⌘G / ⇧⌘G pula entre os resultados.
 - **Excluir:** termos separados por vírgula. Em **Presets** você salva exclusões por namespace.
 - **Tempo:** quantas linhas trazer (tail), desde quando e **Container anterior (`--previous`)**.
+- **Comparar com o anterior** (ícone de colunas): mostra o log do container anterior ao lado do atual.
 - **Histograma:** arraste sobre as barras para ver só aquele intervalo.
 - Na barra de ações: colapsar repetidas, quebrar linhas, **exportar** as linhas filtradas, pausar, limpar a tela e **Terminal**.
 
 ![Detalhes de uma linha](docs/images/details.png)
+
+### Abas
+
+Clique em **+** acima da busca para abrir outra aba, ou faça ⌘-clique (Ctrl-clique no Windows/Linux) num pod para abri-lo direto numa aba nova. Cada aba continua recebendo o log em segundo plano. Até 8 abas.
 
 ### 3. Investigar erros
 
@@ -137,6 +143,7 @@ Em **Preferências** (rodapé da barra lateral): tema, idioma e Sobre.
 | ⌘F | Buscar |
 | ⌘G / ⇧⌘G | Próxima / anterior linha encontrada |
 | ⌥ + clique no nível | Mostrar só aquele nível |
+| ⌘ + clique no pod | Abrir o pod numa nova aba |
 | Esc | Limpar seleção / fechar |
 | ? | Lista de atalhos |
 

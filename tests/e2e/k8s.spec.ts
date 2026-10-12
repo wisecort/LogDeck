@@ -6,6 +6,15 @@ import { fakeKubectlEnv } from '../helpers/fake-kubectl'
 const HML = 'portal-hml/api-hml-example-internal:6443/dev'
 
 function kubectlLogsProcesses(): string[] {
+  if (process.platform === 'win32') {
+    // The fake runs as tests/bin/kubectl.exe on Windows; tasklist has no command line, CIM does.
+    const out = execFileSync(
+      'powershell',
+      ['-NoProfile', '-Command', "Get-CimInstance Win32_Process -Filter \"Name='kubectl.exe'\" | ForEach-Object { $_.CommandLine }"],
+      { encoding: 'utf8' },
+    )
+    return out.split('\n').filter((line) => / logs /.test(line))
+  }
   try {
     return execFileSync('pgrep', ['-f', 'node .*tests/bin/kubectl logs'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean)
   } catch {

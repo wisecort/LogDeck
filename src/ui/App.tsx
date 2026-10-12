@@ -24,8 +24,12 @@ import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from 
 import { LogFileError, MAX_LOG_FILE_BYTES } from '../logs/file'
 import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
-import { useLogSession } from './useLogSession'
+import { useLogTabs } from './useLogTabs'
+import { TabBar } from './components/TabBar'
+import { MAX_TABS } from './tabs'
 import { useNavigation } from './useNavigation'
+import { groupTitle } from './group-title'
+import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
 
 const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
@@ -33,14 +37,14 @@ const AROUND_RADIUS = 10
 const MAX_AI_LINES = 200
 /** ⌘ on macOS, Ctrl on Windows/Linux. */
 const IS_MAC = isMacUserAgent(navigator.userAgent)
+const NO_BOOKMARKS: ReadonlySet<number> = new Set()
+const NOOP = () => {}
 const EMPTY_SEARCH: SearchState = { text: '', regex: false, caseSensitive: false, exclude: '' }
 
 export function App() {
   const [notice, setNotice] = useState<string>()
   const onError = useCallback((m: string) => setNotice(m), [])
   const nav = useNavigation(onError)
-  const [selection, setSelection] = useState<Selection>({})
-  const [options, setOptions] = useState<LogOptions>({ tail: 1000, since: '', previous: false })
   const [now, setNow] = useState(() => Date.now())
   const [levels, setLevels] = useState<ReadonlySet<Level>>(new Set(LEVELS))
   const [search, setSearch] = useState<SearchState>(EMPTY_SEARCH)
@@ -68,12 +72,17 @@ export function App() {
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const [lang, setLang] = useState<Lang>(loadLanguage)
   const [prefs, setPrefs] = useState(false)
+  const [recents, setRecents] = useState<RecentPod[]>(loadRecents)
   const t = useMemo(() => translator(lang), [lang])
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const session = useLogSession()
+  const session = useLogTabs()
   const { engine, version, status } = session
+  // Selection and log options belong to the active tab.
+  const selection: Selection = session.activeTab.selection
+  const options: LogOptions = session.activeTab.options
+  const { setSelection, setOptions } = session
   const selectedContext = nav.contexts.find((c) => c.name === selection.context)
   // What the user sees for the context: their LogDeck alias, else the short derived label.
   const contextShown = selection.context ? (nav.aliases[selection.context]?.trim() || selection.context) : undefined
@@ -120,23 +129,53 @@ export function App() {
     setCursor(undefined)
   }
 
-  const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions) => {
+  /** Tab switches restart the view state (selection, bookmarks, pause, group/time filters); presets follow the tab. */
+  const afterTabChange = () => {
     resetView()
-    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) })
+    setShell(undefined)
+    const { context, namespace } = session.activeTab.selection
+    setPresets(undefined)
+    if (context && namespace) void window.logdeck.getPresets(presetKey(context, namespace)).then(setPresets)
   }
 
-  const selectPod = async (context: string, namespace: string, pod: PodInfo) => {
+  const openLogs = (context: string, namespace: string, pod: PodInfo, container: string, o: LogOptions, tabId?: string) => {
+    resetView()
+    void session.stopCompare(tabId)
+    setRecents((prev) => {
+      const next = pushRecent(prev, { context, namespace, pod: pod.name, container })
+      saveRecents(next)
+      return next
+    })
+    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) }, tabId)
+  }
+
+  const selectPod = async (context: string, namespace: string, pod: PodInfo, preferred?: string, inNewTab = false) => {
+    let tabId: string | undefined
+    if (inNewTab) {
+      tabId = session.newTab()
+      if (!tabId) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+    }
     setShell(undefined)
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
     const opts = { ...options, previous: options.previous && pod.canPrevious }
-    setOptions(opts)
-    if (pod.containers.length === 1 && pod.initContainers.length === 0) {
-      setSelection({ context, namespace, pod, container: pod.containers[0]! })
-      openLogs(context, namespace, pod, pod.containers[0]!, opts)
+    const all = [...pod.containers, ...pod.initContainers]
+    const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : undefined
+    setOptions(opts, tabId)
+    if (container) {
+      setSelection({ context, namespace, pod, container }, tabId)
+      openLogs(context, namespace, pod, container, opts, tabId)
     } else {
-      setSelection({ context, namespace, pod })
-      void session.stop()
+      setSelection({ context, namespace, pod }, tabId)
+      void session.stop(tabId)
     }
+  }
+
+  /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
+  const openRecent = async (r: RecentPod) => {
+    await nav.openNamespace(r.context, r.namespace, true)
+    const pod = (await nav.loadPods(r.context, r.namespace))?.find((p) => p.name === r.pod)
+    if (!pod) return setNotice(t('recent.gone', { pod: r.pod }))
+    await selectPod(r.context, r.namespace, pod, r.container)
   }
 
   const selectContainer = (c: string) => {
@@ -148,7 +187,6 @@ export function App() {
 
   const openFile = async (f: File) => {
     setShell(undefined)
-    setSelection({})
     resetView()
     try {
       await session.openFile(f)
@@ -237,6 +275,18 @@ export function App() {
     [engine, viewVersion, baseFilter, timeRange, collapse], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const counts = useMemo(() => engine.counts, [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
+  // --previous side by side: same level and text filters (group/regex/time filters are tied to the main log's lines).
+  const companion = session.companion
+  const previousRows = useMemo(
+    () => (companion ? companion.engine.view({ levels, ...(compiled && { search: compiled }), collapse }) : []),
+    [companion, version, levels, compiled, collapse], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const canCompare = Boolean(selection.pod?.canPrevious && selection.container && !options.previous)
+  const toggleCompare = () => {
+    const { context, namespace, pod, container } = selection
+    if (session.activeTab.compare) return void session.stopCompare()
+    if (context && namespace && pod && container) void session.startCompare({ context, namespace, pod: pod.name, container, tail: options.tail })
+  }
   const entriesBySeq = useMemo(() => new Map(engine.entries().map((e) => [e.seq, e])), [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
   const selectedEntry = selectedSeq !== undefined ? entriesBySeq.get(selectedSeq) : undefined
   const bookmarkedEntries = [...bookmarks].flatMap((s) => {
@@ -293,7 +343,7 @@ export function App() {
     return groups
       .filter((g) => selectedGroups.has(g.key))
       .map((g) => ({
-        title: g.title,
+        title: groupTitle(t, g),
         count: g.count,
         lines: g.seqs.flatMap((seq) => {
           const e = entriesBySeq.get(seq)
@@ -357,7 +407,7 @@ export function App() {
         <Sidebar
           nav={nav}
           selection={selection}
-          onPod={(c, n, p) => void selectPod(c, n, p)}
+          onPod={(c, n, p, inNewTab) => void selectPod(c, n, p, undefined, inNewTab)}
           onContainer={selectContainer}
           bookmarks={bookmarkedEntries}
           onBookmark={(seq) => {
@@ -368,12 +418,30 @@ export function App() {
           onCloseShell={() => setShell(undefined)}
           now={now}
           onPreferences={() => setPrefs(true)}
+          recents={recents}
+          onRecent={(r) => void openRecent(r)}
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}
           {...(session.file && { fileName: session.file })}
         />
         <main className="main">
+          <TabBar
+            tabs={session.tabs}
+            active={session.activeTab.id}
+            onActivate={(id) => {
+              session.activate(id)
+              afterTabChange()
+            }}
+            onClose={(id) => {
+              void session.close(id)
+              afterTabChange()
+            }}
+            onNew={() => {
+              if (!session.newTab()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+              afterTabChange()
+            }}
+          />
           <TopBar
             search={search}
             onSearch={(s) => {
@@ -414,6 +482,9 @@ export function App() {
               engine.clear()
               resetView()
             }}
+            canCompare={canCompare}
+            compare={!!session.activeTab.compare}
+            onCompare={toggleCompare}
             canShell={Boolean(selection.pod && selection.container && !selection.pod.initContainers.includes(selection.container))}
             onShell={() => {
               const { context, namespace, pod, container } = selection
@@ -425,20 +496,53 @@ export function App() {
             onFollow={() => (paused ? resume() : pause())}
           />
           {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
-          <LogList
-            rows={rows}
-            {...(highlightSearch && { search: highlightSearch })}
-            {...(cursor !== undefined && { cursor })}
-            {...(selectedSeq !== undefined && { selectedSeq })}
-            bookmarks={bookmarks}
-            wrap={wrap}
-            paused={paused}
-            {...(command && { command })}
-            onSelect={selectEntry}
-            onBookmark={toggleBookmark}
-            onUserScrollUp={pause}
-            onResume={resume}
-          />
+          {(() => {
+            const main = (
+              <LogList
+                rows={rows}
+                {...(highlightSearch && { search: highlightSearch })}
+                {...(cursor !== undefined && { cursor })}
+                {...(selectedSeq !== undefined && { selectedSeq })}
+                bookmarks={bookmarks}
+                wrap={wrap}
+                paused={paused}
+                {...(command && { command })}
+                onSelect={selectEntry}
+                onBookmark={toggleBookmark}
+                onUserScrollUp={pause}
+                onResume={resume}
+              />
+            )
+            if (!companion) return main
+            return (
+              <div className="log-split">
+                <div className="log-pane">
+                  <div className="pane-head">{t('cmp.current')}</div>
+                  {main}
+                </div>
+                <div className="log-pane" data-testid="previous-pane">
+                  <div className="pane-head">
+                    {t('cmp.previous')}
+                    <span className="spacer" />
+                    <span>{t('st.lines', { shown: previousRows.length, total: companion.engine.size })}</span>
+                  </div>
+                  <LogList
+                    label={t('cmp.previous')}
+                    rows={previousRows}
+                    {...(highlightSearch && { search: highlightSearch })}
+                    bookmarks={NO_BOOKMARKS}
+                    wrap={wrap}
+                    paused={false}
+                    markable={false}
+                    onSelect={NOOP}
+                    onBookmark={NOOP}
+                    onUserScrollUp={NOOP}
+                    onResume={NOOP}
+                  />
+                </div>
+              </div>
+            )
+          })()}
           {shell && <ShellPanel target={shell} onClose={() => setShell(undefined)} />}
         </main>
         <RightPanel

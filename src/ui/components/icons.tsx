@@ -144,3 +144,10 @@ export const IconPlay = () => (
     <path d="M7 4.5v15l12-7.5z" />
   </Svg>
 )
+/** Two panes side by side (compare with --previous). */
+export const IconColumns = () => (
+  <Svg>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M12 4v16" />
+  </Svg>
+)

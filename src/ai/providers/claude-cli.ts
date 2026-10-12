@@ -72,7 +72,13 @@ export async function runClaude(system: string, user: string, opts: ClaudeOption
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') throw new Error('Claude Code CLI não encontrado no PATH', { cause: err })
     throw err
   } finally {
-    rmSync(cwd, { recursive: true, force: true })
+    // On Windows a just-killed process may still hold its cwd for a moment: retry, and never let the
+    // cleanup hide the real error (e.g. the timeout).
+    try {
+      rmSync(cwd, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
+    } catch {
+      // an empty temp dir left behind is harmless
+    }
   }
 
   let parsed: { is_error?: boolean; result?: unknown }

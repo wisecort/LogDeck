@@ -47,3 +47,16 @@ describe('friendlyError (F1.5)', () => {
     expect(friendlyError(new Error('boom'))).toBe('boom')
   })
 })
+
+describe('friendlyError in the interface language', () => {
+  it('English and Spanish', () => {
+    expect(friendlyError('error: You must be logged in to the server (Unauthorized)', 'darwin', 'en')).toContain('Session expired')
+    expect(friendlyError('Error from server (Forbidden): x', 'darwin', 'es')).toContain('Sin permiso')
+    const err = Object.assign(new Error('spawn kubectl ENOENT'), { code: 'ENOENT' })
+    expect(friendlyError(err, 'linux', 'en')).toBe('kubectl not found. Install it with: sudo snap install kubectl --classic')
+  })
+
+  it('falls back to Portuguese for an unknown language', () => {
+    expect(friendlyError('Error from server (Forbidden): x', 'darwin', 'xx')).toContain('Sem permissão')
+  })
+})

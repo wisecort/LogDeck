@@ -9,6 +9,8 @@
 
 const { appendFileSync, readdirSync } = require('node:fs')
 
+// argv is [node, script, ...args]; the Windows .exe built with Node SEA keeps the same shape
+// ([exe, invoked name, ...args]), so slice(2) works for both.
 const argv = process.argv.slice(2)
 const mode = process.env.FAKE_CLAUDE_MODE || 'ok'
 

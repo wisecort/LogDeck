@@ -1,6 +1,6 @@
 import { LEVELS, type Level } from '../../logs/types'
 import { useI18n } from '../i18n'
-import { IconChart, IconDownload, IconPause, IconPlay, IconStack, IconTerminal, IconTrash, IconWrap } from './icons'
+import { IconChart, IconColumns, IconDownload, IconPause, IconPlay, IconStack, IconTerminal, IconTrash, IconWrap } from './icons'
 
 interface Props {
   counts: Readonly<Record<Level, number>>
@@ -16,6 +16,9 @@ interface Props {
   onExport(): void
   onClear(): void
   canShell: boolean
+  canCompare: boolean
+  compare: boolean
+  onCompare(): void
   onShell(): void
   paused: boolean
   pending: number
@@ -69,6 +72,16 @@ export function LevelBar(p: Props) {
       </button>
       <button className="icon-btn" aria-label={t('lv.clear')} title={t('lv.clearHint')} onClick={p.onClear}>
         <IconTrash />
+      </button>
+      <button
+        className="icon-btn"
+        aria-label={t('lv.compare')}
+        aria-pressed={p.compare}
+        title={p.canCompare ? t('lv.compareHint') : t('top.noRestarts')}
+        disabled={!p.canCompare && !p.compare}
+        onClick={p.onCompare}
+      >
+        <IconColumns />
       </button>
       <button className="icon-btn labeled" aria-label={t('lv.terminalLabel')} title={t('lv.terminalHint')} disabled={!p.canShell} onClick={p.onShell}>
         <IconTerminal /> {t('lv.terminal')}

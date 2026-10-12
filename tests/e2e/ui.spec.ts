@@ -83,6 +83,70 @@ test('popovers close on outside click and Escape, so they never cover the toolba
   await expect(win.getByLabel('tail')).toHaveCount(0)
 })
 
+test('recent pods: the last ones opened reopen with the same container', async () => {
+  await openPod(win, { pod: /portal-web/, container: 'php-fpm' })
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  // the namespace is already open: click the second pod directly
+  await navTree(win).getByRole('list', { name: 'Namespaces' }).getByRole('button', { name: /portal-worker/ }).click()
+  const recents = navTree(win).getByRole('list', { name: 'Recentes' })
+  await expect(recents.getByRole('button')).toHaveCount(2)
+  await expect(recents.getByRole('button').first()).toContainText('portal-worker')
+  await recents.getByRole('button', { name: /portal-web/ }).click()
+  await expect(win.locator('.statusbar')).toContainText('portal-web-7d9f8c6b5-x2k4p › php-fpm')
+  await expect(recents.getByRole('button').first()).toContainText('portal-web')
+})
+
+test('tabs: two pods stream side by side, switch, close and add a new one', async () => {
+  await openWebPod(win)
+  const tabs = win.getByTestId('log-tab')
+  const tabList = win.getByRole('tablist', { name: 'Abas' })
+  await expect(tabs).toHaveCount(1)
+  await expect(tabs.first()).toContainText('portal-web-7d9f8c6b5-x2k4p / httpd')
+
+  // ⌘/Ctrl-click opens the worker pod in a new tab, the web tab keeps its 465 lines
+  await navTree(win).getByRole('list', { name: 'Namespaces' }).getByRole('button', { name: /portal-worker/ }).click({ modifiers: ['ControlOrMeta'] })
+  await expect(tabs).toHaveCount(2)
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('portal-worker')
+  await expect(win.getByTestId('match-count')).not.toContainText('/ 465')
+
+  await tabList.getByRole('tab', { name: /portal-web/ }).click()
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  await expect(win.locator('.statusbar')).toContainText('portal-web-7d9f8c6b5-x2k4p › httpd')
+
+  await win.getByRole('button', { name: /Fechar aba portal-worker/ }).click()
+  await expect(tabs).toHaveCount(1)
+
+  await win.getByRole('button', { name: 'Nova aba', exact: true }).click()
+  await expect(tabs).toHaveCount(2)
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('Nova aba')
+  await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
+})
+
+test('compare with --previous: current and previous container side by side', async () => {
+  await openPod(win, { pod: /portal-worker/ })
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  const compare = win.getByRole('button', { name: 'Comparar com o anterior' })
+  await expect(compare).toBeEnabled()
+  await compare.click()
+  const previous = win.getByTestId('previous-pane')
+  await expect(previous).toContainText('Container anterior (--previous)')
+  await expect(previous.getByTestId('log-row').filter({ hasText: 'FPM initialization failed' })).toHaveCount(1)
+  await expect(previous.getByRole('button', { name: 'Marcar linha' })).toHaveCount(0)
+  await win.screenshot({ path: 'test-results/ui-compare.png' })
+
+  // level filters apply to both panes
+  await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^ERROR/ }).click({ modifiers: ['Alt'] })
+  for (const level of await previous.getByTestId('log-row').evaluateAll((els) => els.map((e) => e.getAttribute('data-level')))) expect(level).toBe('ERROR')
+
+  await compare.click()
+  await expect(previous).toHaveCount(0)
+  // a pod without restarts has no previous container
+  const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
+  await tree.getByRole('button', { name: /portal-migrate/ }).click()
+  await expect(win.locator('.statusbar')).toContainText('portal-migrate')
+  await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
+})
+
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Expressão regular' }).click()
@@ -232,6 +296,7 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await expect(win.getByLabel('Search', { exact: true })).toBeVisible()
   await expect(win.getByTestId('follow-pill')).toContainText('Live')
   await expect(win.getByTestId('match-count')).toContainText('lines')
+  await expect(win.getByTestId('error-group').first()).toContainText('Apache → PHP-FPM timeout')
   await win.screenshot({ path: 'test-results/ui-english.png' })
 
   await win.reload()

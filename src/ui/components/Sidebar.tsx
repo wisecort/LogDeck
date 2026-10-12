@@ -3,23 +3,20 @@ import { formatAge } from '../../k8s/pods'
 import type { LogEntry } from '../../logs/types'
 import type { PodInfo } from '../../shared/ipc'
 import { displayLabel } from '../context-view'
+import type { RecentPod } from '../recents'
 import { ContextsModal } from './ContextsModal'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
 import { nsKey, type Navigation } from '../useNavigation'
-import { IconBookmark, IconChevron, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
+import { IconBookmark, IconChevron, IconClock, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
 
-export interface Selection {
-  context?: string
-  namespace?: string
-  pod?: PodInfo
-  container?: string
-}
+export type { Selection } from '../view-types'
+import type { Selection } from '../view-types'
 
 interface Props {
   nav: Navigation
   selection: Selection
-  onPod(context: string, namespace: string, pod: PodInfo): void
+  onPod(context: string, namespace: string, pod: PodInfo, inNewTab: boolean): void
   onContainer(name: string): void
   bookmarks: LogEntry[]
   onBookmark(seq: number): void
@@ -27,6 +24,8 @@ interface Props {
   onCloseShell(): void
   now: number
   onPreferences(): void
+  recents: RecentPod[]
+  onRecent(r: RecentPod): void
   onAiPreferences(): void
   onShortcuts(): void
   onOpenFile(): void
@@ -64,8 +63,11 @@ export function Sidebar(p: Props) {
         <li key={pod.name}>
           <button
             className={`node ${selected ? 'selected' : ''}`}
-            onClick={() => p.onPod(context, namespace, pod)}
-            title={t('sidebar.podTitle', { name: pod.name, status: pod.status, ready: pod.ready, restarts: pod.restarts })}
+            onClick={(e) => p.onPod(context, namespace, pod, e.metaKey || e.ctrlKey)}
+            onAuxClick={(e) => {
+              if (e.button === 1) p.onPod(context, namespace, pod, true)
+            }}
+            title={`${t('sidebar.podTitle', { name: pod.name, status: pod.status, ready: pod.ready, restarts: pod.restarts })}\n${t('sidebar.newTabHint')}`}
           >
             <span className={`dot ${podDot(pod.status)}`} />
             <span className="node-label mono">{pod.name}</span>
@@ -150,6 +152,24 @@ export function Sidebar(p: Props) {
         {managing && <ContextsModal nav={nav} onClose={() => setManaging(false)} />}
       </div>
       <nav className="sidebar-scroll" aria-label={t('sidebar.navigation')}>
+        {p.recents.length > 0 && (
+          <>
+            <div className="section-label">
+              <IconClock /> {t('sidebar.recents')}
+            </div>
+            <ul className="tree" aria-label={t('sidebar.recents')}>
+              {p.recents.map((r) => (
+                <li key={`${r.context}::${r.namespace}::${r.pod}`}>
+                  <button className="node" onClick={() => p.onRecent(r)} title={`${r.namespace} / ${r.pod} / ${r.container}\n${r.context}`}>
+                    <span className="node-label mono">{r.pod}</span>
+                    <span className="node-meta">{r.namespace}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
         {nav.favorites.length > 0 && (
           <>
             <div className="section-label">

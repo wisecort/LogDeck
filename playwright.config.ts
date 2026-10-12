@@ -8,7 +8,8 @@ import { defineConfig } from '@playwright/test'
 process.env['PATH'] = `${resolve(__dirname, 'tests/bin')}${delimiter}${process.env['PATH'] ?? ''}`
 process.env['KUBECONFIG'] = resolve(__dirname, 'tests/fixtures/kubectl/kubeconfig.fake.yaml')
 // Same for AI: fake `claude` comes from tests/bin, and the Keychain is a fake `security`.
-process.env['LOGDECK_SECURITY_BIN'] = resolve(__dirname, 'tests/bin/security')
+// On Windows the fakes are .exe files built by scripts/build-test-bins.mjs.
+process.env['LOGDECK_SECURITY_BIN'] = resolve(__dirname, process.platform === 'win32' ? 'tests/bin/security.exe' : 'tests/bin/security')
 process.env['FAKE_SECURITY_STORE'] = join(mkdtempSync(join(tmpdir(), 'logdeck-e2e-keychain-')), 'store.json')
 
 export default defineConfig({

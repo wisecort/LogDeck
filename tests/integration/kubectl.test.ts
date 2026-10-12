@@ -42,6 +42,7 @@ describe('runKubectl', () => {
     await expect(runKubectl(['logs', 'p', '-n', 'portal-hml', '-f', '--tail=1', CTX], { env: fake.env, timeoutMs: 300 })).rejects.toThrow(KubectlError)
     expect(Date.now() - t0).toBeLessThan(3000)
     await new Promise((r) => setTimeout(r, 100))
+    if (process.platform === 'win32') return // no POSIX `ps`; the timeout itself is checked above
     const running = execFileSync('ps', ['-axo', 'command'], { encoding: 'utf8' })
       .split('\n')
       .filter((cmd) => /^\S*node \S*tests\/bin\/kubectl logs p -n portal-hml -f --tail=1/.test(cmd))

@@ -16,3 +16,6 @@ test-results/
 /*.mov
 /videoframe_*.png
 /referencias/
+
+# Windows test fakes built by scripts/build-test-bins.mjs
+tests/bin/*.exe

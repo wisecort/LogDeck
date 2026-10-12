@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DICTIONARIES, LANGUAGES, matchLanguage, translator } from '../../src/ui/i18n/core'
 import { ptBR } from '../../src/ui/i18n/pt-BR'
+import { CATALOG_IDS } from '../../src/logs/signatures'
 
 const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort()
 
@@ -45,5 +46,11 @@ describe('matchLanguage', () => {
     [undefined, 'en'],
   ])('%s → %s', (tag, lang) => {
     expect(matchLanguage(tag)).toBe(lang)
+  })
+})
+
+describe('F6 catalog titles', () => {
+  it('every catalog rule has a translated title', () => {
+    for (const id of CATALOG_IDS) expect(Object.keys(ptBR)).toContain(`sig.${id}`)
   })
 })
