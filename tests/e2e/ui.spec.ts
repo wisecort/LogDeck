@@ -59,6 +59,8 @@ test('P3: health checks hidden by the default preset, collapsed ×121 when shown
   await expect(rows().filter({ hasText: 'checagem de disponibilidade' })).toHaveCount(0)
   await win.getByRole('button', { name: /Presets/ }).click()
   await win.getByRole('group', { name: 'Presets de exclusão' }).getByRole('button', { name: 'Ocultar health checks' }).click()
+  await win.keyboard.press('Escape')
+  await expect(win.getByRole('group', { name: 'Presets de exclusão' })).toHaveCount(0)
   // Follow mode may scroll back to the bottom right after the filter re-renders: retry the scroll.
   await expect(async () => {
     await win.getByTestId('log-list').evaluate((el) => el.scrollTo(0, 0))
@@ -66,6 +68,19 @@ test('P3: health checks hidden by the default preset, collapsed ×121 when shown
   }).toPass()
   await win.getByRole('button', { name: 'Colapsar repetidas' }).click()
   await expect(rows().filter({ hasText: '×121' })).toHaveCount(0)
+})
+
+test('popovers close on outside click and Escape, so they never cover the toolbar', async () => {
+  await openWebPod(win)
+  await win.getByRole('button', { name: /Presets/ }).click()
+  await expect(win.getByRole('group', { name: 'Presets de exclusão' })).toBeVisible()
+  await win.getByTestId('log-list').click({ position: { x: 5, y: 5 } })
+  await expect(win.getByRole('group', { name: 'Presets de exclusão' })).toHaveCount(0)
+
+  await win.getByRole('button', { name: 'Tempo' }).click()
+  await expect(win.getByLabel('tail')).toBeVisible()
+  await win.keyboard.press('Escape')
+  await expect(win.getByLabel('tail')).toHaveCount(0)
 })
 
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {

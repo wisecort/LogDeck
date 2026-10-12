@@ -114,3 +114,4 @@ Primeira versão pública (macOS, Apple Silicon). As seções abaixo registram c
 
 - Versão 1.0.0; pacotes `.dmg` e `.zip` para Apple Silicon (`npm run release:mac`), sem assinatura da Apple.
 - README com instalação, uso, atalhos, IA, segurança e build a partir do código.
+- Correção (achada pelo primeiro CI no GitHub): os popovers Presets e Tempo fecham ao clicar fora ou com Esc; antes ficavam abertos e cobriam a barra de ações em janelas menores.

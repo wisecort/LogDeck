@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { BUILTIN_PRESETS, type NamespacePresets } from '../../shared/presets'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
@@ -40,6 +40,26 @@ export function TopBar({ inputRef, ...p }: Props) {
   const { t } = useI18n()
   const [open, setOpen] = useState<'time' | 'presets' | undefined>()
   const [presetName, setPresetName] = useState('')
+  const presetsRef = useRef<HTMLDivElement>(null)
+  const timeRef = useRef<HTMLDivElement>(null)
+
+  // An open popover closes on a click outside it or on Escape, so it never covers the toolbar.
+  useEffect(() => {
+    if (!open) return
+    const wrap = open === 'presets' ? presetsRef : timeRef
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(undefined)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(undefined)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
   const all = [...BUILTIN_PRESETS, ...(p.presets?.presets ?? [])]
   const activeCount = p.presets?.active.length ?? 0
 
@@ -103,7 +123,7 @@ export function TopBar({ inputRef, ...p }: Props) {
         />
       </div>
 
-      <div className="popover-wrap">
+      <div className="popover-wrap" ref={presetsRef}>
         <button className="icon-btn" aria-expanded={open === 'presets'} onClick={() => setOpen(open === 'presets' ? undefined : 'presets')}>
           {t('top.presets')}{activeCount > 0 ? ` (${activeCount})` : ''} ▾
         </button>
@@ -134,7 +154,7 @@ export function TopBar({ inputRef, ...p }: Props) {
         )}
       </div>
 
-      <div className="popover-wrap">
+      <div className="popover-wrap" ref={timeRef}>
         <button className="icon-btn" aria-expanded={open === 'time'} onClick={() => setOpen(open === 'time' ? undefined : 'time')}>
           <IconClock /> {t('top.time')}
         </button>
