@@ -220,7 +220,7 @@ chown: changing ownership of '/var/log/php-fpm/error.log': Operation not permitt
 | RNF6 | Backpressure: buffer cheio descarta as mais antigas e mostra "N linhas descartadas"; nunca congela | `buffer.test` + integração |
 | RNF7 | Nenhum processo kubectl órfão | integração (F3.5) |
 | RNF8 | Cobertura ≥ **90%** em `src/logs/`, `src/k8s/args.ts`, `src/ai/redact.ts` | thresholds no Vitest |
-| RNF9 | macOS 13+ (arm64 e x64), Linux x64 (glibc, com GNOME Keyring/KWallet para guardar chaves de IA), Windows 10+ x64 | CI em `macos-latest`, `ubuntu-latest` e `windows-latest`; no Windows, integração e E2E ficam de fora (os fakes de `tests/bin` são scripts POSIX) |
+| RNF9 | macOS 13+ (arm64 e x64), Linux x64 (glibc, com GNOME Keyring/KWallet para guardar chaves de IA), Windows 10+ x64 | CI em `macos-latest`, `ubuntu-latest` e `windows-latest`, com integração e E2E nos três (no Windows os fakes de `tests/bin` viram `.exe` via Node SEA, `scripts/build-test-bins.mjs`) |
 
 ## 6. Testes
 

@@ -4,6 +4,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- **Windows no CI completo:** testes de integração e E2E também no Windows (os fakes viram `.exe` com o Node SEA).
+- Correção no Windows: a limpeza da pasta temporária do Claude CLI não esconde mais o erro de tempo esgotado.
 - **Comparar com o anterior:** o log do container anterior (`--previous`) aparece ao lado do atual, com os mesmos filtros de nível e texto; útil para CrashLoopBackOff.
 - **Abas:** vários pods ou arquivos abertos ao mesmo tempo, cada um com seu stream rodando em segundo plano; "+" abre uma aba nova e ⌘/Ctrl+clique (ou clique do meio) num pod abre direto numa aba nova; até 8 abas.
 - **Tradução completa:** mensagens de erro do kubectl, títulos dos grupos de erro do catálogo e respostas da IA seguem o idioma escolhido (pt-BR, pt-PT, inglês, espanhol); a "Estimativa da IA" é lida em qualquer um deles.
