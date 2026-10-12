@@ -406,10 +406,6 @@ export function App() {
             wrap={wrap}
             onWrap={() => setWrap((w) => !w)}
             onExport={exportRows}
-            onTop={() => {
-              pause()
-              scroll({ kind: 'top' })
-            }}
             onClear={() => {
               engine.clear()
               resetView()

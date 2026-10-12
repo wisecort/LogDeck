@@ -93,7 +93,8 @@ export const es: Record<MessageKey, string> = {
   'lv.wrapHint': 'Ajustar líneas largas',
   'lv.export': 'Exportar',
   'lv.exportHint': 'Exportar las líneas filtradas a un archivo',
-  'lv.top': 'Ir al inicio',
+  'lv.pause': 'Pausar',
+  'lv.resume': 'Reanudar',
   'lv.clear': 'Limpiar pantalla',
   'lv.clearHint': 'Limpiar las líneas mostradas (el log sigue llegando)',
   'lv.terminal': 'Terminal',
@@ -259,7 +260,8 @@ export const es: Record<MessageKey, string> = {
   'pref.about': 'Acerca de',
   'pref.tagline': 'Explorador de logs de Kubernetes/OKD para macOS, de solo lectura.',
   'pref.madeBy': 'Hecho por {author}',
-  'pref.inspired': 'Inspirado en Logui',
+  'pref.openGithub': 'Abrir LogDeck en GitHub',
+  'pref.openLinkedin': 'Abrir el LinkedIn del autor',
   'pref.license': 'Licencia MIT',
   'pref.source': 'Código fuente',
 
@@ -272,5 +274,4 @@ export const es: Record<MessageKey, string> = {
   'theme.nord': 'Nord',
   'theme.tokyo-night': 'Tokyo Night',
   'theme.catppuccin': 'Catppuccin Mocha',
-  'theme.matrix': 'Matrix (hacker)',
 }

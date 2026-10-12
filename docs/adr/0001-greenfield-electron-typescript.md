@@ -2,7 +2,7 @@
 
 - **Status:** aceito (12/10/2026)
 - **Data:** 12/10/2026
-- **Autor:** Matheus Ribeiro
+- **Autor:** Matheus Corteletti
 
 ## Contexto
 

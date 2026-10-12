@@ -265,55 +265,6 @@
   --lvl-UNKNOWN: #7f849c;
 }
 
-:root[data-theme='matrix'] {
-  color-scheme: dark;
-  --bg: #000000;
-  --bg-2: #030a03;
-  --bg-3: #0a1f0a;
-  --bg-elev: #051005;
-  --fg: #33ff66;
-  --muted: #1f9e3f;
-  --border: #0f3d17;
-  --accent: #00ff41;
-  --accent-fg: #000000;
-  --mark: #0b5d1e;
-  --mark-fg: #eaffea;
-  --ok: #00ff41;
-  --warn: #c8ff00;
-  --bad: #ff3b3b;
-  --row-hover: #061406;
-  --row-sel: #0b2e12;
-  --lvl-TRACE: #1a7f35;
-  --lvl-DEBUG: #4dd97a;
-  --lvl-INFO: #00ff41;
-  --lvl-WARN: #c8ff00;
-  --lvl-ERROR: #ff3b3b;
-  --lvl-FATAL: #000000;
-  --lvl-FATAL-bg: #ff3b3b;
-  --lvl-UNKNOWN: #1a7f35;
-  --mono: 'SF Mono', Menlo, monospace;
-  font-family: var(--mono);
-}
-
-/* Matrix: terminal look everywhere (monospace, soft green glow, square corners). */
-:root[data-theme='matrix'] body,
-:root[data-theme='matrix'] button,
-:root[data-theme='matrix'] input,
-:root[data-theme='matrix'] select,
-:root[data-theme='matrix'] textarea,
-:root[data-theme='matrix'] .empty {
-  font-family: var(--mono);
-}
-
-:root[data-theme='matrix'] .log-row .msg,
-:root[data-theme='matrix'] h2 {
-  text-shadow: 0 0 4px rgb(0 255 65 / 35%);
-}
-
-:root[data-theme='matrix'] * {
-  border-radius: 0 !important;
-}
-
 /* ───────── Base ───────── */
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
@@ -574,6 +525,12 @@ button:disabled {
 .ctx-list .alias-input {
   margin: 0;
   width: 100%;
+}
+
+.about-links {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .about {

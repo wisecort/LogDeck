@@ -193,6 +193,15 @@ test('6.5: dragging on the volume chart filters a time range', async () => {
   await expect(win.getByTestId('match-count')).toContainText('291 / 465')
 })
 
+test('native menu only has what LogDeck uses (no View, Dictation or Emoji items)', async () => {
+  const menu = await app.evaluate(({ Menu }) =>
+    Menu.getApplicationMenu()!.items.map((i) => [i.label, i.submenu?.items.filter((s) => s.type !== 'separator').map((s) => s.label) ?? []]),
+  )
+  expect(menu.map(([label]) => label)).toEqual(['LogDeck', 'Editar', 'Janela'])
+  expect(menu[1]![1]).toEqual(['Desfazer', 'Refazer', 'Recortar', 'Copiar', 'Colar', 'Selecionar tudo'])
+  expect(await app.evaluate(({ systemPreferences }) => systemPreferences.getUserDefault('NSDisabledDictationMenuItem', 'boolean'))).toBe(true)
+})
+
 test('language: English, Spanish and pt-PT translate the interface and persist', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
@@ -217,12 +226,27 @@ test('6.5: themes, bookmarks and favourite namespaces', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
   const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
-  for (const theme of ['claro', 'meia-noite', 'dracula', 'nord', 'matrix', 'alto-contraste', 'sistema', 'escuro']) {
+  for (const theme of ['claro', 'meia-noite', 'dracula', 'nord', 'tokyo-night', 'alto-contraste', 'sistema', 'escuro']) {
     await prefs.getByLabel('Tema').selectOption(theme)
     await expect(win.locator('html')).toHaveAttribute('data-theme', theme)
   }
   await prefs.getByLabel('Tema').selectOption('dracula')
   await expect(prefs.getByTestId('about')).toContainText('Feito por Matheus Corteletti — Wise')
+  await expect(prefs.getByTestId('about')).not.toContainText('Logui')
+  await win.screenshot({ path: 'test-results/ui-prefs.png' })
+  // Never open a real browser in tests: capture what main would open.
+  await app.evaluate(({ shell }) => {
+    ;(globalThis as { opened?: string[] }).opened = []
+    shell.openExternal = async (url: string) => {
+      ;(globalThis as { opened?: string[] }).opened!.push(url)
+    }
+  })
+  await prefs.getByRole('button', { name: 'Abrir o LinkedIn do autor' }).click()
+  await prefs.getByRole('button', { name: 'Abrir o GitHub do LogDeck' }).click()
+  await expect
+    .poll(() => app.evaluate(() => (globalThis as { opened?: string[] }).opened))
+    .toEqual(['https://www.linkedin.com/in/cortelettimatheus/', 'https://github.com/wisecort/LogDeck'])
+  expect(await win.evaluate(() => window.logdeck.openLink('https://evil.example' as 'github').then(() => 'opened', (e: Error) => e.message))).toContain('link inválido')
   await prefs.getByRole('button', { name: 'Fechar' }).click()
   await win.screenshot({ path: 'test-results/ui-theme-dracula.png' })
 

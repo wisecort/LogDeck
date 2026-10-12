@@ -92,7 +92,8 @@ export const ptBR = {
   'lv.wrapHint': 'Quebrar linhas longas',
   'lv.export': 'Exportar',
   'lv.exportHint': 'Exportar as linhas filtradas para um arquivo',
-  'lv.top': 'Ir para o topo',
+  'lv.pause': 'Pausar',
+  'lv.resume': 'Retomar',
   'lv.clear': 'Limpar tela',
   'lv.clearHint': 'Limpar as linhas exibidas (o log continua)',
   'lv.terminal': 'Terminal',
@@ -258,7 +259,8 @@ export const ptBR = {
   'pref.about': 'Sobre',
   'pref.tagline': 'Explorador de logs de Kubernetes/OKD para macOS, somente leitura.',
   'pref.madeBy': 'Feito por {author}',
-  'pref.inspired': 'Inspirado no Logui',
+  'pref.openGithub': 'Abrir o GitHub do LogDeck',
+  'pref.openLinkedin': 'Abrir o LinkedIn do autor',
   'pref.license': 'Licença MIT',
   'pref.source': 'Código-fonte',
 
@@ -271,7 +273,6 @@ export const ptBR = {
   'theme.nord': 'Nord',
   'theme.tokyo-night': 'Tokyo Night',
   'theme.catppuccin': 'Catppuccin Mocha',
-  'theme.matrix': 'Matrix (hacker)',
 } as const
 
 export type MessageKey = keyof typeof ptBR

@@ -2,7 +2,7 @@
 
 - **Status:** aceito (12/10/2026)
 - **Data:** 12/10/2026
-- **Autor:** Matheus Ribeiro
+- **Autor:** Matheus Corteletti
 - **Relacionado:** SPEC F7, GUARDRAILS G2/G6/G7, ADR 0001
 
 ## Contexto

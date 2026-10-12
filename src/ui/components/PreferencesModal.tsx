@@ -1,6 +1,7 @@
 import { APP_AUTHOR, APP_REPOSITORY } from '../../shared/app-info'
 import { LANGUAGES, useI18n, type Lang, type MessageKey } from '../i18n'
 import { THEMES, type ThemeId } from '../theme'
+import { IconGithub, IconLinkedin } from './icons'
 
 interface Props {
   theme: ThemeId
@@ -47,10 +48,21 @@ export function PreferencesModal(p: Props) {
         <div className="about" data-testid="about">
           <strong>LogDeck {__APP_VERSION__}</strong>
           <span className="muted">{t('pref.tagline')}</span>
-          <span>{t('pref.madeBy', { author: APP_AUTHOR })}</span>
           <span className="muted">
-            {t('pref.inspired')} · {t('pref.license')} · <span className="mono">{APP_REPOSITORY.replace('https://', '')}</span>
+            {t('pref.license')} ·{' '}
+            <button className="link mono" onClick={() => void window.logdeck.openLink('github')}>
+              {APP_REPOSITORY.replace('https://', '')}
+            </button>
           </span>
+          <span>{t('pref.madeBy', { author: APP_AUTHOR })}</span>
+          <div className="about-links">
+            <button className="icon-btn labeled" aria-label={t('pref.openGithub')} onClick={() => void window.logdeck.openLink('github')}>
+              <IconGithub /> GitHub
+            </button>
+            <button className="icon-btn labeled" aria-label={t('pref.openLinkedin')} onClick={() => void window.logdeck.openLink('linkedin')}>
+              <IconLinkedin /> LinkedIn
+            </button>
+          </div>
         </div>
 
         <div className="modal-actions">

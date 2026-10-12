@@ -53,6 +53,8 @@ export interface LogDeckApi {
   copyText(text: string): Promise<void>
   /** Interface language, so main can translate the native menu. */
   setLanguage(lang: 'pt-BR' | 'pt-PT' | 'en' | 'es'): Promise<void>
+  /** Opens one of the fixed author links (GitHub, LinkedIn) in the default browser. */
+  openLink(id: 'github' | 'linkedin'): Promise<void>
 }
 
 declare global {

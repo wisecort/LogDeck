@@ -7,7 +7,7 @@ import { K8sService } from '../k8s/service'
 import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
 import { registerIpc } from './ipc'
-import { buildMenu } from './menu'
+import { buildMenu, disableSystemMenuItems } from './menu'
 import { AiSettingsStore } from './ai-settings-store'
 import { PresetStore } from './presets-store'
 
@@ -26,6 +26,7 @@ const CSP = [
 ].join('; ')
 
 app.setName(APP_NAME)
+disableSystemMenuItems()
 // Tests point userData to a temp dir so they never touch the user's presets.
 if (process.env['LOGDECK_USER_DATA']) app.setPath('userData', process.env['LOGDECK_USER_DATA'])
 

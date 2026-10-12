@@ -1,6 +1,6 @@
 # SPEC — LogDeck MVP 1
 
-> Status: **aprovado** (fase 1) · Data: 12/10/2026 · Autor: Matheus Ribeiro
+> Status: **aprovado** (fase 1) · Data: 12/10/2026 · Autor: Matheus Corteletti
 > Leia junto com [`GUARDRAILS.md`](GUARDRAILS.md) e [`AGENTS.md`](AGENTS.md).
 
 ## 1. Visão
@@ -155,8 +155,8 @@ Implementado só depois de F1–F6 verdes no harness. Nenhum teste automático c
 - **Procurar pod ou namespace:** campo acima da árvore; filtra pelos nomes dos namespaces e dos pods já carregados, abrindo os namespaces com pods encontrados.
 - **Copiar para chamado** (aba Detalhes): pod (namespace / pod / container) ou arquivo, contexto, horários em UTC (kubectl e log), nível e a linha com stack trace, com senhas e tokens mascarados pelas regras do `redact.ts` (IPs mantidos). A cópia passa pelo processo main (`clipboard:copy-text`).
 - **Abrir arquivo de log** (⌘O, botão na barra lateral ou arrastar para a janela): lê no renderer um arquivo escolhido pelo usuário (texto, até 200 MB; recusa vazio e binário/compactado), com ou sem o prefixo de `--timestamps`, e passa pelos mesmos parsers, filtros, painel F6 e IA. Nenhuma chamada ao cluster. Acima de 50k linhas valem as regras do buffer (descarta as mais antigas).
-- **Preferências** (rodapé da barra lateral): tema (10 opções: Escuro, Meia-noite, Claro, Sistema, Alto contraste, Dracula, Nord, Tokyo Night, Catppuccin Mocha e Matrix — verde sobre preto, tudo em fonte monoespaçada e sem cantos arredondados), **idioma da interface** (Português do Brasil, Português de Portugal, English, Español; padrão = idioma do sistema, português cai em pt-BR, outros em inglês) e **Sobre** ("Feito por Matheus Corteletti — Wise", versão, licença MIT, crédito ao Logui). O menu nativo e o painel "Sobre" do macOS seguem o idioma e os créditos. Mensagens vindas do kubectl/main, títulos dos grupos de erro do F6 e respostas da IA continuam em português (backlog).
-- **Barra de ações:** "Terminal" com ícone e texto (abre o shell do container, ação manual); pílula **Ao vivo / Pausado** (antes "Seguindo"); exportar com ícone próprio; o botão "Ir para o fim" saiu (a pílula Ao vivo já leva ao fim). A barra de status mostra "Conectado".
+- **Preferências** (rodapé da barra lateral): tema (9 opções: Escuro, Meia-noite, Claro, Sistema, Alto contraste, Dracula, Nord, Tokyo Night e Catppuccin Mocha), **idioma da interface** (Português do Brasil, Português de Portugal, English, Español; padrão = idioma do sistema, português cai em pt-BR, outros em inglês) e **Sobre** (versão, licença MIT, link do repositório, "Feito por Matheus Corteletti — Wise" e botões GitHub e LinkedIn; o main só abre esses dois endereços fixos, `app:open-link` com id). O menu nativo do macOS segue o idioma e tem só o necessário: LogDeck (Sobre, Ocultar, Encerrar), Editar (desfazer, refazer, recortar, copiar, colar, selecionar tudo) e Janela (minimizar, fechar); sem menu Visualizar e sem os itens de Ditado e Emojis que o macOS injeta. Mensagens vindas do kubectl/main, títulos dos grupos de erro do F6 e respostas da IA continuam em português (backlog).
+- **Barra de ações:** "Terminal" com ícone e texto (abre o shell do container, ação manual); pílula **Ao vivo / Pausado** (antes "Seguindo") e botão de pausar/retomar (ícone); exportar com ícone de download; os botões "Ir para o fim" e "Ir para o topo" saíram. A barra de status mostra "Conectado".
 - Não adotados: aplicar mudança direto no código, IA lendo o repositório, merge de fontes e alertas (backlog).
 
 ## 4. Problemas reais (casos de teste)

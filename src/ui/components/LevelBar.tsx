@@ -1,6 +1,6 @@
 import { LEVELS, type Level } from '../../logs/types'
 import { useI18n } from '../i18n'
-import { IconChart, IconExport, IconStack, IconTerminal, IconToTop, IconTrash, IconWrap } from './icons'
+import { IconChart, IconDownload, IconPause, IconPlay, IconStack, IconTerminal, IconTrash, IconWrap } from './icons'
 
 interface Props {
   counts: Readonly<Record<Level, number>>
@@ -14,7 +14,6 @@ interface Props {
   wrap: boolean
   onWrap(): void
   onExport(): void
-  onTop(): void
   onClear(): void
   canShell: boolean
   onShell(): void
@@ -57,10 +56,16 @@ export function LevelBar(p: Props) {
         <IconWrap />
       </button>
       <button className="icon-btn" aria-label={t('lv.export')} title={t('lv.exportHint')} onClick={p.onExport}>
-        <IconExport />
+        <IconDownload />
       </button>
-      <button className="icon-btn" aria-label={t('lv.top')} title={t('lv.top')} onClick={p.onTop}>
-        <IconToTop />
+      <button
+        className="icon-btn"
+        aria-label={p.paused ? t('lv.resume') : t('lv.pause')}
+        title={p.paused ? t('lv.pausedHint') : t('lv.liveHint')}
+        disabled={!p.live}
+        onClick={p.onFollow}
+      >
+        {p.paused ? <IconPlay /> : <IconPause />}
       </button>
       <button className="icon-btn" aria-label={t('lv.clear')} title={t('lv.clearHint')} onClick={p.onClear}>
         <IconTrash />

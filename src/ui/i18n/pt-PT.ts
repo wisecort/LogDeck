@@ -106,6 +106,7 @@ export const ptPT: Record<MessageKey, string> = {
   'pref.languageNote': 'As mensagens do kubectl e as respostas da IA continuam em português do Brasil.',
   'pref.tagline': 'Explorador de logs de Kubernetes/OKD para macOS, apenas de leitura.',
   'pref.source': 'Código-fonte',
+  'lv.resume': 'Retomar',
 
   'theme.meia-noite': 'Meia-noite',
 }

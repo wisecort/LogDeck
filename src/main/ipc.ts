@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
-import { clipboard, dialog, ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { clipboard, dialog, ipcMain, shell, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import type { ExplainService } from '../ai/explain'
 import { detectClaude } from '../ai/providers/claude-cli'
 import type { Keychain } from '../ai/providers/keychain'
@@ -9,6 +9,7 @@ import type { KeyServiceName } from '../shared/ai'
 import type { AiSettingsStore } from './ai-settings-store'
 import { isProductionContext } from '../k8s/contexts'
 import { isMenuLang, type MenuLang } from './menu'
+import { APP_LINKS, type AppLink } from '../shared/app-info'
 import type { K8sService } from '../k8s/service'
 import { PodShell, type ShellRegistry } from '../k8s/shell'
 import { LogStream, type StreamRegistry } from '../k8s/stream'
@@ -227,5 +228,10 @@ export function registerIpc(deps: IpcDeps): void {
   handle(deps, IPC.setLanguage, async (_e, lang: unknown) => {
     if (!isMenuLang(lang)) throw new Error('idioma inválido')
     deps.onLanguage?.(lang)
+  })
+
+  handle(deps, IPC.openLink, async (_e, id: unknown) => {
+    if (typeof id !== 'string' || !Object.hasOwn(APP_LINKS, id)) throw new Error('link inválido')
+    await shell.openExternal(APP_LINKS[id as AppLink])
   })
 }

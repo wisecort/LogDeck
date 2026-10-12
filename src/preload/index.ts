@@ -45,6 +45,7 @@ const api: LogDeckApi = {
   saveText: (content, suggestedName) => invoke(IPC.saveText, content, suggestedName),
   copyText: (text) => invoke(IPC.copyText, text),
   setLanguage: (lang) => invoke(IPC.setLanguage, lang),
+  openLink: (id) => invoke(IPC.openLink, id),
 }
 
 contextBridge.exposeInMainWorld('logdeck', api)
