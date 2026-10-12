@@ -68,7 +68,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 - **F1.1** Dado um kubeconfig em `~/.kube/config` ou em `$KUBECONFIG` (lista separada por `:`), quando o app abre, então lista todos os contextos (nome, cluster, namespace padrão) e marca o contexto atual.
 - **F1.2** Quando o usuário escolhe outro contexto, então todas as chamadas seguintes passam `--context=<nome>` e **nenhum** comando `config use-context` é executado (teste: o kubectl fake registra os argv recebidos e falha se aparecer `use-context`).
 - **F1.3** A listagem usa só `kubectl config get-contexts` (saída tabular, sem credenciais). Dado um kubeconfig fake com `token`, `client-key-data` e `certificate-authority-data`, então nenhum desses valores aparece no retorno de `contexts.ts`, nos logs do app nem no IPC.
-- **F1.4** Dado um contexto com `prod` ou `prd` no nome (sem diferenciar maiúsculas), então a UI mostra uma faixa vermelha fina e fixa "PRODUÇÃO" no topo e a marca PROD no seletor de contexto enquanto ele estiver ativo (G5).
+- **F1.4** Dado um contexto com `prod` ou `prd` no nome (sem diferenciar maiúsculas), então a UI mostra a marca vermelha PROD no seletor de contexto e na barra de status enquanto ele estiver ativo (G5). A faixa no topo saiu na 1.4.0, a pedido do autor.
 - **F1.5** Na abertura, o app roda `kubectl version --client -o json` para detectar instalação e versão. Dado que o kubectl não está instalado, ou que o cluster responde erro de autenticação, então o app mostra mensagem acionável (ex.: `brew install kubectl`, "token expirado: rode `oc login` no terminal") sem travar.
 
 ### F2 — Navegação

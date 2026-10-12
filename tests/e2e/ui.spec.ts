@@ -147,14 +147,16 @@ test('compare with --previous: current and previous container side by side', asy
   await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
 })
 
-test('OKD build and deployer pods are hidden until the user shows them', async () => {
+test('OKD build and deployer pods live in a collapsible Builds folder after the pods', async () => {
   const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()
   await expect(tree.getByRole('button', { name: /portal-worker/ })).toBeVisible()
   await expect(tree.getByRole('button', { name: /portal-web-12-build/ })).toHaveCount(0)
   await expect(tree.getByRole('button', { name: /portal-web-3-deploy/ })).toHaveCount(0)
 
-  await tree.getByRole('button', { name: '+ 2 builds/deploys do OKD' }).click()
+  // pods first, then a "Builds e deploys" folder with the count
+  await tree.getByRole('button', { name: /Builds e deploys/ }).click()
+  await expect(tree.getByRole('list', { name: 'Builds e deploys' }).getByRole('button')).toHaveCount(2)
   await expect(tree.getByRole('button', { name: /portal-web-12-build/ })).toContainText('build')
   await expect(tree.getByRole('button', { name: /portal-web-3-deploy/ })).toContainText('deploy')
 
@@ -162,8 +164,21 @@ test('OKD build and deployer pods are hidden until the user shows them', async (
   const tree2 = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree2.getByRole('button', { name: 'portal-hml', exact: true }).click()
   await expect(tree2.getByRole('button', { name: /portal-web-12-build/ })).toBeVisible()
-  await tree2.getByRole('button', { name: 'Ocultar builds/deploys do OKD' }).click()
+  await tree2.getByRole('button', { name: /Builds e deploys/ }).click()
   await expect(tree2.getByRole('button', { name: /portal-web-12-build/ })).toHaveCount(0)
+})
+
+test('welcome screen on empty tabs and the Home button brings it back', async () => {
+  await expect(win.getByTestId('welcome')).toBeVisible()
+  await expect(win.getByRole('tab', { name: 'Erros (0)' })).toHaveCount(0)
+  await openWebPod(win)
+  await expect(win.getByTestId('welcome')).toHaveCount(0)
+  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await expect(win.getByTestId('welcome')).toBeVisible()
+  await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
+  // the last pod card reopens it
+  await win.getByTestId('welcome').getByRole('button', { name: /Último pod/ }).click()
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
 })
 
 test('F5.4: a catastrophic regex is refused and the UI stays responsive', async () => {
@@ -232,10 +247,11 @@ test('opens a saved log file and refuses binary ones', async () => {
   await expect(win.getByRole('status')).toContainText('não parece texto')
 })
 
-test('G5: production contexts show a red banner', async () => {
+test('G5: production contexts are flagged PROD in the picker and the status bar (no banner)', async () => {
   await openPod(win, { context: PRD, pod: /portal-worker/ })
-  await expect(win.getByTestId('prod-banner')).toContainText('PRODUÇÃO')
+  await expect(win.getByTestId('prod-badge')).toHaveText('PROD')
   await expect(win.locator('.ctx-picker')).toContainText('PROD')
+  await expect(win.getByTestId('prod-banner')).toHaveCount(0)
 })
 
 test('F3.2: CrashLoopBackOff pod offers --previous', async () => {
@@ -309,7 +325,7 @@ test('native menu only has what LogDeck uses (no View, Dictation or Emoji items)
 test('language: English, Spanish and pt-PT translate the interface and persist', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
-  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByLabel('Idioma').selectOption('en')
+  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByRole('radio', { name: 'English' }).click()
   await expect(win.locator('html')).toHaveAttribute('lang', 'en')
   await win.getByRole('dialog', { name: 'Preferences', exact: true }).getByRole('button', { name: 'Close' }).click()
   await expect(win.getByLabel('Search', { exact: true })).toBeVisible()
@@ -321,9 +337,9 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await win.reload()
   await expect(win.getByRole('button', { name: 'Preferences', exact: true })).toBeVisible()
   await win.getByRole('button', { name: 'Preferences', exact: true }).click()
-  await win.getByRole('dialog', { name: 'Preferences', exact: true }).getByLabel('Language').selectOption('es')
+  await win.getByRole('dialog', { name: 'Preferences', exact: true }).getByRole('radio', { name: 'Español' }).click()
   await expect(win.getByRole('dialog', { name: 'Preferencias', exact: true })).toContainText('Hecho por')
-  await win.getByRole('dialog', { name: 'Preferencias', exact: true }).getByLabel('Idioma').selectOption('pt-PT')
+  await win.getByRole('dialog', { name: 'Preferencias', exact: true }).getByRole('radio', { name: 'Português (Portugal)' }).click()
   await expect(win.getByRole('button', { name: 'Definições', exact: true })).toBeVisible()
 })
 
@@ -331,11 +347,12 @@ test('6.5: themes, bookmarks and favourite namespaces', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
   const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
-  for (const theme of ['claro', 'meia-noite', 'dracula', 'nord', 'tokyo-night', 'alto-contraste', 'sistema', 'escuro']) {
-    await prefs.getByLabel('Tema').selectOption(theme)
-    await expect(win.locator('html')).toHaveAttribute('data-theme', theme)
+  const themes: Array<[string, string]> = [['claro', 'Claro'], ['meia-noite', 'Meia-noite'], ['dracula', 'Dracula'], ['nord', 'Nord'], ['tokyo-night', 'Tokyo Night'], ['alto-contraste', 'Alto contraste'], ['sistema', 'Sistema (macOS)'], ['escuro', 'Escuro']]
+  for (const [id, name] of themes) {
+    await prefs.getByRole('radiogroup', { name: 'Tema' }).getByRole('radio', { name }).click()
+    await expect(win.locator('html')).toHaveAttribute('data-theme', id)
   }
-  await prefs.getByLabel('Tema').selectOption('dracula')
+  await prefs.getByRole('radio', { name: 'Dracula' }).click()
   await expect(prefs.getByTestId('about')).toContainText('Feito por Matheus Corteletti — Wise')
   await expect(prefs.getByTestId('about')).not.toContainText('Logui')
   await win.screenshot({ path: 'test-results/ui-prefs.png' })

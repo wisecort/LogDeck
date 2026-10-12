@@ -9,7 +9,6 @@ import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
 import { LevelBar } from './components/LevelBar'
 import { LogList, type ScrollCommand } from './components/LogList'
-import { ProdBanner } from './components/ProdBanner'
 import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
 import { ShortcutsModal } from './components/ShortcutsModal'
@@ -388,7 +387,6 @@ export function App() {
   return (
     <I18nProvider lang={lang}>
     <div className="app">
-      {selectedContext?.production && <ProdBanner context={contextShown ?? selectedContext.name} />}
       {notice && (
         <div className="notice" role="status">
           <span className="spacer">{notice}</span>
@@ -442,6 +440,12 @@ export function App() {
             onClose={(id) => {
               void session.close(id)
               afterTabChange()
+            }}
+            onHome={() => {
+              void session.goHome()
+              setShell(undefined)
+              resetView()
+              setPresets(undefined)
             }}
             onNew={() => {
               if (!session.newTab()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
@@ -601,7 +605,7 @@ export function App() {
         />
         )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {

@@ -164,6 +164,20 @@ export function useLogTabs() {
     return next.active
   }, [commit])
 
+  /** Back to the welcome screen in this tab: stops its streams and forgets the pod/file. */
+  const goHome = useCallback(
+    async (tabId: string = stateRef.current.active) => {
+      await stop(tabId)
+      await stop(companionKey(tabId))
+      slots.get(tabId)?.engine.clear()
+      const s = slots.get(tabId)
+      if (s) s.status = undefined
+      commit(updateTab(stateRef.current, tabId, { selection: {}, file: undefined, compare: false }))
+      setVersion((v) => v + 1)
+    },
+    [stop, commit, slots],
+  )
+
   const close = useCallback(
     async (tabId: string) => {
       await stop(tabId)
@@ -230,6 +244,7 @@ export function useLogTabs() {
     stop,
     openFile,
     newTab,
+    goHome,
     close,
     activate,
     setSelection,

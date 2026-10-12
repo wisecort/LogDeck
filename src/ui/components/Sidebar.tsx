@@ -8,7 +8,7 @@ import { ContextsModal } from './ContextsModal'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
 import { nsKey, type Navigation } from '../useNavigation'
-import { IconBookmark, IconChevron, IconClock, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
+import { IconBookmark, IconBuild, IconChevron, IconClock, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
 
 export type { Selection } from '../view-types'
 import type { Selection } from '../view-types'
@@ -80,10 +80,9 @@ export function Sidebar(p: Props) {
     if (list.length === 0) return <li className="muted node">{t('sidebar.noPods')}</li>
     const shown = q && !namespace.toLowerCase().includes(q) ? list.filter((pod) => pod.name.toLowerCase().includes(q)) : list
     if (shown.length === 0) return <li className="muted node">{t('sidebar.noPodsMatch', { q: podFilter.trim() })}</li>
-    // OKD build and deployer pods: hidden by default, one toggle for all namespaces.
+    // OKD build and deployer pods go to a "Builds" folder after the app pods (collapsed by default, remembered).
     const extra = shown.filter((pod) => pod.kind !== 'app')
-    const visible = showBuilds ? shown : shown.filter((pod) => pod.kind === 'app')
-    const rows = visible.map((pod) => {
+    const row = (pod: PodInfo) => {
       const selected = selection.context === context && selection.namespace === namespace && selection.pod?.name === pod.name
       const containers = [...pod.containers, ...pod.initContainers]
       return (
@@ -116,14 +115,19 @@ export function Sidebar(p: Props) {
           )}
         </li>
       )
-    })
+    }
+    const rows = shown.filter((pod) => pod.kind === 'app').map(row)
     if (extra.length === 0) return rows
     return [
       ...rows,
       <li key="__builds">
-        <button className="node build-toggle" aria-pressed={showBuilds} onClick={toggleBuilds} title={t('sidebar.buildsHint')}>
-          <span className="node-label muted">{showBuilds ? t('sidebar.hideBuilds') : t('sidebar.showBuilds', { n: extra.length })}</span>
+        <button className="node builds-folder" aria-expanded={showBuilds} onClick={toggleBuilds} title={t('sidebar.buildsHint')}>
+          <IconChevron open={showBuilds} />
+          <IconBuild />
+          <span className="node-label">{t('sidebar.buildsFolder')}</span>
+          <span className="node-meta">{extra.length}</span>
         </button>
+        {showBuilds && <ul aria-label={t('sidebar.buildsFolder')}>{extra.map(row)}</ul>}
       </li>,
     ]
   }

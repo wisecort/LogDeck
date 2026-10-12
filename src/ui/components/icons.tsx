@@ -164,3 +164,15 @@ export const IconHistory = () => (
     <path d="M3 3v5h5M12 7v5l3 2" />
   </Svg>
 )
+export const IconHome = () => (
+  <Svg>
+    <path d="M3 11 12 4l9 7" />
+    <path d="M5 10v10h5v-6h4v6h5V10" />
+  </Svg>
+)
+/** Build (OKD BuildConfig/DeploymentConfig pods). */
+export const IconBuild = () => (
+  <Svg>
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z" />
+  </Svg>
+)

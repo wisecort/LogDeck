@@ -390,16 +390,6 @@ button:disabled {
   height: 100vh;
 }
 
-.prod-banner {
-  background: var(--bad);
-  color: #fff;
-  padding: 1px 12px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-align: center;
-}
-
 .notice {
   background: var(--bg-3);
   padding: 6px 12px;
@@ -1555,9 +1545,6 @@ kbd {
   border-color: var(--border);
 }
 
-.build-toggle .node-label {
-  font-size: 12px;
-}
 
 /* ═════════ Cockpit (welcome + polish) ═════════ */
 :root {
@@ -1855,4 +1842,289 @@ button.primary:hover:not(:disabled) {
   button.primary {
     transition: none;
   }
+}
+
+.prod-pill {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.log-tab-home {
+  padding: 2px 8px;
+  margin-right: 4px;
+}
+
+/* ═════════ Cockpit modals (Preferências, Atalhos) ═════════ */
+.prefs-modal,
+.keys-modal {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 18px;
+  padding: 0 22px 20px;
+}
+
+.modal-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -22px 6px;
+  padding: 16px 22px 12px;
+  background: linear-gradient(180deg, var(--bg-elev) 70%, transparent);
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.modal-head-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.pref-section {
+  margin-top: 14px;
+}
+
+.pref-note {
+  font-size: 12px;
+  margin: 8px 0 0;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    box-shadow 0.15s var(--ease);
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.theme-card.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.theme-thumb {
+  position: relative;
+  display: flex;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+.theme-thumb-side {
+  width: 26%;
+}
+
+.theme-thumb-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+}
+
+.theme-thumb-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.theme-thumb-line i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.theme-thumb-line b {
+  height: 4px;
+  border-radius: 2px;
+}
+
+.theme-thumb-accent {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 14px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.theme-name {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 2px;
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.segmented button {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.segmented button:hover {
+  color: var(--fg);
+}
+
+.segmented button.on {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: 0 4px 14px -6px var(--glow);
+}
+
+.about-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--bg-2)), var(--bg-2));
+}
+
+.about-card img {
+  grid-row: span 2;
+  filter: drop-shadow(0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent));
+}
+
+.about-card .about-links {
+  grid-column: 2;
+  margin-top: 4px;
+}
+
+/* Shortcuts */
+.keys-groups {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.keys-group {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.keys-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.keys-group .panel-section-title + .keys-row {
+  border-top: none;
+}
+
+.keys-label {
+  font-size: 13px;
+}
+
+.keys-combos {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.keys-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.keys-or {
+  color: var(--muted);
+  margin: 0 4px;
+}
+
+.keycap {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 8px;
+  white-space: nowrap;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.keycap.wide {
+  font-weight: 400;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--muted);
+}
+
+.keys-foot {
+  margin: 14px 0 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.prefs-modal {
+  width: min(720px, calc(100vw - 32px));
 }
