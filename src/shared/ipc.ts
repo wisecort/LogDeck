@@ -18,6 +18,14 @@ export const IPC = {
   closeShell: 'shell:close',
   shellData: 'shell:data',
   shellExit: 'shell:exit',
+  aiStatus: 'ai:status',
+  aiSetSettings: 'ai:settings:set',
+  aiSetKey: 'ai:key:set',
+  aiDeleteKey: 'ai:key:delete',
+  aiTest: 'ai:test',
+  aiPreview: 'ai:preview',
+  aiExplain: 'ai:explain',
+  aiSave: 'ai:save',
 } as const
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }

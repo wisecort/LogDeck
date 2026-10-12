@@ -20,7 +20,7 @@ Criar o LogDeck **do zero**, usando os problemas observados no Logui (P1–P5) c
 - **Electron + TypeScript + React + Vite**, com npm.
 - `kubectl` executado por `child_process.spawn` com array de argumentos (sem client-go nem `@kubernetes/client-node`). Assim o app herda do kubectl a autenticação, os plugins `exec` e o `oc login` do OKD, sem tocar em credenciais (G3).
 - Pod Shell com `node-pty` + `xterm.js` (P5).
-- IA com `@anthropic-ai/sdk` no processo main e chave no Keychain (`safeStorage`).
+- IA por provedores plugáveis no processo main (Claude Code CLI ou API compatível com OpenAI), sem SDK; chave, quando houver, no Keychain (`safeStorage`). Revisado na fase 7.
 - Testes com Vitest e Playwright `_electron`.
 
 O crédito no README passa de "Construído a partir do Logui" para **"Inspirado no Logui"**.

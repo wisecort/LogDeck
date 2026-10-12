@@ -12,6 +12,7 @@ Toda dependência do `package.json` precisa de uma linha aqui (G9). O `scripts/g
 | `@xterm/xterm` | 6.0.0 | MIT | terminal no renderer para o Pod Shell | 6 |
 | `@xterm/addon-fit` | 0.11.0 | MIT | ajusta colunas/linhas do terminal ao painel e alimenta o resize do PTY | 6 |
 | `@tanstack/react-virtual` | 3.14.17 | MIT | lista virtualizada de logs (50k linhas, RNF1) | 6 |
+| `@anthropic-ai/sdk` | 0.133.0 | MIT | provedor "API da Anthropic" do F7 pelo SDK oficial (ADR 0002); usado só no processo main | 7 |
 
 ## Desenvolvimento e build
 

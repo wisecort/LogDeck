@@ -10,6 +10,8 @@ import type {
   StartLogsRequest,
   VersionInfo,
 } from '../shared/ipc'
+import type { ExplainGroupInput, ExplainResult, KeyServiceName, PreviewResult } from '../shared/ai'
+import type { AiSettings, AiStatus } from '../shared/ai-settings'
 import type { NamespacePresets } from '../shared/presets'
 
 export interface LogDeckApi {
@@ -33,6 +35,18 @@ export interface LogDeckApi {
   closeShell(shellId: string): Promise<void>
   onShellData(listener: (event: ShellDataEvent) => void): () => void
   onShellExit(listener: (event: ShellExitEvent) => void): () => void
+  aiStatus(): Promise<AiStatus>
+  setAiSettings(partial: Partial<AiSettings>): Promise<AiStatus>
+  /** The key goes to the Keychain; it is never returned. */
+  setAiKey(service: KeyServiceName, key: string): Promise<AiStatus>
+  deleteAiKey(service: KeyServiceName): Promise<AiStatus>
+  testAi(): Promise<string>
+  /** F7.2: masked preview; nothing is sent. */
+  previewExplain(groups: ExplainGroupInput[], opts: { maskInternalIps: boolean }): Promise<PreviewResult>
+  /** Sends exactly the previewed text, once. */
+  explain(previewId: string): Promise<ExplainResult>
+  /** F7.6: save dialog; returns the path or null. */
+  saveSuggestion(content: string, suggestedName: string): Promise<string | null>
 }
 
 declare global {

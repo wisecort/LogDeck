@@ -17,6 +17,7 @@ interface Props {
   dropped: number
   canShell: boolean
   onShell(): void
+  onAiPreferences(): void
 }
 
 function label(status: StreamStatus | undefined, paused: boolean): [string, string] {
@@ -88,6 +89,9 @@ export function Toolbar(p: Props) {
       <span className="spacer" />
       <button onClick={p.onShell} disabled={!p.canShell} title="Abre um terminal no container (ação manual)">
         ⌨ Abrir shell
+      </button>
+      <button onClick={p.onAiPreferences} title="Provedor de IA para explicar erros">
+        ⚙ IA
       </button>
     </div>
   )

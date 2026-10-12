@@ -7,9 +7,10 @@ interface Props {
   onSelect(key: string | undefined): void
   selected: ReadonlySet<string>
   onToggleSelected(key: string): void
+  onExplain(): void
 }
 
-export function ErrorsPanel({ groups, activeKey, onSelect, selected, onToggleSelected }: Props) {
+export function ErrorsPanel({ groups, activeKey, onSelect, selected, onToggleSelected, onExplain }: Props) {
   return (
     <aside className="errors" aria-label="Erros e timeouts">
       <div className="section-title">
@@ -20,6 +21,14 @@ export function ErrorsPanel({ groups, activeKey, onSelect, selected, onToggleSel
           </button>
         )}
       </div>
+      <button
+        className="explain-btn"
+        disabled={selected.size === 0}
+        onClick={onExplain}
+        title={selected.size === 0 ? 'Marque ao menos um grupo' : 'Mostra o preview mascarado antes de enviar'}
+      >
+        ✨ Explicar esses erros{selected.size > 0 ? ` (${selected.size})` : ''}
+      </button>
       {groups.length === 0 && <div className="muted">Nenhum erro agrupado até agora.</div>}
       <ul>
         {groups.map((g) => (

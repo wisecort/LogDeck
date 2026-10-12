@@ -1,9 +1,13 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, Menu, session, shell } from 'electron'
+import { ExplainService } from '../ai/explain'
+import { createProvider } from '../ai/providers'
+import { Keychain } from '../ai/providers/keychain'
 import { K8sService } from '../k8s/service'
 import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
 import { registerIpc } from './ipc'
+import { AiSettingsStore } from './ai-settings-store'
 import { PresetStore } from './presets-store'
 
 const APP_NAME = 'LogDeck'
@@ -103,7 +107,11 @@ void app.whenReady().then(() => {
     })
   }
   const presets = new PresetStore(join(app.getPath('userData'), 'presets.json'))
-  registerIpc({ service, registry, shells, presets, trusted: () => mainWindow?.webContents })
+  const aiSettings = new AiSettingsStore(join(app.getPath('userData'), 'ai.json'))
+  // Tests point this at a fake `security` so they never read the user's Keychain.
+  const keychain = new Keychain({ ...(process.env['LOGDECK_SECURITY_BIN'] && { binary: process.env['LOGDECK_SECURITY_BIN'] }) })
+  const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }) })
+  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents })
   buildMenu()
   createWindow()
   app.on('activate', () => {

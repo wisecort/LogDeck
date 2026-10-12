@@ -61,3 +61,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - E2E da UI: fluxo principal (ERROR → FPM → “Timeout Apache → PHP-FPM”), P3, regex catastrófica, faixa de produção, `--previous` e shell com TTY.
 - Arquitetura: núcleo de logs na thread da UI (SPEC §2 atualizado); painel F6 usa o relógio do kubectl.
 - Correção: o E2E `app.spec` abria o app sem o kubectl fake e, com a UI nova, rodou `kubectl version --client` e `config get-contexts` reais (leitura local do kubeconfig, sem contato com cluster). Todos os E2E agora usam kubectl e kubeconfig fake, com rede de segurança no `playwright.config.ts`.
+
+### Fase 7 — IA ("Explicar esses erros")
+
+- Três provedores no processo main (ADR 0002): **Claude Code CLI** (assinatura; `--tools ""`, `--no-session-persistence`, `--strict-mcp-config`, `--permission-mode dontAsk`, stdin, `cwd` temporário vazio), **API da Anthropic** (`@anthropic-ai/sdk`, `claude-opus-5-5`, `effort: medium`, `fallbacks: "default"`, tratamento de recusa) e **API compatível com OpenAI** (Ollama, LM Studio, DeepSeek, OpenRouter, Groq, personalizado; HTTPS fora de localhost).
+- Chaves no Keychain do macOS (`/usr/bin/security`), nunca no renderer; "Testar provedor" sem logs.
+- `redact.ts` (JWT, Bearer, senhas, segredos, AWS/GCP, chaves privadas, credenciais em URL, e-mails, IPs internos opcionais), refeito no main; payload de até 200 linhas / 32 KB com as linhas mais recentes de cada grupo.
+- Preview obrigatório com destino; envio único por id de preview (expira em 10 min); log delimitado em `<logs>` e declarado como dado no prompt de sistema.
+- Resposta exibida como texto: comandos de escrita sugeridos ficam riscados, com aviso e sem botão de copiar; diffs só podem ser salvos em arquivo local escolhido pelo usuário.
+- Guardrails: rede e SDK de IA só em `src/ai/providers/`; bloqueio de `bypassPermissions`/`acceptEdits`/`--dangerously-*`/`--tools default`; exceção justificada para a lista de verbos do detector.
+- Testes com `claude`, `security` e servidores HTTP fakes; testes manuais autorizados com o Claude Code real e a API da Anthropic (texto fictício do fixture) passaram.
+- Harness 100% verde: 512 unitários, 92 de integração, 12 E2E; cobertura de `redact.ts` 100%.

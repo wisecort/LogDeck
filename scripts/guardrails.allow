@@ -1,0 +1,2 @@
+# Exceções justificadas aos guardrails. Formato: <caminho> <regra>  # justificativa
+src/ai/response.ts G1-exec-scope  # lista de verbos usada só para DETECTAR comandos de escrita sugeridos pela IA e exibir aviso; não executa nada

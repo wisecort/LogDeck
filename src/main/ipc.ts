@@ -1,4 +1,12 @@
+import { writeFile } from 'node:fs/promises'
+import { basename } from 'node:path'
 import { dialog, ipcMain, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import type { ExplainService } from '../ai/explain'
+import { detectClaude } from '../ai/providers/claude-cli'
+import type { Keychain } from '../ai/providers/keychain'
+import type { AiStatus } from '../shared/ai-settings'
+import type { KeyServiceName } from '../shared/ai'
+import type { AiSettingsStore } from './ai-settings-store'
 import { isProductionContext } from '../k8s/contexts'
 import type { K8sService } from '../k8s/service'
 import { PodShell, type ShellRegistry } from '../k8s/shell'
@@ -21,6 +29,9 @@ export interface IpcDeps {
   registry: StreamRegistry
   shells: ShellRegistry
   presets: PresetStore
+  aiSettings: AiSettingsStore
+  keychain: Keychain
+  explain: ExplainService
   /** Only this renderer may call the API. */
   trusted: () => WebContents | undefined
 }
@@ -158,5 +169,41 @@ export function registerIpc(deps: IpcDeps): void {
   })
   handle(deps, IPC.closeShell, async (_e, shellId: unknown) => {
     deps.shells.close(str(shellId, 'shellId'))
+  })
+
+  // F7: AI. Keys go into the Keychain and never come back to the renderer.
+  const status = async (): Promise<AiStatus> => ({
+    settings: deps.aiSettings.get(),
+    claude: await detectClaude(),
+    hasAnthropicKey: await deps.keychain.has('logdeck-anthropic-api'),
+    hasOpenAiKey: await deps.keychain.has('logdeck-openai-compatible-api'),
+  })
+  handle(deps, IPC.aiStatus, status)
+  handle(deps, IPC.aiSetSettings, async (_e, partial: unknown) => {
+    deps.aiSettings.set(partial)
+    return status()
+  })
+  handle(deps, IPC.aiSetKey, async (_e, service: unknown, key: unknown) => {
+    await deps.keychain.set(str(service, 'serviço') as KeyServiceName, str(key, 'chave'))
+    return status()
+  })
+  handle(deps, IPC.aiDeleteKey, async (_e, service: unknown) => {
+    await deps.keychain.delete(str(service, 'serviço') as KeyServiceName)
+    return status()
+  })
+  handle(deps, IPC.aiTest, () => deps.explain.test())
+  handle(deps, IPC.aiPreview, async (_e, groups: unknown, opts: unknown) => {
+    const mask = (opts as { maskInternalIps?: unknown } | undefined)?.maskInternalIps
+    return deps.explain.preview(groups, { maskInternalIps: mask === true })
+  })
+  handle(deps, IPC.aiExplain, async (_e, previewId: unknown) => deps.explain.explain(str(previewId, 'preview')))
+  // F7.6: suggestions are only ever written to a local file the user picks; never applied to the cluster.
+  handle(deps, IPC.aiSave, async (_e, content: unknown, name: unknown) => {
+    const text = str(content, 'conteúdo')
+    const defaultPath = basename(str(name, 'nome')).replace(/[^\w.-]/g, '_') || 'logdeck-sugestao.diff'
+    const { canceled, filePath } = await dialog.showSaveDialog({ title: 'Salvar sugestão para revisão', defaultPath })
+    if (canceled || !filePath) return null
+    await writeFile(filePath, text, 'utf8')
+    return filePath
   })
 }

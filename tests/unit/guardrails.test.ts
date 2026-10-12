@@ -84,6 +84,13 @@ describe('guardrails.mjs', () => {
     ['G8-fixture-ip', 'tests/fixtures/ip.log', '10.129.2.2 - - "GET / HTTP/1.1" 200\n'],
     ['G8-fixture-host', 'tests/fixtures/host.log', 'upstream: app.realcompany.com.br\n'],
     ['G10-platform', 'src/main/index.ts', "if (process.platform === 'win32') {}\n"],
+    ['G6-network-scope', 'src/ui/App.tsx', "await fetch('https://api.example.internal/v1')\n"],
+    ['G6-network-scope', 'src/main/ipc.ts', "import https from 'node:https'\n"],
+    ['G6-network-scope', 'src/ai/explain.ts', "import Anthropic from '@anthropic-ai/sdk'\n"],
+    ['G6-agent-bypass', 'src/ai/providers/claude-cli.ts', "const args = ['--permission-mode', 'bypassPermissions']\n"],
+    ['G6-agent-bypass', 'src/ai/providers/claude-cli.ts', "const args = ['--dangerously-skip-permissions']\n"],
+    ['G6-agent-bypass', 'src/ai/providers/claude-cli.ts', "const args = ['--tools', 'default']\n"],
+    ['G2-child-process-scope', 'src/ai/explain.ts', "import { spawn } from 'node:child_process'\n"],
   ]
 
   it.each(dirty)('fails with %s for %s', (rule, path, content) => {
@@ -91,6 +98,18 @@ describe('guardrails.mjs', () => {
     expect(r.code).toBe(1)
     expect(r.out).toContain(rule)
     expect(r.out).toContain(path)
+  })
+
+  it('allows process spawning and network calls inside src/ai/providers/', () => {
+    const r = run(
+      project({
+        'src/ai/providers/claude-cli.ts': "import { spawn } from 'node:child_process'\n",
+        'src/ai/providers/openai-compatible.ts': 'const res = await fetch(url, init)\n',
+        'src/ai/providers/anthropic.ts': "import Anthropic from '@anthropic-ai/sdk'\n",
+      }),
+    )
+    expect(r.out).toContain('✅')
+    expect(r.code).toBe(0)
   })
 
   it('does not mistake Java package names for hosts in fixtures', () => {

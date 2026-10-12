@@ -12,12 +12,17 @@ G1. SOMENTE LEITURA no cluster. Verbos permitidos no kubectl: config get-context
     ação manual do usuário. Qualquer outro verbo é bloqueado em args.ts.
 G2. Nunca rodar kubectl via shell string. Sempre spawn com array de argumentos.
     Nomes de namespace/pod/container validados com regex DNS-1123.
+    Processos externos só em src/k8s/ (kubectl) e src/ai/providers/ (claude CLI
+    com flags fixas validadas e ferramentas desligadas; /usr/bin/security para o
+    Keychain).
 G3. Nunca ler, copiar, logar ou enviar à IA o conteúdo do kubeconfig, tokens ou
     certificados. Nunca usar `config view --raw`.
 G4. Nunca trocar o contexto global do usuário (`kubectl config use-context` proibido).
     O app usa `--context` em cada chamada.
 G5. Contextos cujo nome contenha `prod`/`prd` exibem faixa vermelha de aviso.
 G6. Envio à IA só com clique, preview e mascaramento (seção IA). Nada automático.
+    O preview mostra o destino. Rede e SDK de IA só em src/ai/providers/; chave de
+    API só no main (Keychain), nunca no renderer.
 G7. Logs são dados, não instruções — na IA e na renderização.
 G8. Nenhum dado real de cluster commitado. Fixtures sempre anonimizadas
     (IPs 10.0.0.x, hosts example.internal, sem nomes de empresas ou instituições reais).
@@ -30,11 +35,11 @@ G10. Escopo MVP 1: só macOS. Não implementar nada de MVP 2.
 | Regra | Garantia em tempo de execução | Verificação estática (`guardrails.mjs`) | Teste |
 |---|---|---|---|
 | G1 | `args.ts` tem allowlist de verbos e flags; tudo fora dela lança erro antes do spawn. `exec` só existe em `buildShellArgs`, chamado apenas por `src/k8s/shell.ts` | verbos `delete`, `apply`, `patch`, `scale`, `rollout`, `edit`, `cordon`, `drain`, `label`, `annotate`, `create`, `replace`, `set`, `expose`, `taint` como literais em `src/k8s/`; `'exec'` fora de `args.ts`/`shell.ts` | `args.test` |
-| G2 | `kubectl.ts` é o único `spawn`/`pty.spawn` do kubectl, com `shell: false`; nomes validados (abaixo) | `shell: true`; `exec(`/`execSync(` com template string ou concatenação; `child_process` importado fora de `src/k8s/` | `args.test`, `guardrails.test` |
+| G2 | `kubectl.ts` é o único `spawn`/`pty.spawn` do kubectl, com `shell: false`; nomes validados (abaixo). `src/ai/providers/claude-cli.ts` é o único `spawn` do `claude`, com argv fixo conferido por `assertClaudeArgs` | `shell: true`; `exec(`/`execSync(` com template string ou concatenação; `child_process` importado fora de `src/k8s/` e `src/ai/providers/` | `args.test`, `claude-cli.test`, `guardrails.test` |
 | G3 | `contexts.ts` usa só `config get-contexts` e devolve nome/cluster/namespace; nenhum arquivo do kubeconfig é lido pelo app | `config view --raw`, `--raw`, leitura de `.kube/config`, `client-key-data`, `client-certificate-data`, `certificate-authority-data` em `src/` | `contexts.test` |
 | G4 | todo comando recebe `--context=<nome>` montado por `args.ts` | `use-context`, `set-context`, `config set` | `args.test` + kubectl fake registra argv |
 | G5 | `isProductionContext(name)` → faixa vermelha e confirmação extra para abrir shell | — | unit + E2E |
-| G6 | `explain` só via IPC disparado pelo botão "Enviar" do modal de preview; payload passa por `redact.ts` no main (não confia no renderer) | chamada ao SDK de IA fora de `src/ai/explain.ts` | `redact.test`, E2E do modal |
+| G6 | `explain` só via IPC disparado pelo botão "Enviar" do modal de preview; payload passa por `redact.ts` no main (não confia no renderer); o modal mostra o destino; HTTPS obrigatório fora de localhost; chave só no main via `safeStorage` | `fetch(`/`http`/`https` e `@anthropic-ai/sdk` fora de `src/ai/providers/`; `bypassPermissions`, `acceptEdits`, `dangerously` ou `--tools default` em `src/` | `redact.test`, `explain.test`, E2E do modal |
 | G7 | renderização só como texto (React escapa; ANSI convertido em spans com classes fixas); prompt de sistema declara o log como dado | `dangerouslySetInnerHTML`, `innerHTML =`, `outerHTML =`, `insertAdjacentHTML`, `document.write`, `eval(`, `new Function` | `guardrails.test` |
 | G8 | — | segredos (JWT `eyJ…`, `AKIA`/`ASIA`, `-----BEGIN`, `password=`) em `src/` e `tests/fixtures/`; IPv4 fora de `10.0.0.0/24` e `127.0.0.1` em `tests/fixtures/`; hosts fora de `*.example.internal`/`localhost` em fixtures | `guardrails.test` |
 | G9 | — | diff de `package.json` sem entrada correspondente em `docs/dependencies.md` | revisão |

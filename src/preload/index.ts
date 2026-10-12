@@ -34,6 +34,14 @@ const api: LogDeckApi = {
   closeShell: (shellId) => invoke(IPC.closeShell, shellId),
   onShellData: (listener) => subscribe<ShellDataEvent>(IPC.shellData, listener),
   onShellExit: (listener) => subscribe<ShellExitEvent>(IPC.shellExit, listener),
+  aiStatus: () => invoke(IPC.aiStatus),
+  setAiSettings: (partial) => invoke(IPC.aiSetSettings, partial),
+  setAiKey: (service, key) => invoke(IPC.aiSetKey, service, key),
+  deleteAiKey: (service) => invoke(IPC.aiDeleteKey, service),
+  testAi: () => invoke(IPC.aiTest),
+  previewExplain: (groups, opts) => invoke(IPC.aiPreview, groups, opts),
+  explain: (previewId) => invoke(IPC.aiExplain, previewId),
+  saveSuggestion: (content, suggestedName) => invoke(IPC.aiSave, content, suggestedName),
 }
 
 contextBridge.exposeInMainWorld('logdeck', api)

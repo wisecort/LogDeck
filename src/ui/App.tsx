@@ -2,8 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from '../logs/search'
 import { LEVELS, type Level } from '../logs/types'
 import type { ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
+import type { ExplainGroupInput } from '../shared/ai'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
+import { AiPreferences } from './components/AiPreferences'
 import { ErrorsPanel } from './components/ErrorsPanel'
+import { ExplainModal } from './components/ExplainModal'
 import { LevelFilter } from './components/LevelFilter'
 import { LogList } from './components/LogList'
 import { ProdBanner } from './components/ProdBanner'
@@ -44,6 +47,8 @@ export function App() {
   const [regexError, setRegexError] = useState<string>()
   const [cursor, setCursor] = useState<number>()
   const [shell, setShell] = useState<ShellTarget>()
+  const [aiPrefs, setAiPrefs] = useState(false)
+  const [explaining, setExplaining] = useState<{ groups: ExplainGroupInput[]; mask: boolean }>()
   const searchRef = useRef<HTMLInputElement>(null)
 
   const session = useLogSession()
@@ -225,6 +230,23 @@ export function App() {
   )
   const counts = useMemo(() => engine.counts, [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // F7.1: selected groups with the lines still in the buffer (oldest first).
+  const openExplain = async () => {
+    const bySeq = new Map(engine.entries().map((e) => [e.seq, e]))
+    const input = groups
+      .filter((g) => selectedGroups.has(g.key))
+      .map((g) => ({
+        title: g.title,
+        count: g.count,
+        lines: g.seqs.flatMap((seq) => {
+          const e = bySeq.get(seq)
+          return e ? [entryText(e)] : []
+        }),
+      }))
+    const { settings } = await window.logdeck.aiStatus()
+    setExplaining({ groups: input, mask: settings.maskInternalIps })
+  }
+
   const toggleLevel = (l: Level, solo: boolean) => {
     if (solo) return setLevels(new Set([l]))
     const next = new Set(levels)
@@ -292,6 +314,7 @@ export function App() {
             dropped={engine.dropped}
             canShell={Boolean(pod && container && !pod.initContainers.includes(container))}
             onShell={() => context && namespace && pod && container && setShell({ context, namespace, pod: pod.name, container })}
+            onAiPreferences={() => setAiPrefs(true)}
           />
           <LevelFilter counts={counts} levels={levels} onToggle={toggleLevel} />
           <SearchBar
@@ -323,8 +346,11 @@ export function App() {
             else next.add(k)
             setSelectedGroups(next)
           }}
+          onExplain={() => void openExplain()}
         />
       </div>
+      {aiPrefs && <AiPreferences onClose={() => setAiPrefs(false)} />}
+      {explaining && <ExplainModal groups={explaining.groups} maskDefault={explaining.mask} onClose={() => setExplaining(undefined)} />}
     </div>
   )
 }
