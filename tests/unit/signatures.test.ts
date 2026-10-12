@@ -106,6 +106,21 @@ describe('SignatureIndex on the pod log (P4)', () => {
     expect(counts).toEqual([...counts].sort((a, b) => b - a))
   })
 
+  it('handles entries without time and breaks count ties by the most recent', () => {
+    const i = new SignatureIndex()
+    i.add(entry({ raw: CHOWN, level: 'ERROR' }))
+    i.add(entry({ raw: 'connect ETIMEDOUT 10.0.0.9:5432', level: 'ERROR', k8sTime: 2000 }))
+    i.add(entry({ raw: 'connect ETIMEDOUT 10.0.0.9:5432', level: 'ERROR', k8sTime: 1000 }))
+    i.add(entry({ raw: AH01075, level: 'ERROR', k8sTime: 5000 }))
+    i.add(entry({ raw: 'x', level: 'INFO' }))
+    const [first, second, third] = i.groups()
+    expect(first).toMatchObject({ id: 'node-etimedout', count: 2, firstTime: 1000, lastTime: 2000 })
+    expect(second).toMatchObject({ id: 'apache-phpfpm-timeout', count: 1 })
+    expect(third!.id).toBe('startup-permission')
+    expect(third!.firstTime).toBeUndefined()
+    expect(third!.lastTime).toBeUndefined()
+  })
+
   it('clears', () => {
     const i = new SignatureIndex()
     i.add(entry({ raw: CHOWN, level: 'ERROR' }))

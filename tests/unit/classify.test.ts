@@ -152,7 +152,12 @@ describe('timestamps (P2)', () => {
 
   it('gives every line of a --timestamps stream a k8s time, so they are not all equal', () => {
     expect(entries.every((e) => typeof e.k8sTime === 'number')).toBe(true)
-    expect(new Set(entries.map((e) => displayTime(e).time)).size).toBeGreaterThan(entries.length * 0.9)
+    // Access logs have 1 s resolution, so requests in the same second share a time;
+    // the P2 bug was every line showing the same ingestion instant.
+    const times = entries.map((e) => displayTime(e).time!)
+    expect(new Set(times).size).toBeGreaterThan(entries.length / 2)
+    expect(Math.max(...times) - Math.min(...times)).toBeGreaterThan(4 * 60_000)
+    expect(new Set(entries.map((e) => e.k8sTime)).size).toBeGreaterThan(entries.length * 0.95)
   })
 
   it('prefers the log time and flags no divergence when close to k8s time', () => {

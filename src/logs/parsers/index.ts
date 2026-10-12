@@ -6,7 +6,6 @@ import { jsonParser } from './json'
 import { laravelParser } from './laravel'
 import { nginxErrorParser } from './nginx-error'
 import { phpFpmParser } from './php-fpm'
-import { todo } from '../../shared/todo'
 
 /** Tried in this order (SPEC P1). The heuristic parser is the last resort. */
 export const PARSERS: readonly LineParser[] = [
@@ -20,5 +19,10 @@ export const PARSERS: readonly LineParser[] = [
 ]
 
 export function parseLine(line: string): ParsedLine & { parser: string } {
-  return todo(line)
+  for (const parser of PARSERS) {
+    if (parser === heuristicParser || !parser.detect(line)) continue
+    const parsed = parser.parse(line)
+    if (parsed) return { ...parsed, parser: parser.id }
+  }
+  return { ...heuristicParser.parse(line)!, parser: heuristicParser.id }
 }

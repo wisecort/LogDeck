@@ -84,11 +84,28 @@ describe('regex mode', () => {
 })
 
 describe('isUnsafeRegex', () => {
-  it.each(['(a+)+$', '(a*)*', '(\\w+)+x', '(.*)*', '([a-z]+)*$', '(a|b+)+'])('flags %s', (p) => {
+  it.each(['(a+)+$', '(a*)*', '(\\w+)+x', '(.*)*', '([a-z]+)*$', '(a|b+)+', '(?:a+)+', '(?<word>a+)*', '(a+){2,}', '(a{2,})+', '((a+)b)+'])('flags %s', (p) => {
     expect(isUnsafeRegex(p)).toBe(true)
   })
 
-  it.each(['(ab)+', 'a+b+', '\\d{1,3}', 'AH0107[15]', 'timed? ?out', '(GET|POST) /api'])('accepts %s', (p) => {
+  it.each([
+    '(ab)+',
+    'a+b+',
+    '\\d{1,3}',
+    'AH0107[15]',
+    'timed? ?out',
+    '(GET|POST) /api',
+    '(a+){3}',
+    '(a+){0,1}',
+    '(a+)?',
+    '[(]a+[)]+',
+    '[^\\]]+x',
+    '[]a]+',
+    '\\(a+\\)+',
+    '(?=a+)b',
+    '(?<!x)y+',
+    'a{,3}',
+  ])('accepts %s', (p) => {
     expect(isUnsafeRegex(p)).toBe(false)
   })
 })
@@ -156,6 +173,22 @@ describe('filterEntries', () => {
 })
 
 describe('searchWithTimeout (ReDoS protection, F5.4)', () => {
+  it('applies case sensitivity and exclusions to regex searches', async () => {
+    const texts = ['FPM down', 'fpm up', 'FPM probe']
+    await expect(searchWithTimeout(texts, { text: 'FPM', mode: 'regex', caseSensitive: true, exclude: ['probe'] })).resolves.toEqual({
+      status: 'ok',
+      matches: [0],
+    })
+  })
+
+  it('accepts a custom runner (renderer Web Worker)', async () => {
+    const runner = async (texts: readonly string[], source: string, flags: string) => {
+      expect([source, flags]).toEqual(['x', 'i'])
+      return texts.map((_, i) => i)
+    }
+    await expect(searchWithTimeout(['a', 'b'], { text: 'x', mode: 'regex' }, { runner })).resolves.toEqual({ status: 'ok', matches: [0, 1] })
+  })
+
   it('returns matching indexes for a normal search', async () => {
     await expect(searchWithTimeout(['a', 'FPM', 'b', 'php-fpm'], { text: 'fpm' })).resolves.toEqual({ status: 'ok', matches: [1, 3] })
   })

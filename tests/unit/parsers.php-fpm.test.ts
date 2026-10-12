@@ -39,4 +39,10 @@ describe('php-fpm parser', () => {
     expect(phpFpmParser.parse('[09-Oct-2026 03:26:40] BOGUS: m')).toBeNull()
     expect(phpFpmParser.parse('[09-Oct-2026 03:26:4')).toBeNull()
   })
+
+  it('keeps the line but drops the time when the month is invalid', () => {
+    const r = phpFpmParser.parse('[09-Xyz-2026 03:26:40] NOTICE: m')
+    expect(r?.level).toBe('INFO')
+    expect(r?.time).toBeUndefined()
+  })
 })

@@ -35,4 +35,8 @@ describe('nginx error parser', () => {
   it('returns null for a truncated header', () => {
     expect(nginxErrorParser.parse('2026/10/09 03:26:40 [err')).toBeNull()
   })
+
+  it('returns null for an unknown level', () => {
+    expect(nginxErrorParser.parse('2026/10/09 03:26:40 [verbose] 1#1: m')).toBeNull()
+  })
 })

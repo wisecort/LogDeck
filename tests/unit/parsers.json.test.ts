@@ -66,6 +66,12 @@ describe('json parser', () => {
     })
   })
 
+  it('maps information/dbug aliases and ignores unknown names', () => {
+    expect(jsonParser.parse('{"level":"information","msg":"m"}')?.level).toBe('INFO')
+    expect(jsonParser.parse('{"level":"dbug","msg":"m"}')?.level).toBe('DEBUG')
+    expect(jsonParser.parse('{"level":"verbose","msg":"m"}')?.level).toBeUndefined()
+  })
+
   it('maps warning/err aliases', () => {
     expect(jsonParser.parse('{"level":"warning","msg":"m"}')?.level).toBe('WARN')
     expect(jsonParser.parse('{"level":"err","msg":"m"}')?.level).toBe('ERROR')

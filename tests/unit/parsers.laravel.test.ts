@@ -40,4 +40,8 @@ describe('laravel text parser', () => {
   it('returns null when the header is incomplete', () => {
     expect(laravelParser.parse('[2026-10-09 03:26:40] production')).toBeNull()
   })
+
+  it('returns null for an unknown level suffix', () => {
+    expect(laravelParser.parse('[2026-10-09 03:26:40] production.VERBOSE: m')).toBeNull()
+  })
 })
