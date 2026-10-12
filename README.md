@@ -42,13 +42,32 @@ Todos os arquivos estão na página de [Releases](https://github.com/wisecort/Lo
 
 **macOS** (Apple Silicon ou Intel)
 
-Pelo Homebrew (instala o `kubectl` junto):
+#### Pelo Homebrew (recomendado)
 
-```bash
-brew install --cask wisecort/tap/logdeck
-```
+O Homebrew baixa a versão certa para o seu Mac (Apple Silicon ou Intel) e instala o `kubectl` junto.
 
-Ou manualmente:
+1. Instale:
+   ```bash
+   brew install --cask wisecort/tap/logdeck
+   ```
+2. Na primeira vez, o macOS avisa que não consegue verificar o desenvolvedor (o app ainda não é assinado pela Apple). Libere com:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/LogDeck.app
+   ```
+   Ou abra o LogDeck uma vez, feche o aviso e vá em **Ajustes do Sistema → Privacidade e Segurança → Abrir mesmo assim**.
+3. Abra o **LogDeck** pelo Launchpad ou pelo Spotlight.
+
+| Para | Comando |
+|---|---|
+| Atualizar para a versão mais nova | `brew update && brew upgrade --cask logdeck` |
+| Ver a versão instalada | `brew info --cask logdeck` |
+| Já tem o LogDeck em Aplicativos (instalado pelo `.dmg`) | `brew install --cask --force wisecort/tap/logdeck` |
+| Remover | `brew uninstall --cask logdeck` |
+| Remover tudo, inclusive preferências e contextos renomeados | `brew uninstall --zap --cask logdeck` |
+
+Depois de atualizar, rode de novo o `xattr` do passo 2 se o macOS voltar a avisar.
+
+#### Manualmente (`.dmg`)
 
 1. Baixe `LogDeck-<versão>-arm64.dmg` (M1 ou mais novo) ou `LogDeck-<versão>-x64.dmg` (Intel).
 2. Abra o `.dmg` e arraste o **LogDeck** para **Aplicativos**.

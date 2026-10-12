@@ -2,6 +2,10 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [Não lançado]
+
+- README: passo a passo do Homebrew (instalar, liberar a primeira abertura, atualizar, reinstalar por cima do `.dmg`, remover).
+
 ## [1.2.0] — 12/10/2026
 
 - **Windows no CI completo:** testes de integração e E2E também no Windows (os fakes viram `.exe` com o Node SEA).
