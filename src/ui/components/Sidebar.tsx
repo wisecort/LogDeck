@@ -122,9 +122,24 @@ export function Sidebar(p: Props) {
     if (shown.length === 0 && builds.length === 0) return <li className="muted node">{t('sidebar.noPodsMatch', { q: podFilter.trim() })}</li>
     // OKD build and deployer pods go to a "Builds" folder after the app pods (collapsed by default, remembered).
     const extra = shown.filter((pod) => pod.kind !== 'app')
+    const containerList = (pod: PodInfo) => {
+      const containers = [...pod.containers, ...pod.initContainers]
+      if (containers.length < 2) return null
+      return (
+        <ul role="group" aria-label={t('sidebar.containers')}>
+          {containers.map((c) => (
+            <li key={c}>
+              <button className={`node ${selection.container === c ? 'selected' : ''}`} onClick={() => p.onContainer(c)}>
+                <span className="node-label mono">{c}</span>
+                {pod.initContainers.includes(c) && <span className="node-meta">init</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )
+    }
     const row = (pod: PodInfo) => {
       const selected = selection.context === context && selection.namespace === namespace && selection.pod?.name === pod.name
-      const containers = [...pod.containers, ...pod.initContainers]
       return (
         <li key={pod.name}>
           <button
@@ -141,18 +156,7 @@ export function Sidebar(p: Props) {
             {pod.restarts > 0 && <span className="node-meta">↻{pod.restarts}</span>}
             {pod.createdAt !== undefined && <span className="node-meta">{formatAge(p.now - pod.createdAt)}</span>}
           </button>
-          {selected && containers.length > 1 && (
-            <ul role="group" aria-label={t('sidebar.containers')}>
-              {containers.map((c) => (
-                <li key={c}>
-                  <button className={`node ${selection.container === c ? 'selected' : ''}`} onClick={() => p.onContainer(c)}>
-                    <span className="node-label mono">{c}</span>
-                    {pod.initContainers.includes(c) && <span className="node-meta">init</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          {selected && containerList(pod)}
         </li>
       )
     }
@@ -181,6 +185,7 @@ export function Sidebar(p: Props) {
             <span className={`node-meta ${buildDot(b.phase) === 'bad' ? 'error-text' : ''}`}>{b.phase}</span>
             {b.startedAt !== undefined && <span className="node-meta">{formatAge(p.now - b.startedAt)}</span>}
           </button>
+          {selected && pod && containerList(pod)}
         </li>
       )
     }

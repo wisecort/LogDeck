@@ -177,9 +177,13 @@ test('OKD builds folder: Build history after the pods; log while the pod exists,
   await expect(win.getByRole('tablist', { name: 'Abas' }).getByRole('tab', { selected: true })).toContainText('portal-web-11')
   await expect(builds.getByRole('button', { name: /portal-web-3-deploy/ })).toContainText('deploy')
 
-  // the build whose pod still exists opens it
+  // the build whose pod still exists opens its main container (not the git-clone init step)
   await builds.getByRole('button', { name: /portal-web-12/ }).click()
-  await expect(win.locator('.statusbar')).toContainText('portal-web-12-build')
+  await expect(win.locator('.statusbar')).toContainText('portal-web-12-build › sti-build')
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  // and lists the containers under the build to switch to the init steps
+  await builds.getByRole('group', { name: 'Containers' }).getByRole('button', { name: /^git-clone/ }).click()
+  await expect(win.locator('.statusbar')).toContainText('portal-web-12-build › git-clone')
 
   await win.reload()
   const tree2 = navTree(win).getByRole('list', { name: 'Namespaces' })

@@ -163,7 +163,9 @@ export function App() {
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
     const opts = { ...options, previous: options.previous && pod.canPrevious }
     const all = [...pod.containers, ...pod.initContainers]
-    const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : undefined
+    // OKD build/deployer pods: open the main container (the build itself), not the init steps (git-clone…)
+    const main = pod.kind !== 'app' && pod.containers.length === 1 ? pod.containers[0] : undefined
+    const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : main
     setOptions(opts, tabId)
     if (container) {
       setSelection({ context, namespace, pod, container }, tabId)
