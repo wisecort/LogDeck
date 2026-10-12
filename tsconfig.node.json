@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  "include": [
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/k8s/**/*",
+    "src/ai/**/*",
+    "src/logs/**/*",
+    "src/shared/**/*",
+    "tests/**/*",
+    "*.config.ts"
+  ]
+}

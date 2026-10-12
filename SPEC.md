@@ -15,7 +15,7 @@ Projeto **greenfield**: o código-fonte do Logui não está disponível (é um a
 |---|---|
 | Nome do produto | LogDeck (janela, menu do app, Dock, `Info.plist` via electron-builder) |
 | Bundle id | `io.github.wisecort.logdeck` |
-| Binário | `logdeck` |
+| Binário | `LogDeck.app`; o comando `logdeck` no terminal fica para depois (link simbólico para o executável) |
 | Repositório | [`wisecort/LogDeck`](https://github.com/wisecort/LogDeck) (público, CI no GitHub Actions) |
 
 ### 1.2 Stack

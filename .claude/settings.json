@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(~/.kube/**)",
+      "Read(./.env*)",
+      "Edit(./.env*)",
+      "Bash(kubectl delete:*)",
+      "Bash(kubectl apply:*)",
+      "Bash(kubectl patch:*)",
+      "Bash(kubectl scale:*)",
+      "Bash(kubectl config use-context:*)",
+      "Bash(kubectl config view --raw:*)",
+      "Bash(oc delete:*)",
+      "Bash(oc apply:*)",
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(curl:* | sh)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/scripts/guardrails.mjs\" --hook" }]
+      }
+    ]
+  }
+}

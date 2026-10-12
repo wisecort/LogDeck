@@ -1,0 +1,85 @@
+import { join } from 'node:path'
+import { app, BrowserWindow, Menu, session, shell } from 'electron'
+
+const APP_NAME = 'LogDeck'
+
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "frame-ancestors 'none'",
+].join('; ')
+
+app.setName(APP_NAME)
+
+function buildMenu(): void {
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      {
+        label: APP_NAME,
+        submenu: [
+          { role: 'about', label: `Sobre o ${APP_NAME}` },
+          { type: 'separator' },
+          { role: 'hide', label: `Ocultar ${APP_NAME}` },
+          { role: 'hideOthers', label: 'Ocultar outros' },
+          { role: 'unhide', label: 'Mostrar tudo' },
+          { type: 'separator' },
+          { role: 'quit', label: `Encerrar ${APP_NAME}` },
+        ],
+      },
+      { role: 'editMenu', label: 'Editar' },
+      { role: 'viewMenu', label: 'Visualizar' },
+      { role: 'windowMenu', label: 'Janela' },
+    ]),
+  )
+}
+
+function createWindow(): void {
+  const win = new BrowserWindow({
+    title: APP_NAME,
+    width: 1280,
+    height: 800,
+    minWidth: 900,
+    minHeight: 560,
+    show: false,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+    },
+  })
+
+  win.once('ready-to-show', () => win.show())
+
+  // The renderer never opens windows or navigates away; external links go to the browser.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) void shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  win.webContents.on('will-navigate', (event) => event.preventDefault())
+
+  const devUrl = process.env['ELECTRON_RENDERER_URL']
+  if (!app.isPackaged && devUrl) void win.loadURL(devUrl)
+  else void win.loadFile(join(__dirname, '../renderer/index.html'))
+}
+
+void app.whenReady().then(() => {
+  if (app.isPackaged) {
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [CSP] } })
+    })
+  }
+  buildMenu()
+  createWindow()
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => app.quit())
