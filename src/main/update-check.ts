@@ -13,10 +13,13 @@ interface CheckOptions {
   /** Local JSON used instead of the network (E2E tests, via LOGDECK_UPDATE_FEED). */
   feedFile?: string
   fetchImpl?: typeof fetch
+  /** Microsoft Store copies are updated by the Store, so they never check GitHub. */
+  storeBuild?: boolean
 }
 
 /** Returns null on any failure: the check is a convenience and never shows an error. */
-export async function checkLatestRelease({ current, feedFile, fetchImpl = fetch }: CheckOptions): Promise<UpdateInfo | null> {
+export async function checkLatestRelease({ current, feedFile, fetchImpl = fetch, storeBuild = false }: CheckOptions): Promise<UpdateInfo | null> {
+  if (storeBuild) return null
   try {
     const text = feedFile ? await readFile(feedFile, 'utf8') : await download(fetchImpl)
     if (text === null || text.length > MAX_BYTES) return null

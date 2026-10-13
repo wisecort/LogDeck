@@ -94,6 +94,12 @@ describe('checkLatestRelease', () => {
     expect(headers.get('cookie')).toBeNull()
   })
 
+  it('never touches the network in a Microsoft Store build (the Store updates the app)', async () => {
+    const fetchImpl = vi.fn(async () => ok(release()))
+    expect(await checkLatestRelease({ current: '1.4.0', fetchImpl, storeBuild: true })).toBeNull()
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
   it('reports when the installed version is already the latest', async () => {
     const result = await checkLatestRelease({ current: '1.5.0', fetchImpl: async () => ok(release()) })
     expect(result?.newer).toBe(false)

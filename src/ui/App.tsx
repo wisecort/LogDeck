@@ -3,7 +3,7 @@ import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { BuildInfo, PodInfo } from '../shared/ipc'
+import type { BuildInfo, PodInfo, VersionInfo } from '../shared/ipc'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
@@ -79,6 +79,7 @@ export function App() {
   const [prefs, setPrefs] = useState(false)
   const [recents, setRecents] = useState<RecentPod[]>(loadRecents)
   const [kubectlVersion, setKubectlVersion] = useState<string>()
+  const [kubectlMissing, setKubectlMissing] = useState<string>()
   const updates = useUpdateCheck()
   const [updateOpen, setUpdateOpen] = useState(false)
   const t = useMemo(() => translator(lang), [lang])
@@ -103,19 +104,28 @@ export function App() {
     void window.logdeck.setLanguage(lang)
   }, [lang])
 
+  // Shows what kubectl reported and loads the contexts; at startup and again from the "Check again" button.
+  const applyKubectl = async (v: VersionInfo) => {
+    if (!v.installed) {
+      // A missing kubectl gets the install card on the welcome screen instead of a notice.
+      if (v.missing && v.installHint) return setKubectlMissing(v.installHint)
+      return setNotice(v.message)
+    }
+    setKubectlMissing(undefined)
+    if (v.version) setKubectlVersion(v.version)
+    try {
+      const list = await window.logdeck.listContexts()
+      nav.showContexts(list)
+      if (list.length === 0) setNotice(t('app.noContexts'))
+    } catch (err) {
+      setNotice((err as Error).message)
+    }
+  }
+
+  const loadKubectl = () => window.logdeck.kubectlVersion().then(applyKubectl)
+
   useEffect(() => {
-    void (async () => {
-      const v = await window.logdeck.kubectlVersion()
-      if (!v.installed) return setNotice(v.message)
-      if (v.version) setKubectlVersion(v.version)
-      try {
-        const list = await window.logdeck.listContexts()
-        nav.showContexts(list)
-        if (list.length === 0) setNotice(t('app.noContexts'))
-      } catch (err) {
-        setNotice((err as Error).message)
-      }
-    })()
+    void window.logdeck.kubectlVersion().then(applyKubectl)
     void window.logdeck.aiStatus().then(setAiStatus)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -474,14 +484,9 @@ export function App() {
               void session.close(id)
               afterTabChange()
             }}
+            homeActive={isEmptyTab}
             onHome={() => {
-              void session.goHome()
-              setShell(undefined)
-              resetView()
-              setPresets(undefined)
-            }}
-            onNew={() => {
-              if (!session.newTab()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+              if (!session.openHome()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
               afterTabChange()
             }}
           />
@@ -492,6 +497,9 @@ export function App() {
               contexts={nav.visible.length}
               {...(nav.activeContext && { currentContext: displayLabel(nav.activeContext, nav.aliases).title })}
               {...(kubectlVersion && { kubectl: kubectlVersion })}
+              {...(kubectlMissing && { kubectlMissing })}
+              onCopyHint={(hint) => void window.logdeck.copyText(hint)}
+              onRecheckKubectl={() => void loadKubectl()}
               {...(recents[0] && { lastRecent: recents[0] })}
               onPods={() => document.getElementById('pod-search')?.focus()}
               onFile={() => fileRef.current?.click()}

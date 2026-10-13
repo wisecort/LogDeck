@@ -13,6 +13,8 @@ export const PATTERNS: ReadonlyArray<[RegExp, Kind]> = [
 
 interface Texts extends Record<Kind, string> {
   missing: string
+  /** {name}: the credential plugin the kubeconfig calls (oc, aws, gke-gcloud-auth-plugin, kubelogin…). */
+  plugin: string
   /** {s} seconds, {cmd} e.g. "get pods". */
   timeout: string
 }
@@ -25,6 +27,7 @@ const TEXTS: Record<string, Texts> = {
     notFound: 'Recurso não encontrado (o pod pode ter sido removido ou recriado).',
     noContext: 'Contexto não existe no kubeconfig.',
     missing: 'kubectl não encontrado. Instale com: {hint}',
+    plugin: 'Plugin de login `{name}` não encontrado. O kubeconfig deste contexto usa esse programa para entrar no cluster: instale-o ou confira se a pasta dele está no PATH.',
     timeout: 'O cluster não respondeu em {s} s ({cmd}). Verifique a VPN/rede e se o login do contexto ainda vale (oc login, aws sso login…).',
   },
   'pt-PT': {
@@ -34,6 +37,7 @@ const TEXTS: Record<string, Texts> = {
     notFound: 'Recurso não encontrado (o pod pode ter sido removido ou recriado).',
     noContext: 'O contexto não existe no kubeconfig.',
     missing: 'kubectl não encontrado. Instale com: {hint}',
+    plugin: 'Plugin de início de sessão `{name}` não encontrado. O kubeconfig deste contexto usa esse programa para aceder ao cluster: instale-o ou verifique se a pasta dele está no PATH.',
     timeout: 'O cluster não respondeu em {s} s ({cmd}). Verifique a VPN/rede e se a sessão do contexto ainda é válida (oc login, aws sso login…).',
   },
   en: {
@@ -43,6 +47,7 @@ const TEXTS: Record<string, Texts> = {
     notFound: 'Resource not found (the pod may have been removed or recreated).',
     noContext: 'Context does not exist in the kubeconfig.',
     missing: 'kubectl not found. Install it with: {hint}',
+    plugin: 'Login plugin `{name}` not found. This context\'s kubeconfig uses it to sign in to the cluster: install it or check that its folder is in the PATH.',
     timeout: 'The cluster did not answer within {s} s ({cmd}). Check the VPN/network and whether the context login is still valid (oc login, aws sso login…).',
   },
   es: {
@@ -52,6 +57,7 @@ const TEXTS: Record<string, Texts> = {
     notFound: 'Recurso no encontrado (el pod puede haberse eliminado o recreado).',
     noContext: 'El contexto no existe en el kubeconfig.',
     missing: 'kubectl no encontrado. Instálelo con: {hint}',
+    plugin: 'Plugin de inicio de sesión `{name}` no encontrado. El kubeconfig de este contexto lo usa para entrar al clúster: instálelo o compruebe que su carpeta está en el PATH.',
     timeout: 'El clúster no respondió en {s} s ({cmd}). Revise la VPN/red y si la sesión del contexto sigue siendo válida (oc login, aws sso login…).',
   },
 }

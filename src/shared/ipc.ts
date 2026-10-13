@@ -40,6 +40,10 @@ export interface VersionInfo {
   installed: boolean
   version?: string
   message?: string
+  /** kubectl is not installed at all; the welcome screen then shows how to install it. */
+  missing?: boolean
+  /** Install command for this OS (winget, brew, snap), set only when `missing`. */
+  installHint?: string
 }
 
 export interface ContextInfo {

@@ -1,12 +1,17 @@
 import logo from '../assets/logo.png'
 import { useI18n } from '../i18n'
 import type { RecentPod } from '../recents'
-import { IconCube, IconFile, IconHistory } from './icons'
+import { useState } from 'react'
+import { IconCopy, IconCube, IconFile, IconHistory } from './icons'
 
 interface Props {
   contexts: number
   currentContext?: string
   kubectl?: string
+  /** kubectl is not installed: the install command for this OS (winget, brew, snap). */
+  kubectlMissing?: string
+  onCopyHint?(hint: string): void
+  onRecheckKubectl?(): void
   lastRecent?: RecentPod
   onPods(): void
   onFile(): void
@@ -19,6 +24,7 @@ interface Props {
 /** Empty tab: what you can do, with shortcuts (Cockpit look). */
 export function Welcome(p: Props) {
   const { t, k } = useI18n()
+  const [copied, setCopied] = useState(false)
   return (
     <div className="welcome" data-testid="welcome">
       <div className="welcome-hero">
@@ -26,6 +32,29 @@ export function Welcome(p: Props) {
         <h1>LogDeck</h1>
         <p className="welcome-tagline">{t('welcome.tagline')}</p>
       </div>
+      {p.kubectlMissing && (
+        <div className="welcome-missing" data-testid="kubectl-missing" role="alert">
+          <strong>{t('welcome.kubectlTitle')}</strong>
+          <span className="muted">{t('welcome.kubectlText')}</span>
+          <div className="welcome-missing-cmd">
+            <code className="mono" data-testid="kubectl-install-hint">{p.kubectlMissing}</code>
+            <button
+              className="welcome-missing-copy"
+              onClick={() => {
+                p.onCopyHint?.(p.kubectlMissing!)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+            >
+              <IconCopy /> {copied ? t('common.copied') : t('welcome.kubectlCopy')}
+            </button>
+            <button className="primary" onClick={() => p.onRecheckKubectl?.()}>
+              {t('welcome.kubectlRecheck')}
+            </button>
+          </div>
+          <span className="muted">{t('welcome.kubectlFile', { key: k('⌘O') })}</span>
+        </div>
+      )}
       <div className="welcome-cards">
         <button className="welcome-card tone-green" onClick={p.onPods}>
           <span className="welcome-icon">

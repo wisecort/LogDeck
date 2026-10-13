@@ -1,4 +1,4 @@
-.PHONY: harness test dev harness-integration icon tap winget
+.PHONY: harness test dev harness-integration icon tap winget screenshots
 
 harness: ## pipeline completo, igual ao CI
 	bash scripts/harness.sh
@@ -21,3 +21,7 @@ tap: ## aponta o cask do Homebrew para uma release publicada (VERSION=1.2.0)
 
 winget: ## abre o PR do winget para uma release publicada (VERSION=1.5.0)
 	bash scripts/update-winget.sh $(VERSION)
+
+screenshots: ## refaz as capturas do README (docs/images e docs/images/en) com o kubectl falso; só no macOS
+	npm run build
+	npx playwright test -c playwright.screenshots.config.ts

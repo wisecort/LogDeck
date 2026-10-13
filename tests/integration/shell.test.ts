@@ -68,8 +68,13 @@ describe('PodShell (P5)', () => {
   it('reports exit when the remote shell ends', async () => {
     const s = open()
     await waitFor(() => s.out().includes('$ '))
-    s.shell.write('exit\r')
-    await waitFor(() => s.exitCode() !== undefined)
+    // Same ConPTY issue as typeUntilEchoed: the first "exit" can be dropped on Windows, so resend until the shell ends.
+    const t0 = Date.now()
+    while (s.exitCode() === undefined) {
+      if (Date.now() - t0 > PTY_TIMEOUT_MS) throw new Error('the shell did not exit')
+      s.shell.write('exit\r')
+      await waitFor(() => s.exitCode() !== undefined, 2000).catch(() => undefined)
+    }
     expect(s.exitCode()).toBe(0)
   })
 

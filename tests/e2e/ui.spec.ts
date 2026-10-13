@@ -102,7 +102,7 @@ test('recent pods: the last ones opened reopen with the same container', async (
   await expect(navTree(win).getByRole('list', { name: 'Recentes' }).getByRole('button', { name: /^portal-worker/ })).toHaveCount(0)
 })
 
-test('tabs: two pods stream side by side, switch, close and add a new one', async () => {
+test('tabs: two pods stream side by side, switch, close, and Home keeps them running', async () => {
   await openWebPod(win)
   const tabs = win.getByTestId('log-tab')
   const tabList = win.getByRole('tablist', { name: 'Abas' })
@@ -122,10 +122,14 @@ test('tabs: two pods stream side by side, switch, close and add a new one', asyn
   await win.getByRole('button', { name: /Fechar aba portal-worker/ }).click()
   await expect(tabs).toHaveCount(1)
 
-  await win.getByRole('button', { name: 'Nova aba', exact: true }).click()
-  await expect(tabs).toHaveCount(2)
-  await expect(tabList.getByRole('tab', { selected: true })).toContainText('Nova aba')
-  await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
+  // Home is the house button, not a tab: the pod tab stays open and keeps its log
+  await expect(win.getByRole('button', { name: 'Nova aba', exact: true })).toHaveCount(0)
+  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await expect(win.getByTestId('welcome')).toBeVisible()
+  await expect(tabs).toHaveCount(1)
+  await expect(tabList.getByRole('tab', { selected: true })).toHaveCount(0)
+  await tabList.getByRole('tab', { name: /portal-web/ }).click()
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
 })
 
 test('compare with --previous: current and previous container side by side', async () => {
@@ -202,12 +206,18 @@ test('OKD builds folder: Build history after the pods; log while the pod exists,
 })
 
 test('welcome screen on empty tabs and the Home button brings it back', async () => {
+  const home = win.getByRole('button', { name: 'Início', exact: true })
   await expect(win.getByTestId('welcome')).toBeVisible()
+  // The app opens on the home screen: the Home button is lit and there is no tab yet.
+  await expect(home).toHaveAttribute('aria-pressed', 'true')
+  await expect(win.getByTestId('log-tab')).toHaveCount(0)
   await expect(win.getByRole('tab', { name: 'Erros (0)' })).toHaveCount(0)
   await openWebPod(win)
   await expect(win.getByTestId('welcome')).toHaveCount(0)
-  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await expect(home).toHaveAttribute('aria-pressed', 'false')
+  await home.click()
   await expect(win.getByTestId('welcome')).toBeVisible()
+  await expect(home).toHaveAttribute('aria-pressed', 'true')
   await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
   // the last pod card reopens it
   await win.getByTestId('welcome').getByRole('button', { name: /Último pod/ }).click()
@@ -258,15 +268,29 @@ test('pod search filters the tree and opens matching namespaces', async () => {
   await expect(navTree(win).getByRole('button', { name: /portal-worker/ })).toHaveCount(0)
 })
 
-test('copy for ticket: pod, UTC times, level and the line', async () => {
+test('copy with details: pod, UTC times, level and the line', async () => {
   await openWebPod(win)
   await win.getByLabel('Buscar').fill('AH01075')
   await win.getByTestId('log-row').first().click()
-  await win.getByRole('button', { name: 'Copiar para chamado' }).click()
+  await win.getByRole('button', { name: 'Copiar com detalhes' }).click()
   const text = await app.evaluate(({ clipboard }) => clipboard.readText())
   expect(text).toContain('Pod: portal-hml / portal-web-7d9f8c6b5-x2k4p / httpd')
   expect(text).toMatch(/Horário \(kubectl\): 2026-10-09 \d\d:\d\d:\d\d\.\d{3} UTC/)
   expect(text).toContain('AH01075')
+})
+
+test('copy the line from Details, with or without masking secrets and internal IPs', async () => {
+  await openWebPod(win)
+  await win.getByLabel('Buscar').fill('AH01075')
+  await win.getByTestId('log-row').first().click()
+  const details = win.getByTestId('log-details')
+  await details.getByRole('button', { name: 'Copiar', exact: true }).click()
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toContain('[client 10.0.0.2:')
+
+  await details.getByLabel('Mascarar dados sensíveis').check()
+  await details.getByRole('button', { name: 'Copiar', exact: true }).click()
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toContain('[client [REDACTED:IP]:')
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).not.toContain('10.0.0.2')
 })
 
 test('opens a saved log file and refuses binary ones', async () => {
@@ -374,6 +398,13 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await expect(win.getByRole('dialog', { name: 'Preferencias', exact: true })).toContainText('Hecho por')
   await win.getByRole('dialog', { name: 'Preferencias', exact: true }).getByRole('radio', { name: 'Português (Portugal)' }).click()
   await expect(win.getByRole('button', { name: 'Definições', exact: true })).toBeVisible()
+})
+
+test('Preferences: in the default 1280×800 window the About card shows without scrolling', async () => {
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
+  await expect(prefs.getByTestId('about')).toBeInViewport({ ratio: 1 })
+  await expect(prefs.getByRole('radio', { name: 'Catppuccin Mocha' })).toBeInViewport({ ratio: 1 })
 })
 
 test('6.5: themes, bookmarks and favourite namespaces', async () => {

@@ -3,6 +3,7 @@ import { app, BrowserWindow, session, shell } from 'electron'
 import { ExplainService } from '../ai/explain'
 import { createProvider } from '../ai/providers'
 import { createSecretStore } from '../platform/secret-store'
+import { isStoreBuild } from '../platform/distribution'
 import { K8sService } from '../k8s/service'
 import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
@@ -33,7 +34,8 @@ disableSystemMenuItems()
 // Tests point userData to a temp dir so they never touch the user's presets.
 if (process.env['LOGDECK_USER_DATA']) app.setPath('userData', process.env['LOGDECK_USER_DATA'])
 
-const service = new K8sService()
+// Tests point main at a kubectl that does not exist to show the install card (like LOGDECK_SECURITY_BIN).
+const service = new K8sService(process.env['LOGDECK_KUBECTL_BIN'] ? { binary: process.env['LOGDECK_KUBECTL_BIN'] } : {})
 const registry = new StreamRegistry()
 const shells = new ShellRegistry()
 let mainWindow: BrowserWindow | undefined
@@ -100,7 +102,7 @@ void app.whenReady().then(() => {
   let lastUpdate: { at: number; info: UpdateInfo | null } | null = null
   const checkUpdate = async (): Promise<UpdateInfo | null> => {
     if (lastUpdate && Date.now() - lastUpdate.at < UPDATE_INTERVAL_MS) return lastUpdate.info
-    const info = await checkLatestRelease({ current: app.getVersion(), feedFile: process.env['LOGDECK_UPDATE_FEED'] })
+    const info = await checkLatestRelease({ current: app.getVersion(), feedFile: process.env['LOGDECK_UPDATE_FEED'], storeBuild: isStoreBuild() })
     lastUpdate = { at: Date.now(), info }
     return info
   }

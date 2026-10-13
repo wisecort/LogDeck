@@ -22,6 +22,15 @@ describe('K8sService', () => {
     const v = await svc.version()
     expect(v.installed).toBe(false)
     expect(v.message).toContain(kubectlInstallHint())
+    // The welcome screen shows the install command on its own, with a copy button.
+    expect(v.missing).toBe(true)
+    expect(v.installHint).toBe(kubectlInstallHint())
+  })
+
+  it('does not flag an installed kubectl as missing', async () => {
+    const v = await service().svc.version()
+    expect(v.missing).toBeUndefined()
+    expect(v.installHint).toBeUndefined()
   })
 
   it('lists contexts and remembers them as the allowlist for --context', async () => {

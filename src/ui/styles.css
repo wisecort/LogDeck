@@ -2924,7 +2924,26 @@ button.primary:disabled {
 }
 
 .prefs-modal {
-  width: min(720px, calc(100vw - 32px));
+  width: min(1100px, calc(100vw - 48px));
+}
+
+.prefs-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 28px;
+  align-items: start;
+}
+
+.prefs-side {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Narrow window: one column, as before. */
+@media (max-width: 980px) {
+  .prefs-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .build-row[data-nolog] .node-label {
@@ -3072,6 +3091,57 @@ button.primary:disabled {
   font-size: 12px;
 }
 
+.welcome-missing {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 640px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--warn) 55%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 10%, var(--bg-2));
+  font-size: 12px;
+  text-align: left;
+}
+
+.welcome-missing-cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.welcome-missing-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--ctl-h-sm);
+  padding: 3px 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--border));
+  border-radius: 8px;
+  background: var(--bg-3);
+  color: var(--fg);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.welcome-missing-copy:hover {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 18%, var(--bg-3));
+}
+
+.welcome-missing-copy:active {
+  transform: translateY(1px);
+}
+
+.welcome-missing-cmd code {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  user-select: all;
+}
+
 .welcome-ask > div {
   display: flex;
   flex-direction: column;
@@ -3136,5 +3206,17 @@ button.primary:disabled {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+}
+
+.det-mask {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-end;
+  gap: 6px;
+  margin-top: -4px;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
   cursor: pointer;
 }

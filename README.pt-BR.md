@@ -43,7 +43,7 @@ A tela inicial mostra o contexto atual, a versão do kubectl e atalhos para abri
 
 ### Detalhes de qualquer linha
 
-Clique numa linha para ver os horários do log e do kubectl, os campos reconhecidos, o JSON formatado e o stack trace. **Copiar para chamado** gera um texto pronto com pod, horários em UTC, nível e a linha, com senhas e tokens mascarados.
+Clique numa linha para ver os horários do log e do kubectl, os campos reconhecidos, o JSON formatado e o stack trace. **Copiar com detalhes** gera um texto pronto com pod, horários em UTC, nível e a linha, com senhas e tokens mascarados.
 
 ![Detalhes de uma linha de erro](docs/images/details.png)
 
@@ -85,7 +85,7 @@ Nove temas (Escuro, Meia-noite, Claro, Sistema, Alto contraste, Dracula, Nord, T
 - **Níveis com cores** (TRACE a FATAL) em JSON, Laravel, Apache, Nginx, PHP-FPM, Java, builds do OKD (buildah/docker/s2i) e texto livre; stack traces ficam juntos da linha de origem.
 - **Busca** por texto ou regex (com proteção contra regex que trava), **exclusões** e presets por namespace, como esconder health checks.
 - **Histograma de volume**: arraste sobre as barras para ver só aquele intervalo.
-- **Painel de erros e timeouts** com contagem e período, e **detalhes da linha** com **Copiar para chamado**.
+- **Painel de erros e timeouts** com contagem e período, e **detalhes da linha** com **Copiar com detalhes**.
 - **Abas**, **pods recentes** (com × para tirar da lista) e **Comparar com o anterior** (`--previous`).
 - **Builds do OKD**: histórico, log do container do build e detalhes quando o pod já foi removido.
 - **Terminal no container**, aberto só quando você clica.
@@ -106,7 +106,9 @@ Nove temas (Escuro, Meia-noite, Claro, Sistema, Alto contraste, Dracula, Nord, T
   | Linux | `sudo snap install kubectl --classic` ou o pacote `kubectl` da sua distribuição |
   | Windows | `winget install -e --id Kubernetes.kubectl` |
 
-- Um kubeconfig com acesso ao cluster (o padrão `~/.kube/config` ou a variável `KUBECONFIG`). No OKD/OpenShift, basta fazer `oc login` antes.
+  Se o kubectl não estiver instalado, a tela inicial do LogDeck mostra esse comando com um botão de copiar; depois de instalar, clique em **Verificar de novo** (não precisa reiniciar).
+
+- Um kubeconfig com acesso ao cluster (o padrão `~/.kube/config` ou a variável `KUBECONFIG`). No OKD/OpenShift, basta fazer `oc login` antes. Para instalar o `oc`: `brew install openshift-cli` (macOS), `winget install -e --id RedHat.OpenShift-Client` (Windows) ou o cliente no console do seu cluster (**?** → **Command line tools**).
 
 ### macOS (Apple Silicon ou Intel)
 
@@ -154,7 +156,7 @@ Todos os arquivos ficam na página de [Releases](https://github.com/wisecort/Log
 2. **Abra um namespace** e clique num pod (bolinha verde: rodando; vermelha: com problema; ↻ = restarts). Se o pod tiver mais de um container, escolha o container. ⌘-clique abre numa aba nova.
 3. **Acompanhe o log ao vivo.** Rolar para cima ou clicar numa linha pausa a tela; **Ao vivo** volta para o fim.
 4. **Filtre:** níveis (⌥+clique mostra só um), busca (⌘F, `Aa`, `.*`), exclusões e presets, **Tempo** (tail, desde quando, `--previous`) e o histograma.
-5. **Investigue:** painel **Erros**, **Detalhes** da linha, **Copiar para chamado**, **Comparar com o anterior** e **Terminal** no container.
+5. **Investigue:** painel **Erros**, **Detalhes** da linha, **Copiar com detalhes**, **Comparar com o anterior** e **Terminal** no container.
 6. **No OKD:** abra a pasta **Builds e deploys** e clique num build para ver o log dele.
 7. **Volte ao início** pelo ícone de casa, à esquerda das abas.
 
@@ -227,13 +229,11 @@ Os testes nunca acessam um cluster de verdade: usam um `kubectl` falso e logs fi
 
 ## Política de assinatura de código
 
-As versões de Windows serão assinadas quando o projeto for aceito pela SignPath Foundation (pedido em andamento). Até lá, o instalador de Windows não é assinado e o app de macOS tem assinatura ad-hoc (sem notarização).
+As versões **ainda não têm assinatura de código**: o instalador de Windows não é assinado (o SmartScreen mostra um aviso; escolha "Mais informações → Executar assim mesmo"), e o app de macOS tem assinatura ad-hoc (sem notarização). Pretendemos pedir de novo a assinatura grátis da [SignPath Foundation](https://signpath.org) quando o projeto tiver mais uso. As regras abaixo são as que a assinatura vai seguir.
 
-Assinatura de código gratuita fornecida por [SignPath.io](https://about.signpath.io), certificado da [SignPath Foundation](https://signpath.org).
-
-- **O que é assinado:** só binários gerados a partir do código deste repositório pelo [workflow de release](.github/workflows/release.yml), em runners hospedados pelo GitHub: o app `LogDeck.exe` e o instalador `LogDeck-<versão>-x64.exe`. Nada gerado em outro lugar ou a partir de código de terceiros é assinado.
+- **O que será assinado:** só binários gerados a partir do código deste repositório pelo [workflow de release](.github/workflows/release.yml), em runners hospedados pelo GitHub: o app `LogDeck.exe` e o instalador `LogDeck-<versão>-x64.exe`. Nada gerado em outro lugar ou a partir de código de terceiros é assinado.
 - **Commits e revisão:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort)
-- **Aprovação:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort). Cada release é aprovada manualmente antes de ser assinada.
+- **Aprovação:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort). Cada release será aprovada manualmente antes de ser assinada.
 - **Privacidade:** este programa não transfere nenhuma informação para outros sistemas em rede, a não ser quando o usuário, ou quem instala ou opera o programa, pede isso explicitamente. Veja a [política de privacidade](PRIVACY.pt-BR.md).
 
 ## Licença

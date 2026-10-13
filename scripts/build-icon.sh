@@ -15,4 +15,5 @@ for size in 16 32 128 256 512; do
   sips -z $((size * 2)) $((size * 2)) "$PNG" --out "$SET/icon_${size}x${size}@2x.png" >/dev/null
 done
 iconutil -c icns "$SET" -o build/icon.icns
+bash scripts/build-appx-assets.sh
 echo "✅ build/icon.png e build/icon.icns gerados de $SRC"
