@@ -43,3 +43,4 @@ Vale para qualquer IA que mexa neste repositório (Claude Code, Codex, Copilot e
 | `make test` | testes unitários e de integração |
 | `make dev` | abre o app em modo desenvolvimento |
 | `make harness-integration` | testes contra cluster `kind` local (manual, nunca no CI) |
+| `make screenshots` | refaz as capturas do README (`docs/images/` e `docs/images/en/`) com o kubectl falso; só no macOS |

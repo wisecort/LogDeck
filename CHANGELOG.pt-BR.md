@@ -6,18 +6,20 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
-- README: situação da assinatura de código atualizada. A SignPath Foundation recusou o primeiro pedido (projeto novo demais); as versões seguem sem assinatura, e vamos pedir de novo quando o projeto tiver mais uso.
+## [1.6.0] — 13/10/2026
+
 - **Pacote da Microsoft Store (appx/MSIX):** `npm run release:store` gera o pacote (`build.appx` com a identidade do Partner Center, logos da Store em `build/appx/` feitos por `scripts/build-appx-assets.sh`, que o `make icon` também roda). O CI gera o pacote em todo PR e em cada release como artefato do workflow (nunca como arquivo da release: a Store assina na publicação). Passos de teste e envio em `docs/microsoft-store.md`.
 - A cópia da Microsoft Store nunca consulta o GitHub atrás de versão nova: a Store atualiza o app (`src/platform/distribution.ts`).
 - **Sem kubectl? A tela inicial diz como instalar:** um cartão destacado com o comando de instalação do sistema (winget, brew, snap), botão **Copiar** e **Verificar de novo**, que acha o kubectl sem reiniciar o app; enquanto isso, já dá para abrir arquivos de log. O README também diz como instalar o `oc`.
 - **O Início é a casinha:** o app abre na tela inicial com a casinha acesa e sem nenhuma aba; abas são só para pods, arquivos e builds. A casinha mostra a tela inicial e deixa as abas abertas rodando (antes ela esvaziava a aba atual e parava o log). O botão "+" saiu: ⌘/Ctrl+clique ou clique do meio num pod abre em aba nova.
-- Correção: um plugin de login ausente (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) aparecia como "Recurso não encontrado (o pod pode ter sido removido)". Agora a mensagem diz qual plugin falta e pede para instalar ou conferir o PATH.
-- "Copiar para chamado" agora se chama **Copiar com detalhes** (pod, horários em UTC, nível e a linha, com segredos mascarados).
 - **Copiar com máscara:** os Detalhes têm a opção "Mascarar dados sensíveis" para o **Copiar**: esconde senhas, tokens, chaves, e-mails e IPs internos (10.x, 172.16–31.x, 192.168.x) na linha e no stack trace copiados. Desligada por padrão e lembrada nesta máquina; o log na tela não muda.
+- "Copiar para chamado" agora se chama **Copiar com detalhes** (pod, horários em UTC, nível e a linha, com segredos mascarados).
 - **Preferências mais largas:** duas colunas quando há espaço (temas à esquerda; idioma, atualizações e Sobre à direita), e tudo aparece sem rolar na janela padrão; uma coluna em janela estreita.
-
+- Correção: um plugin de login ausente (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) aparecia como "Recurso não encontrado (o pod pode ter sido removido)". Agora a mensagem diz qual plugin falta e pede para instalar ou conferir o PATH.
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
 - **Notas da release com as mudanças:** cada release do GitHub mostra a seção da sua versão no `CHANGELOG.md` (`scripts/release-notes.mjs`) em vez de "veja o CHANGELOG", mais o link da política de assinatura; a release falha se a versão não tiver seção.
+- README: situação da assinatura de código atualizada. A SignPath Foundation recusou o primeiro pedido (projeto novo demais); as versões seguem sem assinatura, e vamos pedir de novo quando o projeto tiver mais uso.
+- Capturas do README refeitas pelo `make screenshots` (`tests/screenshots`, kubectl falso e logs fictícios, em inglês e português).
 
 ## [1.5.0] — 12/10/2026
 
