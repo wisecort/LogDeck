@@ -77,6 +77,7 @@ export function registerIpc(deps: IpcDeps): void {
   handle(deps, IPC.version, () => service.version())
   handle(deps, IPC.contexts, () => service.contexts())
   handle(deps, IPC.namespaces, (_e, context: unknown) => service.namespaces(str(context, 'contexto')))
+  handle(deps, IPC.builds, (_e, context: unknown, namespace: unknown) => service.builds(str(context, 'contexto'), str(namespace, 'namespace')))
   handle(deps, IPC.pods, (_e, context: unknown, namespace: unknown) =>
     service.pods(str(context, 'contexto'), str(namespace, 'namespace')),
   )
@@ -87,6 +88,7 @@ export function registerIpc(deps: IpcDeps): void {
     const tail = optional(req.tail, isNumber, 'tail') ?? DEFAULT_TAIL
     const since = optional(req.since, isString, 'since')
     const previous = optional(req.previous, isBoolean, 'previous')
+    const once = optional(req.once, isBoolean, 'once')
     const sender = event.sender
     let streamId = ''
     const stream = new LogStream({
@@ -100,6 +102,7 @@ export function registerIpc(deps: IpcDeps): void {
       tail,
       ...(since !== undefined && { since }),
       ...(previous !== undefined && { previous }),
+      ...(once && { once: true }),
       onLines: (lines) => {
         if (!sender.isDestroyed()) sender.send(IPC.logLines, { streamId, lines } satisfies LogLinesEvent)
       },

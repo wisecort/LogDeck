@@ -9,7 +9,7 @@ import { useI18n, type Translate } from '../i18n'
 import { groupTitle } from '../group-title'
 import { ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
-import { IconBookmark, IconCopy, IconGear, IconSparkle } from './icons'
+import { IconBookmark, IconCheckCircle, IconCopy, IconGear, IconRows, IconSparkle } from './icons'
 
 export type PanelTab = 'erros' | 'detalhes' | 'ia'
 export type AiContextMode = 'linha' | 'grupos' | 'visiveis'
@@ -51,6 +51,7 @@ function ErrorsTab(p: Props) {
   const { t } = useI18n()
   return (
     <>
+      <div className="errors-head">
       <button
         className="primary"
         disabled={p.selectedGroups.size === 0}
@@ -63,11 +64,19 @@ function ErrorsTab(p: Props) {
         {t('err.explain')}{p.selectedGroups.size > 0 ? ` (${p.selectedGroups.size})` : ''}
       </button>
       {p.activeGroup && (
-        <button className="link" onClick={() => p.onGroup(undefined)}>
+        <button className="link" style={{ alignSelf: 'flex-start' }} onClick={() => p.onGroup(undefined)}>
           {t('err.clearGroup')}
         </button>
       )}
-      {p.groups.length === 0 && <div className="muted">{t('err.none')}</div>}
+      </div>
+      {p.groups.length === 0 && (
+        <div className="empty-state tone-ok">
+          <span className="empty-state-icon">
+            <IconCheckCircle />
+          </span>
+          {t('err.none')}
+        </div>
+      )}
       <ul className="groups">
         {p.groups.map((g) => (
           <li key={g.key} className={`group ${p.activeGroup === g.key ? 'active' : ''}`} data-testid="error-group">
@@ -128,16 +137,30 @@ function TicketButton({ entry, source }: { entry: LogEntry; source: TicketSource
 function DetailsTab(p: Props) {
   const { t } = useI18n()
   const e = p.entry
-  if (!e) return <div className="muted">{t('det.empty')}</div>
+  if (!e)
+    return (
+      <div className="empty-state">
+        <span className="empty-state-icon">
+          <IconRows />
+        </span>
+        {t('det.empty')}
+      </div>
+    )
   const time = displayTime(e)
   const json = prettyJson(e.raw)
   const full = [e.raw, ...e.continuation].join('\n')
   return (
     <div data-testid="log-details" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span className={`badge lvl-${e.level}`}>{e.level}</span>
-        <span className="mono">{formatDateTime(time.time)}</span>
-        <span className="spacer" />
+      <div className="det-head">
+        <div className="det-head-row">
+          <span className={`badge lvl-${e.level}`}>{e.level}</span>
+          <span className="mono">{formatDateTime(time.time)}</span>
+          <span className="spacer" />
+          <span className="muted mono" style={{ fontSize: 11 }}>
+            {e.parser}
+          </span>
+        </div>
+        <div className="det-actions">
         <button className="icon-btn" aria-pressed={p.bookmarked} onClick={() => p.onBookmark(e.seq)}>
           <IconBookmark filled={p.bookmarked} /> {p.bookmarked ? t('det.marked') : t('det.mark')}
         </button>
@@ -150,6 +173,7 @@ function DetailsTab(p: Props) {
         >
           <IconSparkle /> {t('det.askAi')}
         </button>
+        </div>
       </div>
       <dl className="kv">
         <dt>{t('det.format')}</dt>

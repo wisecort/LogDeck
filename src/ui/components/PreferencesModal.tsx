@@ -1,7 +1,8 @@
 import { APP_AUTHOR, APP_REPOSITORY } from '../../shared/app-info'
+import logo from '../assets/logo.png'
 import { LANGUAGES, useI18n, type Lang, type MessageKey } from '../i18n'
-import { THEMES, type ThemeId } from '../theme'
-import { IconGithub, IconLinkedin } from './icons'
+import { THEME_PREVIEW, THEMES, type ThemeId } from '../theme'
+import { IconGithub, IconLinkedin, IconSliders, IconX } from './icons'
 
 interface Props {
   theme: ThemeId
@@ -11,66 +12,87 @@ interface Props {
   onClose(): void
 }
 
-/** Appearance (theme, language) and About. */
+/** Appearance (theme thumbnails, language) and About (Cockpit look). */
 export function PreferencesModal(p: Props) {
   const { t } = useI18n()
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={t('pref.title')} onClick={p.onClose}>
       <div className="modal prefs-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('pref.title')}</h2>
-
-        <div className="panel-section-title">{t('pref.appearance')}</div>
-        <label className="field">
-          <span>{t('pref.theme')}</span>
-          <select aria-label={t('pref.theme')} value={p.theme} onChange={(e) => p.onTheme(e.target.value as ThemeId)}>
-            {THEMES.map((th) => (
-              <option key={th.id} value={th.id}>
-                {t(`theme.${th.id}` as MessageKey)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>{t('pref.language')}</span>
-          <select aria-label={t('pref.language')} value={p.lang} onChange={(e) => p.onLang(e.target.value as Lang)}>
-            {LANGUAGES.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="muted" style={{ fontSize: 12 }}>
-          {t('pref.languageNote')}
-        </p>
-
-        <div className="panel-section-title">{t('pref.about')}</div>
-        <div className="about" data-testid="about">
-          <strong>LogDeck {__APP_VERSION__}</strong>
-          <span className="muted">{t('pref.tagline')}</span>
-          <span className="muted">
-            {t('pref.license')} ·{' '}
-            <button className="link mono" onClick={() => void window.logdeck.openLink('github')}>
-              {APP_REPOSITORY.replace('https://', '')}
-            </button>
+        <header className="modal-head">
+          <span className="modal-head-icon">
+            <IconSliders />
           </span>
-          <span>{t('pref.madeBy', { author: APP_AUTHOR })}</span>
-          <div className="about-links">
-            <button className="icon-btn labeled" aria-label={t('pref.openGithub')} onClick={() => void window.logdeck.openLink('github')}>
-              <IconGithub /> GitHub
-            </button>
-            <button className="icon-btn labeled" aria-label={t('pref.openLinkedin')} onClick={() => void window.logdeck.openLink('linkedin')}>
-              <IconLinkedin /> LinkedIn
-            </button>
-          </div>
-        </div>
-
-        <div className="modal-actions">
+          <h2>{t('pref.title')}</h2>
           <span className="spacer" />
-          <button className="primary" onClick={p.onClose}>
-            {t('common.close')}
+          <button className="icon-btn" aria-label={t('common.close')} onClick={p.onClose}>
+            <IconX />
           </button>
-        </div>
+        </header>
+
+        <section className="pref-section">
+          <div className="panel-section-title">{t('pref.theme')}</div>
+          <div className="theme-grid" role="radiogroup" aria-label={t('pref.theme')}>
+            {THEMES.map((th) => {
+              const c = THEME_PREVIEW[th.id]
+              const on = p.theme === th.id
+              return (
+                <button key={th.id} role="radio" aria-checked={on} className={`theme-card ${on ? 'on' : ''}`} onClick={() => p.onTheme(th.id)}>
+                  <span className="theme-thumb" style={{ background: c.bg }} aria-hidden="true">
+                    <span className="theme-thumb-side" style={{ background: c.panel }} />
+                    <span className="theme-thumb-lines">
+                      {c.levels.map((color, i) => (
+                        <span key={i} className="theme-thumb-line">
+                          <i style={{ background: color }} />
+                          <b style={{ background: c.fg, opacity: 0.35, width: `${70 - i * 15}%` }} />
+                        </span>
+                      ))}
+                    </span>
+                    <span className="theme-thumb-accent" style={{ background: c.accent }} />
+                  </span>
+                  <span className="theme-name">{t(`theme.${th.id}` as MessageKey)}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="pref-section">
+          <div className="panel-section-title">{t('pref.language')}</div>
+          <div className="segmented" role="radiogroup" aria-label={t('pref.language')}>
+            {LANGUAGES.map((l) => (
+              <button key={l.id} role="radio" aria-checked={p.lang === l.id} className={p.lang === l.id ? 'on' : ''} onClick={() => p.onLang(l.id)}>
+                {l.name}
+              </button>
+            ))}
+          </div>
+          <p className="muted pref-note">{t('pref.languageNote')}</p>
+        </section>
+
+        <section className="pref-section">
+          <div className="panel-section-title">{t('pref.about')}</div>
+          <div className="about-card" data-testid="about">
+            <img src={logo} alt="" width={56} height={56} />
+            <div className="about">
+              <strong>LogDeck {__APP_VERSION__}</strong>
+              <span className="muted">{t('pref.tagline')}</span>
+              <span className="muted">
+                {t('pref.license')} ·{' '}
+                <button className="link mono" onClick={() => void window.logdeck.openLink('github')}>
+                  {APP_REPOSITORY.replace('https://', '')}
+                </button>
+              </span>
+              <span>{t('pref.madeBy', { author: APP_AUTHOR })}</span>
+            </div>
+            <div className="about-links">
+              <button className="icon-btn labeled" aria-label={t('pref.openGithub')} onClick={() => void window.logdeck.openLink('github')}>
+                <IconGithub /> GitHub
+              </button>
+              <button className="icon-btn labeled" aria-label={t('pref.openLinkedin')} onClick={() => void window.logdeck.openLink('linkedin')}>
+                <IconLinkedin /> LinkedIn
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )

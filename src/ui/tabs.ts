@@ -61,7 +61,8 @@ export function updateTab(s: TabsState, id: string, patch: Partial<Omit<Tab, 'id
 /** Undefined for an empty tab (the UI shows "Nova aba"). */
 export function tabLabel(tab: Tab): string | undefined {
   if (tab.file) return tab.file
-  const { pod, container } = tab.selection
-  if (!pod) return undefined
+  const { pod, container, build } = tab.selection
+  if (!pod) return build?.name
+
   return container ? `${pod.name} / ${container}` : pod.name
 }

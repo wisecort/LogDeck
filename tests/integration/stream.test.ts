@@ -135,6 +135,16 @@ describe('LogStream (F3)', () => {
     expect(s.delays).toEqual([])
   })
 
+  it('reads a finished container (completed build, Job) once: no -f, no reconnect', async () => {
+    const s = startStream({}, { once: true })
+    await waitFor(() => s.statuses.some((x) => x.state === 'ended'))
+    expect(s.lines.length).toBeGreaterThan(0)
+    const [argv] = s.fake.calls()
+    expect(argv).not.toContain('-f')
+    expect(s.fake.calls()).toHaveLength(1)
+    expect(s.delays).toEqual([])
+  })
+
   it('kills kubectl on stop and does not reconnect afterwards (F3.5)', async () => {
     const s = startStream({ FAKE_KUBECTL_DELAY_MS: '50' })
     await waitFor(() => s.lines.length > 0)

@@ -33,6 +33,7 @@ const RULES: readonly Rule[] = [
   { id: 'node-etimedout', title: 'Timeout de conexão', re: /\b(?:ETIMEDOUT|ESOCKETTIMEDOUT)\b/ },
   { id: 'fpm-max-children', title: 'PHP-FPM sem workers', re: /server reached pm\.max_children/ },
   { id: 'php-fatal', title: 'PHP Fatal error', re: /PHP Fatal error/ },
+  { id: 'build-failed', title: 'Falha no build', re: /error: build error|\berror building at STEP|^ERRO: /i },
 ]
 
 /** Ids of the catalog rules; the UI translates their titles as `sig.<id>`. */

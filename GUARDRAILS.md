@@ -19,7 +19,8 @@ G3. Nunca ler, copiar, logar ou enviar à IA o conteúdo do kubeconfig, tokens o
     certificados. Nunca usar `config view --raw`.
 G4. Nunca trocar o contexto global do usuário (`kubectl config use-context` proibido).
     O app usa `--context` em cada chamada.
-G5. Contextos cujo nome contenha `prod`/`prd` exibem faixa vermelha de aviso.
+G5. Contextos cujo nome contenha `prod`/`prd` são sinalizados com a marca vermelha PROD no seletor
+    de contexto e na barra de status (desde a 1.4.0 sem faixa no topo, a pedido do autor).
 G6. Envio à IA só com clique, preview e mascaramento (seção IA). Nada automático.
     O preview mostra o destino. Rede e SDK de IA só em src/ai/providers/; chave de
     API só no main (Keychain), nunca no renderer.
@@ -39,7 +40,7 @@ G10. Plataformas: macOS, Linux e Windows (desde a 1.1.0). Código específico de
 | G2 | `kubectl.ts` é o único `spawn`/`pty.spawn` do kubectl, com `shell: false`; nomes validados (abaixo). `src/ai/providers/claude-cli.ts` é o único `spawn` do `claude`, com argv fixo conferido por `assertClaudeArgs` | `shell: true`; `exec(`/`execSync(` com template string ou concatenação; `child_process` importado fora de `src/k8s/` e `src/ai/providers/` | `args.test`, `claude-cli.test`, `guardrails.test` |
 | G3 | `contexts.ts` usa só `config get-contexts` e devolve nome/cluster/namespace; nenhum arquivo do kubeconfig é lido pelo app | `config view --raw`, `--raw`, leitura de `.kube/config`, `client-key-data`, `client-certificate-data`, `certificate-authority-data` em `src/` | `contexts.test` |
 | G4 | todo comando recebe `--context=<nome>` montado por `args.ts` | `use-context`, `set-context`, `config set` | `args.test` + kubectl fake registra argv |
-| G5 | `isProductionContext(name)` → faixa vermelha e confirmação extra para abrir shell | — | unit + E2E |
+| G5 | `isProductionContext(name)` → marca PROD no seletor e na barra de status | — | unit + E2E |
 | G6 | `explain` só via IPC disparado pelo botão "Enviar" do modal de preview; payload passa por `redact.ts` no main (não confia no renderer); o modal mostra o destino; HTTPS obrigatório fora de localhost; chave só no main via `safeStorage` | `fetch(`/`http`/`https` e `@anthropic-ai/sdk` fora de `src/ai/providers/`; `bypassPermissions`, `acceptEdits`, `dangerously` ou `--tools default` em `src/` | `redact.test`, `explain.test`, E2E do modal |
 | G7 | renderização só como texto (React escapa; ANSI convertido em spans com classes fixas); prompt de sistema declara o log como dado | `dangerouslySetInnerHTML`, `innerHTML =`, `outerHTML =`, `insertAdjacentHTML`, `document.write`, `eval(`, `new Function` | `guardrails.test` |
 | G8 | — | segredos (JWT `eyJ…`, `AKIA`/`ASIA`, `-----BEGIN`, `password=`) em `src/` e `tests/fixtures/`; IPv4 fora de `10.0.0.0/24` e `127.0.0.1` em `tests/fixtures/`; hosts fora de `*.example.internal`/`localhost` em fixtures | `guardrails.test` |
@@ -66,7 +67,7 @@ Exceções pontuais (ex.: fixture de teste "suja" do próprio `guardrails.test`)
 | `version` | `--client`, `-o json` (obrigatório `--client`; não fala com o cluster, dispensa `--context`) |
 | `config get-contexts` | `--no-headers` |
 | `config view` | `--minify`, `-o jsonpath=…` (nunca `--raw`, nunca `--flatten`) |
-| `get` | recursos `namespaces`, `pods`, `pod`; `-n`, `-o json` |
+| `get` | recursos `namespaces`, `pods`, `pod` e `builds.build.openshift.io` (histórico de builds do OKD); `-n`, `-o json` |
 | `logs` | `-f`, `--timestamps`, `--tail`, `--since`, `--since-time`, `--previous`, `-c`, `-n` |
 | `auth can-i` | `list`/`get`/`watch` + recurso, `-n` |
 | `exec` (só `shell.ts`) | `-i`, `-t`, `-c`, `-n`, `--` + comando fixo de shell |

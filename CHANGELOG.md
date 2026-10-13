@@ -2,6 +2,24 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [1.4.0] — 12/10/2026
+
+- **README novo** com tour visual: boas-vindas, detalhes, erros, builds do OKD, comparação com o anterior, tema claro, Preferências e Atalhos (capturas feitas com dados fictícios).
+- **Recentes:** um × ao passar o mouse tira o pod da lista (fica salvo).
+- **Visual Cockpit:** tela de boas-vindas nas abas vazias (logo, cartões Pods / Arquivo / Último pod com atalhos, status do contexto e do kubectl), botão **Início** na barra de abas, indicador ao vivo pulsando, superfícies de vidro e brilho na cor de destaque.
+- **Preferências** redesenhadas: temas em miniaturas com as cores reais, idiomas em botões, cartão Sobre com logo. **Atalhos** agrupados (Geral, Busca, Mouse) com teclas desenhadas (Ctrl no Windows/Linux).
+- **Builds do OKD** numa pasta dentro do namespace, depois dos pods: o histórico de builds (`kubectl get builds.build.openshift.io`, só leitura) com status, commit, duração e idade; abre o log do container principal do build quando o pod ainda existe; quando o cluster já removeu o pod, abre um painel com os detalhes do build (status, motivo, commit, duração) e o comando `oc describe` para copiar. Pods de deploy na mesma pasta.
+- **Produção (G5):** sem a faixa vermelha no topo; a marca PROD fica no seletor de contexto e na barra de status.
+- **Logs de build do OKD reconhecidos:** parser para buildah/docker/s2i (`STEP n/m`, camadas `-->`, `Copying blob`, `COMMIT`, push, `git clone`, `error: build error`, `ERRO:`), com passo e instrução em campos; a saída dos `RUN` vira INFO em vez de UNKNOWN; regra "Falha no build" no painel de erros. Abrir um build mostra só o container do build (sem as etapas de init).
+- **Pods já terminados** (builds concluídos, Jobs) são lidos uma vez, sem `-f`: antes o app ficava reconectando a cada 1–10 s.
+- **Refinamento visual:** escala de espaçamento, raios, sombras e tipografia em variáveis CSS; barras de rolagem finas; foco de teclado visível e animações que respeitam `prefers-reduced-motion`.
+  - Linhas de log mais fáceis de escanear: INFO/DEBUG discretos, WARN/ERROR/FATAL com etiqueta preenchida, marcador à esquerda e fundo levemente tingido; milissegundos esmaecidos; seleção com borda de destaque.
+  - Barra de níveis numa linha só (filtros de nível segmentados, grupos de ícones com separadores, Terminal); **Ao vivo / Pausado** e pausar juntos no fim da barra de cima. Presets e Tempo como botões com contador e seta.
+  - Barra lateral com guias de indentação na árvore, contadores nas pastas, estrela de favorito só ao passar o mouse; o pod fica discreto quando um container dele está selecionado.
+  - Painel direito: abas segmentadas, grupos de erro em cartões, cabeçalho da linha selecionada com ações, campos em tabela, estados vazios com ícone; botão principal desabilitado neutro.
+  - Abas com linha de destaque na aba ativa; barra de status com ponto de estado pulsando e caminho com separadores; janela estreita (≤1280 px) dá mais espaço ao log.
+- Tempo esgotado do kubectl com mensagem útil e traduzida (qual comando demorou e o que verificar: VPN/rede, login do contexto).
+
 ## [1.3.0] — 12/10/2026
 
 - **Pods de build e de deploy do OKD ocultos:** pods criados por BuildConfig (`openshift.io/build.name`) e por DeploymentConfig (`openshift.io/deployer-pod-for.name`) ficam escondidos na árvore; "+ N builds/deploys do OKD" mostra todos, com a marca `build`/`deploy`, e a escolha é lembrada.

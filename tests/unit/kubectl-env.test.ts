@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { friendlyError, kubectlEnv } from '../../src/k8s/kubectl'
+import { friendlyError, kubectlEnv, timeoutMessage } from '../../src/k8s/kubectl'
 
 describe('kubectlEnv', () => {
   it('adds Homebrew paths for apps opened from Finder', () => {
@@ -58,5 +58,13 @@ describe('friendlyError in the interface language', () => {
 
   it('falls back to Portuguese for an unknown language', () => {
     expect(friendlyError('Error from server (Forbidden): x', 'darwin', 'xx')).toContain('Sem permissão')
+  })
+})
+
+describe('timeoutMessage', () => {
+  it('says what to check and which command hung, without the context name', () => {
+    const msg = timeoutMessage(['get', 'pods', '-n', 'portal-hml', '-o', 'json', '--context=portal-prd/api:6443/dev'], 30_000, 'pt-BR')
+    expect(msg).toBe('O cluster não respondeu em 30 s (kubectl get pods). Verifique a VPN/rede e se o login do contexto ainda vale (oc login, aws sso login…).')
+    expect(timeoutMessage(['get', 'namespaces'], 30_000, 'en')).toContain('did not answer within 30 s (kubectl get namespaces)')
   })
 })

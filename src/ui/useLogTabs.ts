@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { checkLogFile, LogFileError, splitLogText } from '../logs/file'
+import type { Level } from '../logs/types'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
 import type { LogOptions, Selection } from './view-types'
 import { LogEngine } from './engine'
@@ -100,11 +101,11 @@ export function useLogTabs() {
   }, [slots])
 
   const start = useCallback(
-    async (request: StartLogsRequest, tabId: string = stateRef.current.active) => {
+    async (request: StartLogsRequest, tabId: string = stateRef.current.active, opts: { defaultLevel?: Level } = {}) => {
       await stop(tabId)
       const s = slot(tabId)
       const generation = s.generation
-      s.engine.clear()
+      s.engine.clear(opts.defaultLevel)
       s.status = { state: 'connecting' }
       commit(updateTab(stateRef.current, tabId, { file: undefined }))
       setVersion((v) => v + 1)
@@ -163,6 +164,20 @@ export function useLogTabs() {
     setVersion((v) => v + 1)
     return next.active
   }, [commit])
+
+  /** Back to the welcome screen in this tab: stops its streams and forgets the pod/file. */
+  const goHome = useCallback(
+    async (tabId: string = stateRef.current.active) => {
+      await stop(tabId)
+      await stop(companionKey(tabId))
+      slots.get(tabId)?.engine.clear()
+      const s = slots.get(tabId)
+      if (s) s.status = undefined
+      commit(updateTab(stateRef.current, tabId, { selection: {}, file: undefined, compare: false }))
+      setVersion((v) => v + 1)
+    },
+    [stop, commit, slots],
+  )
 
   const close = useCallback(
     async (tabId: string) => {
@@ -230,6 +245,7 @@ export function useLogTabs() {
     stop,
     openFile,
     newTab,
+    goHome,
     close,
     activate,
     setSelection,

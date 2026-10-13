@@ -16,6 +16,8 @@ export interface LogStreamOptions {
   tail?: number
   since?: string
   previous?: boolean
+  /** Finished container (completed build, Job): read once, no -f, no reconnection. */
+  once?: boolean
   kubectl?: KubectlOptions
   batchMs?: number
   backoffMs?: readonly number[]
@@ -100,7 +102,7 @@ export class LogStream {
     // After a drop, resume right after the last delivered line instead of re-reading the tail.
     if (this.lastTs) return { follow: true, sinceTime: this.lastTs.text }
     const { tail, since, previous } = this.opts
-    return { follow: !previous, ...(tail !== undefined && { tail }), ...(since !== undefined && { since }), ...(previous && { previous }) }
+    return { follow: !previous && !this.opts.once, ...(tail !== undefined && { tail }), ...(since !== undefined && { since }), ...(previous && { previous }) }
   }
 
   private connect(): void {
@@ -169,7 +171,7 @@ export class LogStream {
     if (this.stopped || this.final) return
 
     const message = stderr.trim() ? friendlyError(stderr) : undefined
-    if (this.opts.previous) return this.emit({ state: 'ended', ...(message && code !== 0 && { message }) })
+    if (this.opts.previous || this.opts.once) return this.emit({ state: 'ended', ...(message && code !== 0 && { message }) })
     if (FATAL.test(stderr) || /ENOENT|não encontrado. Instale/.test(stderr)) return this.emit({ state: 'error', message: message! })
     if (GONE.test(stderr)) return this.emit({ state: 'ended', message: message! })
 

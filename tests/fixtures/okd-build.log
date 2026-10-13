@@ -1,0 +1,31 @@
+Cloning "https://git.example.internal/team/portal-web.git" ...
+	Commit:	0f3c2a1b (Update httpd.conf)
+	Author:	Dev Example <dev@example.internal>
+	Date:	Sun Oct 11 23:30:33 2026 -0300
+Adding cluster TLS certificate authority to trust store
+Caching blobs under "/var/cache/blobs".
+Trying to pull registry.example.internal/library/php:8.4...
+Getting image source signatures
+Copying blob sha256:49b6c85f038020e39d79b81506f773f7effe740ff948ed3b336192cd21c06aba
+Copying config sha256:7570390dfa55afd4569280c03ae53d8196f724df9706600ff0e537568b3bdaaf
+Writing manifest to image destination
+STEP 1/6: FROM registry.example.internal/library/php:8.4
+STEP 2/6: USER 0
+--> 1e50b24c0680
+STEP 3/6: COPY app/ /opt/app-root/src/
+--> a6a069606949
+STEP 4/6: RUN composer install --no-dev
+Installing dependencies from lock file
+Generating optimized autoload files
+--> Using cache 32c8c1458339
+STEP 5/6: RUN php -m | grep -qi '^redis$' || { echo "ERRO: extensao PHP redis ausente na imagem base"; exit 1; }
+ERRO: extensao PHP redis ausente na imagem base
+error: build error: building at STEP "RUN php -m": exit status 1
+warning: the image registry is using an insecure connection
+STEP 6/6: USER 1001
+COMMIT temp.builder.example.internal/portal-hml/portal-web-12:d8bb38cd
+--> 7570390dfa55
+Successfully tagged temp.builder.example.internal/portal-hml/portal-web-12:d8bb38cd
+Pushing image image-registry.example.internal:5000/portal-hml/portal-web:latest ...
+Successfully pushed image-registry.example.internal:5000/portal-hml/portal-web@sha256:2bdded26f1e2899c36881155a6ac61b2511dba01420d82840812061070dc6724
+Push successful

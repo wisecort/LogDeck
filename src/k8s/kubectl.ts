@@ -41,6 +41,12 @@ export function friendlyError(stderrOrError: string | NodeJS.ErrnoException, pla
   return hit ? `${tx[hit[1]]} (${text.split('\n')[0]})` : text
 }
 
+/** Timeout in the interface language, naming the command that hung (`get pods`, never the context). */
+export function timeoutMessage(args: readonly string[], ms: number, lang: string = messagesLanguage()): string {
+  const cmd = args.filter((a) => !a.startsWith('-')).slice(0, 2).join(' ')
+  return texts(lang).timeout.replace('{s}', String(Math.round(ms / 1000))).replace('{cmd}', `kubectl ${cmd}`)
+}
+
 /** Absolute path of `name` in env PATH (node-pty does not search the PATH we pass). */
 export function resolveExecutable(name: string, env: NodeJS.ProcessEnv): string | undefined {
   return resolveIn(name, env)
@@ -70,7 +76,7 @@ export function runKubectl(args: string[], opts: KubectlOptions = {}): Promise<K
     child.stderr!.setEncoding('utf8').on('data', (d: string) => (stderr += d))
     const timer = setTimeout(() => {
       child.kill('SIGKILL')
-      reject(new KubectlError(`kubectl: tempo esgotado após ${opts.timeoutMs ?? DEFAULT_TIMEOUT_MS} ms`))
+      reject(new KubectlError(timeoutMessage(args, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS)))
     }, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS)
     child.on('error', (err) => {
       clearTimeout(timer)

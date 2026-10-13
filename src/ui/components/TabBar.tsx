@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n'
 import { tabLabel, type Tab } from '../tabs'
-import { IconX } from './icons'
+import { IconHome, IconPlus, IconX } from './icons'
 
 interface Props {
   tabs: Tab[]
@@ -8,6 +8,7 @@ interface Props {
   onActivate(id: string): void
   onClose(id: string): void
   onNew(): void
+  onHome(): void
 }
 
 /** Open pods/files; each tab keeps its own stream running in the background. */
@@ -15,6 +16,9 @@ export function TabBar(p: Props) {
   const { t } = useI18n()
   return (
     <div className="tabbar" role="tablist" aria-label={t('tabs.label')}>
+      <button className="icon-btn log-tab-home" aria-label={t('tabs.home')} title={t('tabs.homeHint')} onClick={p.onHome}>
+        <IconHome />
+      </button>
       {p.tabs.map((tab) => {
         const label = tabLabel(tab) ?? t('tabs.new')
         const on = tab.id === p.active
@@ -30,7 +34,7 @@ export function TabBar(p: Props) {
         )
       })}
       <button className="icon-btn log-tab-add" aria-label={t('tabs.add')} title={t('tabs.addHint')} onClick={p.onNew}>
-        +
+        <IconPlus />
       </button>
     </div>
   )

@@ -50,5 +50,6 @@ describe('tabs', () => {
     expect(tabLabel({ ...base, file: 'app.log' })).toBe('app.log')
     expect(tabLabel({ ...base, selection: { pod: pod('web-1'), container: 'httpd' } })).toBe('web-1 / httpd')
     expect(tabLabel({ ...base, selection: { pod: pod('web-1') } })).toBe('web-1')
+    expect(tabLabel({ ...base, selection: { build: { name: 'app-40', phase: 'Complete', podName: 'app-40-build' } } })).toBe('app-40')
   })
 })

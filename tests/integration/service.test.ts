@@ -76,3 +76,22 @@ describe('K8sService', () => {
     await expect(svc.pods(HML, 'portal-hml')).rejects.toThrow(/oc login/)
   })
 })
+
+describe('K8sService builds (OKD)', () => {
+  it('lists the builds of a namespace, newest first', async () => {
+    const fake = fakeKubectlEnv()
+    const svc = new K8sService({ env: fake.env })
+    const builds = await svc.builds('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml')
+    expect(builds.map((b) => [b.name, b.phase])).toEqual([
+      ['portal-web-12', 'Complete'],
+      ['portal-web-11', 'Failed'],
+    ])
+    expect(fake.calls().at(-1)!.slice(0, 2)).toEqual(['get', 'builds.build.openshift.io'])
+  })
+
+  it('returns [] when the cluster has no Build API (plain Kubernetes) instead of failing', async () => {
+    const fake = fakeKubectlEnv()
+    const svc = new K8sService({ env: fake.env })
+    await expect(svc.builds('portal-hml/api-hml-example-internal:6443/dev', 'monitoring')).resolves.toEqual([])
+  })
+})

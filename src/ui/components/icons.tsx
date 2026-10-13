@@ -151,3 +151,51 @@ export const IconColumns = () => (
     <path d="M12 4v16" />
   </Svg>
 )
+/** Kubernetes-ish cube (pods). */
+export const IconCube = () => (
+  <Svg size={22}>
+    <path d="M12 2 3 7v10l9 5 9-5V7z" />
+    <path d="M3 7l9 5 9-5M12 12v10" />
+  </Svg>
+)
+export const IconHistory = () => (
+  <Svg size={22}>
+    <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+    <path d="M3 3v5h5M12 7v5l3 2" />
+  </Svg>
+)
+export const IconHome = () => (
+  <Svg>
+    <path d="M3 11 12 4l9 7" />
+    <path d="M5 10v10h5v-6h4v6h5V10" />
+  </Svg>
+)
+export const IconChevronDown = () => (
+  <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+)
+export const IconPlus = () => (
+  <Svg size={14}>
+    <path d="M12 5v14M5 12h14" />
+  </Svg>
+)
+export const IconCheckCircle = () => (
+  <Svg>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12.5 2.7 2.7L16 10" />
+  </Svg>
+)
+/** A row being picked (details empty state). */
+export const IconRows = () => (
+  <Svg>
+    <path d="M4 6h16M4 12h10M4 18h13" />
+    <path d="m17 13 4 1.6-1.8.8-.8 1.8z" fill="currentColor" />
+  </Svg>
+)
+/** Build (OKD BuildConfig/DeploymentConfig pods). */
+export const IconBuild = () => (
+  <Svg>
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z" />
+  </Svg>
+)

@@ -91,6 +91,11 @@ export function buildGetPodsArgs(target: Target & { namespace: string }): string
   return ['get', 'pods', '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
 }
 
+/** OKD/OpenShift Build objects (history of a BuildConfig), read-only. */
+export function buildGetBuildsArgs(target: Target & { namespace: string }): string[] {
+  return ['get', BUILDS_RESOURCE, '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
+}
+
 export function buildCanIArgs(
   target: Target & { namespace?: string; verb: 'get' | 'list' | 'watch'; resource: 'namespaces' | 'pods' | 'pods/log' },
 ): string[] {
@@ -153,7 +158,8 @@ export function buildShellArgs(target: PodTarget): string[] {
 
 const CAN_I_VERBS = new Set(['get', 'list', 'watch'])
 const CAN_I_RESOURCES = new Set(['namespaces', 'pods', 'pods/log'])
-const GET_RESOURCES = new Set(['namespaces', 'pods', 'pod'])
+export const BUILDS_RESOURCE = 'builds.build.openshift.io'
+const GET_RESOURCES = new Set(['namespaces', 'pods', 'pod', BUILDS_RESOURCE])
 
 interface FlagRules {
   /** Flags followed by a separate value, with its validator. */

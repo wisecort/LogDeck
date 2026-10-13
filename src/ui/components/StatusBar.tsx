@@ -13,6 +13,8 @@ interface Props {
   file?: string
   /** Context as shown to the user (alias when set). */
   contextName?: string
+  /** Production context (G5): a red PROD badge next to the location. */
+  production?: boolean
 }
 
 function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
@@ -37,16 +39,28 @@ function state(t: Translate, status: StreamStatus | undefined, paused: boolean, 
 export function StatusBar(p: Props) {
   const { t, n } = useI18n()
   const [text, cls] = state(t, p.status, p.paused, p.file)
-  const where = p.file ?? [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name, p.selection.container].filter(Boolean).join(' › ')
+  const parts = p.file ? [p.file] : [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name ?? p.selection.build?.name, p.selection.container].filter((x): x is string => !!x)
+  const where = parts.join(' › ')
   return (
     <footer className="statusbar">
       <span className={`state ${cls}`} data-testid="stream-status" title={p.status?.message ?? ''}>
-        ● {text}
+        <span className="status-dot" />
+        {text}
       </span>
       {p.status?.state === 'error' && p.status.message && <span className="error-text">{p.status.message}</span>}
+      {p.production && (
+        <span className="pill bad prod-pill" data-testid="prod-badge" title={t('prod.hint')}>
+          PROD
+        </span>
+      )}
       {where && (
-        <span className="mono" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }} title={where}>
-          {where}
+        <span className="mono where" title={where}>
+          {parts.map((part, i) => (
+            <span key={i}>
+              {i > 0 && <span className="sep"> › </span>}
+              {part}
+            </span>
+          ))}
         </span>
       )}
       <span className="spacer" />

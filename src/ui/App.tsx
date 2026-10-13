@@ -3,13 +3,13 @@ import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { PodInfo } from '../shared/ipc'
+import type { BuildInfo, PodInfo } from '../shared/ipc'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
 import { LevelBar } from './components/LevelBar'
+import { StreamControl } from './components/StreamControl'
 import { LogList, type ScrollCommand } from './components/LogList'
-import { ProdBanner } from './components/ProdBanner'
 import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
 import { ShortcutsModal } from './components/ShortcutsModal'
@@ -26,10 +26,13 @@ import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogTabs } from './useLogTabs'
 import { TabBar } from './components/TabBar'
+import { Welcome } from './components/Welcome'
+import { BuildDetails } from './components/BuildDetails'
 import { MAX_TABS } from './tabs'
 import { useNavigation } from './useNavigation'
+import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
-import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
+import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
 
 const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
@@ -73,6 +76,7 @@ export function App() {
   const [lang, setLang] = useState<Lang>(loadLanguage)
   const [prefs, setPrefs] = useState(false)
   const [recents, setRecents] = useState<RecentPod[]>(loadRecents)
+  const [kubectlVersion, setKubectlVersion] = useState<string>()
   const t = useMemo(() => translator(lang), [lang])
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -99,6 +103,7 @@ export function App() {
     void (async () => {
       const v = await window.logdeck.kubectlVersion()
       if (!v.installed) return setNotice(v.message)
+      if (v.version) setKubectlVersion(v.version)
       try {
         const list = await window.logdeck.listContexts()
         nav.showContexts(list)
@@ -146,7 +151,14 @@ export function App() {
       saveRecents(next)
       return next
     })
-    void session.start({ context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }) }, tabId)
+    // A finished pod (completed build, Job) is read once: following it would just reconnect over and over.
+    const once = pod.phase === 'Succeeded' || pod.phase === 'Failed'
+    void session.start(
+      { context, namespace, pod: pod.name, container, tail: o.tail, ...(o.since && { since: o.since }), ...(o.previous && { previous: true }), ...(once && { once: true }) },
+      tabId,
+      // OKD build pods: RUN output has no format, show it as INFO instead of UNKNOWN
+      pod.kind === 'build' ? { defaultLevel: 'INFO' } : {},
+    )
   }
 
   const selectPod = async (context: string, namespace: string, pod: PodInfo, preferred?: string, inNewTab = false) => {
@@ -159,7 +171,9 @@ export function App() {
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
     const opts = { ...options, previous: options.previous && pod.canPrevious }
     const all = [...pod.containers, ...pod.initContainers]
-    const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : undefined
+    // OKD build/deployer pods: open the main container (the build itself), not the init steps (git-clone…)
+    const main = pod.kind !== 'app' && pod.containers.length === 1 ? pod.containers[0] : undefined
+    const container = preferred && all.includes(preferred) ? preferred : all.length === 1 ? all[0] : main
     setOptions(opts, tabId)
     if (container) {
       setSelection({ context, namespace, pod, container }, tabId)
@@ -168,6 +182,14 @@ export function App() {
       setSelection({ context, namespace, pod }, tabId)
       void session.stop(tabId)
     }
+  }
+
+  /** A build whose pod is gone: stop this tab's log and show the build details. */
+  const openBuild = async (context: string, namespace: string, build: BuildInfo) => {
+    setShell(undefined)
+    resetView()
+    await session.goHome()
+    setSelection({ context, namespace, build })
   }
 
   /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
@@ -378,11 +400,13 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [rows.length, version])
 
+  // Empty tab: welcome screen instead of the log views, and no right panel.
+  const showingBuild = !!selection.build && !selection.pod
+  const isEmptyTab = !selection.pod && !session.file && !showingBuild
   const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
     <I18nProvider lang={lang}>
     <div className="app">
-      {selectedContext?.production && <ProdBanner context={contextShown ?? selectedContext.name} />}
       {notice && (
         <div className="notice" role="status">
           <span className="spacer">{notice}</span>
@@ -403,11 +427,12 @@ export function App() {
           if (f) void openFile(f)
         }}
       />
-      <div className="layout">
+      <div className={`layout ${isEmptyTab || showingBuild ? 'no-panel' : ''}`}>
         <Sidebar
           nav={nav}
           selection={selection}
           onPod={(c, n, p, inNewTab) => void selectPod(c, n, p, undefined, inNewTab)}
+          onBuild={(c, n, b) => void openBuild(c, n, b)}
           onContainer={selectContainer}
           bookmarks={bookmarkedEntries}
           onBookmark={(seq) => {
@@ -420,6 +445,13 @@ export function App() {
           onPreferences={() => setPrefs(true)}
           recents={recents}
           onRecent={(r) => void openRecent(r)}
+          onForgetRecent={(r) =>
+            setRecents((prev) => {
+              const next = prev.filter((x) => recentKey(x) !== recentKey(r))
+              saveRecents(next)
+              return next
+            })
+          }
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}
@@ -437,11 +469,31 @@ export function App() {
               void session.close(id)
               afterTabChange()
             }}
+            onHome={() => {
+              void session.goHome()
+              setShell(undefined)
+              resetView()
+              setPresets(undefined)
+            }}
             onNew={() => {
               if (!session.newTab()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
               afterTabChange()
             }}
           />
+          {showingBuild && selection.build && selection.namespace ? (
+            <BuildDetails namespace={selection.namespace} build={selection.build} />
+          ) : isEmptyTab ? (
+            <Welcome
+              contexts={nav.visible.length}
+              {...(nav.activeContext && { currentContext: displayLabel(nav.activeContext, nav.aliases).title })}
+              {...(kubectlVersion && { kubectl: kubectlVersion })}
+              {...(recents[0] && { lastRecent: recents[0] })}
+              onPods={() => document.getElementById('pod-search')?.focus()}
+              onFile={() => fileRef.current?.click()}
+              onRecent={(r) => void openRecent(r)}
+            />
+          ) : (
+            <>
           <TopBar
             search={search}
             onSearch={(s) => {
@@ -465,6 +517,7 @@ export function App() {
             onClearTimeRange={() => setTimeRange(undefined)}
             filtersActive={filtersActive}
             onClearFilters={clearFilters}
+            trailing={<StreamControl paused={paused} pending={0} live={live} onFollow={() => (paused ? resume() : pause())} />}
           />
           <LevelBar
             counts={counts}
@@ -490,10 +543,6 @@ export function App() {
               const { context, namespace, pod, container } = selection
               if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
             }}
-            paused={paused}
-            pending={0}
-            live={live}
-            onFollow={() => (paused ? resume() : pause())}
           />
           {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
           {(() => {
@@ -544,7 +593,10 @@ export function App() {
             )
           })()}
           {shell && <ShellPanel target={shell} onClose={() => setShell(undefined)} />}
+            </>
+          )}
         </main>
+        {!isEmptyTab && !showingBuild && (
         <RightPanel
           tab={tab}
           onTab={setTab}
@@ -578,8 +630,9 @@ export function App() {
                 }
           }
         />
+        )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {

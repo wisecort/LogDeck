@@ -92,8 +92,9 @@ export class LogEngine {
     return filter.collapse ? collapseRows(visible) : visible.map((entry) => ({ entry, count: 1 }))
   }
 
-  clear(): void {
-    this.assembler = new LogAssembler({ ...(this.opts.now && { now: this.opts.now }) })
+  /** Starts over; `defaultLevel` is the level of lines no parser recognizes (INFO for OKD build pods). */
+  clear(defaultLevel?: Level): void {
+    this.assembler = new LogAssembler({ ...(this.opts.now && { now: this.opts.now }), ...(defaultLevel && { defaultLevel }) })
     this.buffer.clear()
     this.signatures.clear()
     this.changes++
