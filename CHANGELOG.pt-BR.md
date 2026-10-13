@@ -14,6 +14,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - Correção: um plugin de login ausente (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) aparecia como "Recurso não encontrado (o pod pode ter sido removido)". Agora a mensagem diz qual plugin falta e pede para instalar ou conferir o PATH.
 - "Copiar para chamado" agora se chama **Copiar com detalhes** (pod, horários em UTC, nível e a linha, com segredos mascarados).
 - **Copiar com máscara:** os Detalhes têm a opção "Mascarar dados sensíveis" para o **Copiar**: esconde senhas, tokens, chaves, e-mails e IPs internos (10.x, 172.16–31.x, 192.168.x) na linha e no stack trace copiados. Desligada por padrão e lembrada nesta máquina; o log na tela não muda.
+- **Preferências mais largas:** duas colunas quando há espaço (temas à esquerda; idioma, atualizações e Sobre à direita), e tudo aparece sem rolar na janela padrão; uma coluna em janela estreita.
 
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
 - **Notas da release com as mudanças:** cada release do GitHub mostra a seção da sua versão no `CHANGELOG.md` (`scripts/release-notes.mjs`) em vez de "veja o CHANGELOG", mais o link da política de assinatura; a release falha se a versão não tiver seção.

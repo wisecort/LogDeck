@@ -400,6 +400,13 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await expect(win.getByRole('button', { name: 'Definições', exact: true })).toBeVisible()
 })
 
+test('Preferences: in the default 1280×800 window the About card shows without scrolling', async () => {
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
+  await expect(prefs.getByTestId('about')).toBeInViewport({ ratio: 1 })
+  await expect(prefs.getByRole('radio', { name: 'Catppuccin Mocha' })).toBeInViewport({ ratio: 1 })
+})
+
 test('6.5: themes, bookmarks and favourite namespaces', async () => {
   await openWebPod(win)
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()

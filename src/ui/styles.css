@@ -2924,7 +2924,26 @@ button.primary:disabled {
 }
 
 .prefs-modal {
-  width: min(720px, calc(100vw - 32px));
+  width: min(1100px, calc(100vw - 48px));
+}
+
+.prefs-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 28px;
+  align-items: start;
+}
+
+.prefs-side {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Narrow window: one column, as before. */
+@media (max-width: 980px) {
+  .prefs-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .build-row[data-nolog] .node-label {
