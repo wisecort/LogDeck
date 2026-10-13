@@ -161,6 +161,8 @@ export const es: Record<MessageKey, string> = {
   'det.diverge': 'las horas no coinciden (¿zona horaria de la app?)',
   'det.line': 'Línea',
   'det.stack': 'Stack trace ({n} líneas)',
+  'det.mask': 'Ocultar datos sensibles',
+  'det.maskHint': 'Al copiar, oculta contraseñas, tokens, claves, correos e IP internas (10.x, 172.16–31.x, 192.168.x)',
   'det.ticket': 'Copiar para el ticket',
   'det.ticketHint': 'Copia pod, horas (UTC), nivel y la línea, con contraseñas y tokens enmascarados',
   'ticket.file': 'Archivo',

@@ -269,6 +269,20 @@ test('copy for ticket: pod, UTC times, level and the line', async () => {
   expect(text).toContain('AH01075')
 })
 
+test('copy the line from Details, with or without masking secrets and internal IPs', async () => {
+  await openWebPod(win)
+  await win.getByLabel('Buscar').fill('AH01075')
+  await win.getByTestId('log-row').first().click()
+  const details = win.getByTestId('log-details')
+  await details.getByRole('button', { name: 'Copiar', exact: true }).click()
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toContain('[client 10.0.0.2:')
+
+  await details.getByLabel('Mascarar dados sensíveis').check()
+  await details.getByRole('button', { name: 'Copiar', exact: true }).click()
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toContain('[client [REDACTED:IP]:')
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).not.toContain('10.0.0.2')
+})
+
 test('opens a saved log file and refuses binary ones', async () => {
   await win.getByLabel('Arquivo de log').setInputFiles('tests/fixtures/pod-php-apache.log')
   await expect(win.getByTestId('stream-status')).toContainText('Arquivo')

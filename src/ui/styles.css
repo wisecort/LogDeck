@@ -3138,3 +3138,15 @@ button.primary:disabled {
   gap: 8px;
   cursor: pointer;
 }
+
+.det-mask {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-end;
+  gap: 6px;
+  margin-top: -4px;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
