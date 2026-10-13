@@ -3091,6 +3091,29 @@ button.primary:disabled {
   gap: 8px;
 }
 
+.welcome-missing-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--ctl-h-sm);
+  padding: 3px 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, var(--border));
+  border-radius: 8px;
+  background: var(--bg-3);
+  color: var(--fg);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.welcome-missing-copy:hover {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 18%, var(--bg-3));
+}
+
+.welcome-missing-copy:active {
+  transform: translateY(1px);
+}
+
 .welcome-missing-cmd code {
   flex: 1;
   padding: 6px 10px;
