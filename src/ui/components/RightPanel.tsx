@@ -117,7 +117,7 @@ function ticketLabels(t: Translate) {
   }
 }
 
-function TicketButton({ entry, source }: { entry: LogEntry; source: TicketSource }) {
+function TicketButton({ entry, source, masked }: { entry: LogEntry; source: TicketSource; masked: boolean }) {
   const { t } = useI18n()
   const [copied, setCopied] = useState<number>()
   return (
@@ -125,8 +125,10 @@ function TicketButton({ entry, source }: { entry: LogEntry; source: TicketSource
       className="icon-btn"
       title={t('det.ticketHint')}
       onClick={() => {
-        void window.logdeck.copyText(ticketText(entry, source, ticketLabels(t)))
+        void window.logdeck.copyText(ticketText(entry, source, ticketLabels(t), { mask: masked }))
         setCopied(entry.seq)
+        // "Copiado" for a moment, then the label comes back
+        setTimeout(() => setCopied((c) => (c === entry.seq ? undefined : c)), 2000)
       }}
     >
       <IconCopy /> {copied === entry.seq ? t('common.copied') : t('det.ticket')}
@@ -228,7 +230,7 @@ function DetailsTab(p: Props) {
         <button className="icon-btn" onClick={() => void window.logdeck.copyText(lineText(e, { mask: masked }))}>
           <IconCopy /> {t('common.copy')}
         </button>
-        <TicketButton entry={e} source={p.ticketSource} />
+        <TicketButton entry={e} source={p.ticketSource} masked={masked} />
       </div>
       <label className="det-mask" title={t('det.maskHint')}>
         <input type="checkbox" checked={masked} onChange={(ev) => setMasked(ev.target.checked)} />

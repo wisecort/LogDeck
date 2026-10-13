@@ -26,6 +26,18 @@ describe('ticketText', () => {
     expect(text).toContain('  at a()\n  at b()')
   })
 
+  it('with "Mask sensitive data" it also hides the context (cluster host and user) and internal IPs', () => {
+    const e = entry({ raw: 'login failed password=hunter2 from 10.0.0.5', k8sTime: T })
+    const text = ticketText(e, where, undefined, { mask: true })
+    expect(text).toContain('Contexto: [REDACTED:CONTEXT]')
+    expect(text).not.toContain('api-hml-example-internal')
+    expect(text).not.toContain('10.0.0.5')
+    expect(text).toContain('[REDACTED:IP]')
+    expect(text).not.toContain('hunter2')
+    // namespace, pod and container stay: they say where to look
+    expect(text).toContain('Pod: portal-hml / portal-web-7d9f8c6b5-x2k4p / httpd')
+  })
+
   it('names the file when the log came from a local file', () => {
     const text = ticketText(entry({ raw: 'x' }), { file: 'pod-php-apache.log' })
     expect(text).toContain('Arquivo: pod-php-apache.log')

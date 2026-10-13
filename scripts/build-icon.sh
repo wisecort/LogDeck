@@ -15,5 +15,10 @@ for size in 16 32 128 256 512; do
   sips -z $((size * 2)) $((size * 2)) "$PNG" --out "$SET/icon_${size}x${size}@2x.png" >/dev/null
 done
 iconutil -c icns "$SET" -o build/icon.icns
+# Linux: the hicolor theme stops at 512×512, so a lone 1024 PNG shows as a generic gear in GNOME.
+mkdir -p build/icons
+for size in 16 24 32 48 64 128 256 512; do
+  sips -z "$size" "$size" "$PNG" --out "build/icons/${size}x${size}.png" >/dev/null
+done
 bash scripts/build-appx-assets.sh
 echo "✅ build/icon.png e build/icon.icns gerados de $SRC"

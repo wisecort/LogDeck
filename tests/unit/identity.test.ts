@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
@@ -33,5 +33,18 @@ describe('app identity', () => {
     expect(archs(pkg.build.mac.target)).toEqual(['arm64', 'x64'])
     expect(pkg.build.linux.target.map((t: { target: string }) => t.target).sort()).toEqual(['AppImage', 'deb', 'rpm'])
     expect(pkg.build.win.target.map((t: { target: string }) => t.target)).toEqual(['nsis'])
+  })
+
+  it('ships the Linux icon in the standard hicolor sizes (GNOME showed a gear with only 1024×1024)', () => {
+    expect(pkg.build.linux.icon).toBe('build/icons')
+    for (const size of [16, 32, 48, 64, 128, 256, 512]) {
+      expect(existsSync(resolve(__dirname, '../../build/icons', `${size}x${size}.png`)), `${size}x${size}.png`).toBe(true)
+    }
+  })
+
+  it('describes the app for every platform (the .desktop Comment and the package description)', () => {
+    expect(pkg.description).not.toMatch(/macOS \(/)
+    expect(pkg.description).toMatch(/Linux/)
+    expect(pkg.description).toMatch(/Windows/)
   })
 })
