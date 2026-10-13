@@ -2,8 +2,9 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
-## [Não lançado]
+## [1.4.0] — 12/10/2026
 
+- **README novo** com tour visual: boas-vindas, detalhes, erros, builds do OKD, comparação com o anterior, tema claro, Preferências e Atalhos (capturas feitas com dados fictícios).
 - **Recentes:** um × ao passar o mouse tira o pod da lista (fica salvo).
 - **Visual Cockpit:** tela de boas-vindas nas abas vazias (logo, cartões Pods / Arquivo / Último pod com atalhos, status do contexto e do kubectl), botão **Início** na barra de abas, indicador ao vivo pulsando, superfícies de vidro e brilho na cor de destaque.
 - **Preferências** redesenhadas: temas em miniaturas com as cores reais, idiomas em botões, cartão Sobre com logo. **Atalhos** agrupados (Geral, Busca, Mouse) com teclas desenhadas (Ctrl no Windows/Linux).
@@ -17,7 +18,6 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
   - Barra lateral com guias de indentação na árvore, contadores nas pastas, estrela de favorito só ao passar o mouse; o pod fica discreto quando um container dele está selecionado.
   - Painel direito: abas segmentadas, grupos de erro em cartões, cabeçalho da linha selecionada com ações, campos em tabela, estados vazios com ícone; botão principal desabilitado neutro.
   - Abas com linha de destaque na aba ativa; barra de status com ponto de estado pulsando e caminho com separadores; janela estreita (≤1280 px) dá mais espaço ao log.
-  - Três conceitos novos de ícone em `build/icon-src/` (`d-helm-lines`, `e-strata`, `f-scope`), sem trocar o atual.
 - Tempo esgotado do kubectl com mensagem útil e traduzida (qual comando demorou e o que verificar: VPN/rede, login do contexto).
 
 ## [1.3.0] — 12/10/2026
