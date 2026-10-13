@@ -89,11 +89,17 @@ test('recent pods: the last ones opened reopen with the same container', async (
   // the namespace is already open: click the second pod directly
   await navTree(win).getByRole('list', { name: 'Namespaces' }).getByRole('button', { name: /portal-worker/ }).click()
   const recents = navTree(win).getByRole('list', { name: 'Recentes' })
-  await expect(recents.getByRole('button')).toHaveCount(2)
+  await expect(recents.locator('li')).toHaveCount(2)
   await expect(recents.getByRole('button').first()).toContainText('portal-worker')
-  await recents.getByRole('button', { name: /portal-web/ }).click()
+  await recents.getByRole('button', { name: /^portal-web/ }).click()
   await expect(win.locator('.statusbar')).toContainText('portal-web-7d9f8c6b5-x2k4p › php-fpm')
   await expect(recents.getByRole('button').first()).toContainText('portal-web')
+  // the × (shown on hover) forgets an entry, and it stays forgotten after a reload
+  await recents.locator('li').filter({ hasText: 'portal-worker' }).hover()
+  await recents.getByRole('button', { name: /Tirar portal-worker.* dos recentes/ }).click()
+  await expect(recents.getByRole('button', { name: /^portal-worker/ })).toHaveCount(0)
+  await win.reload()
+  await expect(navTree(win).getByRole('list', { name: 'Recentes' }).getByRole('button', { name: /^portal-worker/ })).toHaveCount(0)
 })
 
 test('tabs: two pods stream side by side, switch, close and add a new one', async () => {

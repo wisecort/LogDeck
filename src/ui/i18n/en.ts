@@ -31,6 +31,7 @@ export const en: Record<MessageKey, string> = {
   'sidebar.cannotList': 'no permission to list; type and press Enter',
   'sidebar.favorite': 'Favorite {ns}',
   'sidebar.recents': 'Recent',
+  'sidebar.forgetRecent': 'Remove {pod} from recent',
   'recent.gone': '{pod} no longer exists (it may have been recreated). Opened its namespace.',
   'sidebar.favorites': 'Favorites',
   'sidebar.containers': 'Containers',

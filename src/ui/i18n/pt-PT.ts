@@ -14,6 +14,7 @@ export const ptPT: Record<MessageKey, string> = {
   'file.binary': '{name}: não parece texto (comprimido ou binário?)',
 
   'sidebar.recents': 'Recentes',
+  'sidebar.forgetRecent': 'Retirar {pod} dos recentes',
   'recent.gone': '{pod} já não existe (o pod pode ter sido recriado). Abri o namespace.',
   'sidebar.buildOpenLog': 'Clique para abrir o log do build',
   'sidebar.buildNoLog': 'Sem log (pod removido): clique para ver os detalhes do build',

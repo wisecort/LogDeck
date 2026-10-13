@@ -30,6 +30,7 @@ export const ptBR = {
   'sidebar.cannotList': 'sem permissão para listar; digite e Enter',
   'sidebar.favorite': 'Favoritar {ns}',
   'sidebar.recents': 'Recentes',
+  'sidebar.forgetRecent': 'Tirar {pod} dos recentes',
   'recent.gone': '{pod} não existe mais (o pod pode ter sido recriado). Abri o namespace.',
   'sidebar.favorites': 'Favoritos',
   'sidebar.containers': 'Containers',

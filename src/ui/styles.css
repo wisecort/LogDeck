@@ -3028,3 +3028,33 @@ button.primary:disabled {
   height: 14px;
   flex: none;
 }
+
+/* Recent pods: × to forget an entry, shown on hover/focus */
+.recent-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.recent-item > .node {
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-forget {
+  position: absolute;
+  right: 4px;
+  padding: 2px;
+  min-height: 20px;
+  opacity: 0;
+  background: var(--bg-2);
+}
+
+.recent-item:hover .recent-forget,
+.recent-forget:focus-visible {
+  opacity: 1;
+}
+
+.recent-forget:hover {
+  color: var(--bad);
+}

@@ -32,7 +32,7 @@ import { MAX_TABS } from './tabs'
 import { useNavigation } from './useNavigation'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
-import { loadRecents, pushRecent, saveRecents, type RecentPod } from './recents'
+import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
 
 const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
@@ -445,6 +445,13 @@ export function App() {
           onPreferences={() => setPrefs(true)}
           recents={recents}
           onRecent={(r) => void openRecent(r)}
+          onForgetRecent={(r) =>
+            setRecents((prev) => {
+              const next = prev.filter((x) => recentKey(x) !== recentKey(r))
+              saveRecents(next)
+              return next
+            })
+          }
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}

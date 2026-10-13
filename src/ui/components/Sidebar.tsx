@@ -28,6 +28,7 @@ interface Props {
   onPreferences(): void
   recents: RecentPod[]
   onRecent(r: RecentPod): void
+  onForgetRecent(r: RecentPod): void
   onAiPreferences(): void
   onShortcuts(): void
   onOpenFile(): void
@@ -290,10 +291,13 @@ export function Sidebar(p: Props) {
             </div>
             <ul className="tree" aria-label={t('sidebar.recents')}>
               {p.recents.map((r) => (
-                <li key={`${r.context}::${r.namespace}::${r.pod}`}>
+                <li key={`${r.context}::${r.namespace}::${r.pod}`} className="recent-item">
                   <button className="node" onClick={() => p.onRecent(r)} title={`${r.namespace} / ${r.pod} / ${r.container}\n${r.context}`}>
                     <span className="node-label mono">{r.pod}</span>
                     <span className="node-meta">{r.namespace}</span>
+                  </button>
+                  <button className="icon-btn recent-forget" aria-label={t('sidebar.forgetRecent', { pod: r.pod })} title={t('sidebar.forgetRecent', { pod: r.pod })} onClick={() => p.onForgetRecent(r)}>
+                    <IconX />
                   </button>
                 </li>
               ))}
