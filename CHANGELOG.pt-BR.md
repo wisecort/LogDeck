@@ -7,6 +7,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 ## [Não lançado]
 
 - **Sem kubectl? A tela inicial diz como instalar:** um cartão destacado com o comando de instalação do sistema (winget, brew, snap), botão **Copiar** e **Verificar de novo**, que acha o kubectl sem reiniciar o app; enquanto isso, já dá para abrir arquivos de log. O README também diz como instalar o `oc`.
+- O rótulo "Nova aba" da aba vazia não usa mais a fonte monoespaçada dos nomes de pod e de arquivo.
 - Correção: um plugin de login ausente (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) aparecia como "Recurso não encontrado (o pod pode ter sido removido)". Agora a mensagem diz qual plugin falta e pede para instalar ou conferir o PATH.
 
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
