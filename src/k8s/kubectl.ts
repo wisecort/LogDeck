@@ -20,7 +20,12 @@ export interface KubectlResult {
 
 export class KubectlError extends Error {
   override name = 'KubectlError'
+  /** kubectl itself is not installed (spawn ENOENT), as opposed to a kubectl that ran and failed. */
+  missing = false
 }
+
+/** client-go: "getting credentials: exec: executable aws not found". */
+const MISSING_PLUGIN = /executable (\S+) not found/i
 
 const DEFAULT_TIMEOUT_MS = 30_000
 
@@ -37,6 +42,8 @@ export function friendlyError(stderrOrError: string | NodeJS.ErrnoException, pla
     stderrOrError = stderrOrError.message
   }
   const text = stderrOrError.trim()
+  const plugin = MISSING_PLUGIN.exec(text)
+  if (plugin) return tx.plugin.replace('{name}', plugin[1]!)
   const hit = PATTERNS.find(([re]) => re.test(text))
   return hit ? `${tx[hit[1]]} (${text.split('\n')[0]})` : text
 }
@@ -78,9 +85,11 @@ export function runKubectl(args: string[], opts: KubectlOptions = {}): Promise<K
       child.kill('SIGKILL')
       reject(new KubectlError(timeoutMessage(args, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS)))
     }, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS)
-    child.on('error', (err) => {
+    child.on('error', (err: NodeJS.ErrnoException) => {
       clearTimeout(timer)
-      reject(new KubectlError(friendlyError(err)))
+      const error = new KubectlError(friendlyError(err))
+      error.missing = err.code === 'ENOENT'
+      reject(error)
     })
     child.on('close', (code) => {
       clearTimeout(timer)

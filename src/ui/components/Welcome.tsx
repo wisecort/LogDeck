@@ -7,6 +7,10 @@ interface Props {
   contexts: number
   currentContext?: string
   kubectl?: string
+  /** kubectl is not installed: the install command for this OS (winget, brew, snap). */
+  kubectlMissing?: string
+  onCopyHint?(hint: string): void
+  onRecheckKubectl?(): void
   lastRecent?: RecentPod
   onPods(): void
   onFile(): void
@@ -26,6 +30,22 @@ export function Welcome(p: Props) {
         <h1>LogDeck</h1>
         <p className="welcome-tagline">{t('welcome.tagline')}</p>
       </div>
+      {p.kubectlMissing && (
+        <div className="welcome-missing" data-testid="kubectl-missing" role="alert">
+          <strong>{t('welcome.kubectlTitle')}</strong>
+          <span className="muted">{t('welcome.kubectlText')}</span>
+          <div className="welcome-missing-cmd">
+            <code className="mono" data-testid="kubectl-install-hint">{p.kubectlMissing}</code>
+            <button className="icon-btn labeled" onClick={() => p.onCopyHint?.(p.kubectlMissing!)}>
+              {t('welcome.kubectlCopy')}
+            </button>
+            <button className="primary" onClick={() => p.onRecheckKubectl?.()}>
+              {t('welcome.kubectlRecheck')}
+            </button>
+          </div>
+          <span className="muted">{t('welcome.kubectlFile', { key: k('⌘O') })}</span>
+        </div>
+      )}
       <div className="welcome-cards">
         <button className="welcome-card tone-green" onClick={p.onPods}>
           <span className="welcome-icon">

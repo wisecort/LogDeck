@@ -42,6 +42,20 @@ describe('friendlyError (F1.5)', () => {
     expect(friendlyError(stderr)).toContain(expected)
   })
 
+  it('names a missing login plugin instead of calling it a missing resource', () => {
+    const stderr = [
+      'E1013 10:00:00.000000   123 memcache.go:265] couldn\'t get current server API group list: Get "https://api.example.internal:6443/api": getting credentials: exec: executable aws not found',
+      '',
+      'It looks like you are trying to use a client-go credential plugin that is not installed.',
+    ].join('\n')
+    const pt = friendlyError(stderr)
+    expect(pt).toContain('Plugin de login `aws` não encontrado')
+    expect(pt).not.toContain('Recurso não encontrado')
+    expect(friendlyError('getting credentials: exec: executable oc not found', 'darwin', 'en')).toContain('Login plugin `oc` not found')
+    expect(friendlyError('exec: executable gke-gcloud-auth-plugin not found', 'darwin', 'es')).toContain('`gke-gcloud-auth-plugin`')
+    expect(friendlyError('exec: executable kubelogin not found', 'darwin', 'pt-PT')).toContain('`kubelogin`')
+  })
+
   it('falls back to the trimmed message', () => {
     expect(friendlyError('  something odd\n')).toBe('something odd')
     expect(friendlyError(new Error('boom'))).toBe('boom')
