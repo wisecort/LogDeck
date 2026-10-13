@@ -8,6 +8,7 @@ import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
 import { LevelBar } from './components/LevelBar'
+import { StreamControl } from './components/StreamControl'
 import { LogList, type ScrollCommand } from './components/LogList'
 import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
@@ -509,6 +510,7 @@ export function App() {
             onClearTimeRange={() => setTimeRange(undefined)}
             filtersActive={filtersActive}
             onClearFilters={clearFilters}
+            trailing={<StreamControl paused={paused} pending={0} live={live} onFollow={() => (paused ? resume() : pause())} />}
           />
           <LevelBar
             counts={counts}
@@ -534,10 +536,6 @@ export function App() {
               const { context, namespace, pod, container } = selection
               if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
             }}
-            paused={paused}
-            pending={0}
-            live={live}
-            onFollow={() => (paused ? resume() : pause())}
           />
           {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
           {(() => {

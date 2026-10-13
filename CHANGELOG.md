@@ -10,6 +10,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - **Produção (G5):** sem a faixa vermelha no topo; a marca PROD fica no seletor de contexto e na barra de status.
 - **Logs de build do OKD reconhecidos:** parser para buildah/docker/s2i (`STEP n/m`, camadas `-->`, `Copying blob`, `COMMIT`, push, `git clone`, `error: build error`, `ERRO:`), com passo e instrução em campos; a saída dos `RUN` vira INFO em vez de UNKNOWN; regra "Falha no build" no painel de erros. Abrir um build mostra só o container do build (sem as etapas de init).
 - **Pods já terminados** (builds concluídos, Jobs) são lidos uma vez, sem `-f`: antes o app ficava reconectando a cada 1–10 s.
+- **Refinamento visual:** escala de espaçamento, raios, sombras e tipografia em variáveis CSS; barras de rolagem finas; foco de teclado visível e animações que respeitam `prefers-reduced-motion`.
+  - Linhas de log mais fáceis de escanear: INFO/DEBUG discretos, WARN/ERROR/FATAL com etiqueta preenchida, marcador à esquerda e fundo levemente tingido; milissegundos esmaecidos; seleção com borda de destaque.
+  - Barra de níveis numa linha só (filtros de nível segmentados, grupos de ícones com separadores, Terminal); **Ao vivo / Pausado** e pausar juntos no fim da barra de cima. Presets e Tempo como botões com contador e seta.
+  - Barra lateral com guias de indentação na árvore, contadores nas pastas, estrela de favorito só ao passar o mouse; o pod fica discreto quando um container dele está selecionado.
+  - Painel direito: abas segmentadas, grupos de erro em cartões, cabeçalho da linha selecionada com ações, campos em tabela, estados vazios com ícone; botão principal desabilitado neutro.
+  - Abas com linha de destaque na aba ativa; barra de status com ponto de estado pulsando e caminho com separadores; janela estreita (≤1280 px) dá mais espaço ao log.
+  - Três conceitos novos de ícone em `build/icon-src/` (`d-helm-lines`, `e-strata`, `f-scope`), sem trocar o atual.
 - Tempo esgotado do kubectl com mensagem útil e traduzida (qual comando demorou e o que verificar: VPN/rede, login do contexto).
 
 ## [1.3.0] — 12/10/2026

@@ -36,6 +36,9 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
   const { entry } = row
   const time = displayTime(entry)
   const both = time.divergent ? t('log.both', { a: formatDateTime(entry.logTime), b: formatDateTime(entry.k8sTime) }) : undefined
+  // HH:MM:SS stays bright, the milliseconds are dimmed so the eye lands on the second.
+  const clock = formatTime(time.time)
+  const dotAt = clock.lastIndexOf('.')
   return (
     <div
       className={`log-row lvl-${entry.level} ${selected ? 'selected' : ''} ${cursor ? 'cursor' : ''}`}
@@ -45,7 +48,14 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
       onClick={() => onSelect(entry.seq)}
     >
       <span className="time" title={both ?? (time.source === 'k8s' ? t('log.k8sTime') : t('log.logTime'))}>
-        {formatTime(time.time)}
+        {dotAt > 0 ? (
+          <>
+            {clock.slice(0, dotAt)}
+            <span className="ms">{clock.slice(dotAt)}</span>
+          </>
+        ) : (
+          clock
+        )}
         {time.divergent && <span className="diverge" aria-label={t('log.diverge')}> ⚠</span>}
       </span>
       <span className={`badge lvl-${entry.level}`}>{entry.level}</span>

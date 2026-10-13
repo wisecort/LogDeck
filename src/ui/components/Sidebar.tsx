@@ -232,7 +232,7 @@ export function Sidebar(p: Props) {
     const open = nav.expanded.has(`ns:${key}`) || podHit
     return (
       <li key={namespace}>
-        <div className="node" style={{ padding: 0 }}>
+        <div className="node ns-row">
           <button className="node" aria-expanded={open} onClick={() => void nav.openNamespace(context, namespace)}>
             <IconChevron open={open} />
             <span className="node-label">{namespace}</span>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Concept F, "Scope": a viewfinder that frames the one line that matters in a stream of logs. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14161f"/>
+      <stop offset="1" stop-color="#07080d"/>
+    </linearGradient>
+    <linearGradient id="bracket" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#4f8cff"/>
+    </linearGradient>
+    <linearGradient id="fade" gradientUnits="userSpaceOnUse" x1="0" y1="200" x2="0" y2="824">
+      <stop offset="0" stop-color="#8b93b0" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#8b93b0" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#8b93b0" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="hot" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff5d73" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ff5d73" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="102" y="102" width="820" height="820" rx="183" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+  <!-- the stream, fading at the edges -->
+  <g stroke="url(#fade)" stroke-linecap="round" stroke-width="26">
+    <line x1="250" y1="236" x2="640" y2="236"/>
+    <line x1="250" y1="300" x2="720" y2="300"/>
+    <line x1="250" y1="364" x2="600" y2="364"/>
+    <line x1="250" y1="660" x2="690" y2="660"/>
+    <line x1="250" y1="724" x2="560" y2="724"/>
+    <line x1="250" y1="788" x2="660" y2="788"/>
+  </g>
+  <!-- the line that matters -->
+  <ellipse cx="512" cy="512" rx="330" ry="120" fill="url(#hot)"/>
+  <circle cx="300" cy="512" r="26" fill="#ff5d73"/>
+  <line x1="360" y1="512" x2="724" y2="512" stroke="#ffd1d8" stroke-width="40" stroke-linecap="round"/>
+  <!-- viewfinder brackets -->
+  <g fill="none" stroke="url(#bracket)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M232 500 V430 a24 24 0 0 1 24 -24 H330"/>
+    <path d="M694 406 H768 a24 24 0 0 1 24 24 V500"/>
+    <path d="M792 524 V594 a24 24 0 0 1 -24 24 H694"/>
+    <path d="M330 618 H256 a24 24 0 0 1 -24 -24 V524"/>
+  </g>
+</svg>

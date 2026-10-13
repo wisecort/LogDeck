@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Concept D, "Helm lines": the Kubernetes heptagon as a frame, three log lines inside, the error one lit. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a2147"/>
+      <stop offset="1" stop-color="#070a1a"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#4f8cff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#4f8cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fb4ff"/>
+      <stop offset="1" stop-color="#4f6fff"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#halo)"/>
+  <rect x="102" y="102" width="820" height="820" rx="183" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+  <!-- heptagon frame -->
+  <polygon points="512,230 746.5,343 804.5,596.8 642.2,800.3 381.8,800.3 219.5,596.8 277.5,343"
+           fill="#0c1230" fill-opacity="0.75" stroke="url(#ring)" stroke-width="34" stroke-linejoin="round"/>
+  <!-- log lines -->
+  <g stroke-linecap="round">
+    <circle cx="352" cy="440" r="20" fill="#3fd9b8"/>
+    <line x1="404" y1="440" x2="672" y2="440" stroke="#a9b8e6" stroke-opacity="0.8" stroke-width="32"/>
+    <rect x="300" y="500" width="424" height="96" rx="30" fill="#ff5d73" opacity="0.22"/>
+    <circle cx="352" cy="548" r="22" fill="#ff5d73"/>
+    <line x1="404" y1="548" x2="690" y2="548" stroke="#ffc2cb" stroke-width="34"/>
+    <circle cx="352" cy="656" r="20" fill="#f2c14e"/>
+    <line x1="404" y1="656" x2="610" y2="656" stroke="#a9b8e6" stroke-opacity="0.8" stroke-width="32"/>
+  </g>
+</svg>

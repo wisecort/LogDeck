@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { BUILTIN_PRESETS, type NamespacePresets } from '../../shared/presets'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
-import { IconBan, IconClock, IconSearch, IconX } from './icons'
+import { IconBan, IconChevronDown, IconClock, IconSearch, IconX } from './icons'
 
 export interface SearchState {
   text: string
@@ -31,6 +31,8 @@ interface Props {
   onClearTimeRange(): void
   filtersActive: boolean
   onClearFilters(): void
+  /** Rendered at the right end of the bar (stream control). */
+  trailing?: ReactNode
 }
 
 export function TopBar({ inputRef, ...p }: Props) {
@@ -121,8 +123,10 @@ export function TopBar({ inputRef, ...p }: Props) {
       </div>
 
       <div className="popover-wrap" ref={presetsRef}>
-        <button className="icon-btn" aria-expanded={open === 'presets'} onClick={() => setOpen(open === 'presets' ? undefined : 'presets')}>
-          {t('top.presets')}{activeCount > 0 ? ` (${activeCount})` : ''} ▾
+        <button className="icon-btn tool-btn" aria-expanded={open === 'presets'} onClick={() => setOpen(open === 'presets' ? undefined : 'presets')}>
+          {t('top.presets')}
+          {activeCount > 0 && <span className="count-badge">{activeCount}</span>}
+          <IconChevronDown />
         </button>
         {open === 'presets' && (
           <div className="popover">
@@ -152,8 +156,9 @@ export function TopBar({ inputRef, ...p }: Props) {
       </div>
 
       <div className="popover-wrap" ref={timeRef}>
-        <button className="icon-btn" aria-expanded={open === 'time'} onClick={() => setOpen(open === 'time' ? undefined : 'time')}>
+        <button className="icon-btn tool-btn" aria-expanded={open === 'time'} onClick={() => setOpen(open === 'time' ? undefined : 'time')}>
           <IconClock /> {t('top.time')}
+          <IconChevronDown />
         </button>
         {open === 'time' && (
           <div className="popover">
@@ -210,6 +215,7 @@ export function TopBar({ inputRef, ...p }: Props) {
           {t('top.clearFilters')}
         </button>
       )}
+      {p.trailing}
     </div>
   )
 }

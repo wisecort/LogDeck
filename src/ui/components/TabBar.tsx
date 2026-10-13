@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n'
 import { tabLabel, type Tab } from '../tabs'
-import { IconHome, IconX } from './icons'
+import { IconHome, IconPlus, IconX } from './icons'
 
 interface Props {
   tabs: Tab[]
@@ -34,7 +34,7 @@ export function TabBar(p: Props) {
         )
       })}
       <button className="icon-btn log-tab-add" aria-label={t('tabs.add')} title={t('tabs.addHint')} onClick={p.onNew}>
-        +
+        <IconPlus />
       </button>
     </div>
   )
