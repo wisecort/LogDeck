@@ -48,6 +48,19 @@ jobs:
           # ad-hoc signing (no secrets): sign in pull requests too, so CI checks what the release ships
           CSC_FOR_PULL_REQUEST: 'true'
 
+      # Microsoft Store package for the Partner Center submission; a workflow artifact, never a release asset.
+      - name: Microsoft Store package (appx)
+        if: runner.os == 'Windows'
+        run: npm run release:store
+
+      - name: Keep the Store package
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogDeck-${{ github.ref_name }}-store-appx
+          path: release/*.appx
+          if-no-files-found: error
+
       - name: Checksums
         run: |
           cd release

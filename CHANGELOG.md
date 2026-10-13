@@ -7,6 +7,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 ## [Unreleased]
 
 - README: code signing status updated. The SignPath Foundation declined the first application (the project is too new); releases stay unsigned, and we will reapply once the project has wider adoption.
+- **Microsoft Store package (appx/MSIX):** `npm run release:store` builds it (`build.appx` with the Partner Center identity, Store logos in `build/appx/` made by `scripts/build-appx-assets.sh`, also run by `make icon`). CI builds it on every PR and on each release as a workflow artifact (never a release asset: the Store signs it on submission). Testing and submission steps in `docs/microsoft-store.md`.
+- The Microsoft Store copy never checks GitHub for new versions: the Store updates it (`src/platform/distribution.ts`).
 
 - **CHANGELOG in English** (`CHANGELOG.md`), with the Portuguese version in `CHANGELOG.pt-BR.md`.
 - **Release notes with the changes:** each GitHub Release shows its version's section from `CHANGELOG.md` (`scripts/release-notes.mjs`) instead of "see the CHANGELOG", plus the code signing policy link; the release fails if the version has no section.

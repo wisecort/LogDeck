@@ -7,6 +7,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 ## [Não lançado]
 
 - README: situação da assinatura de código atualizada. A SignPath Foundation recusou o primeiro pedido (projeto novo demais); as versões seguem sem assinatura, e vamos pedir de novo quando o projeto tiver mais uso.
+- **Pacote da Microsoft Store (appx/MSIX):** `npm run release:store` gera o pacote (`build.appx` com a identidade do Partner Center, logos da Store em `build/appx/` feitos por `scripts/build-appx-assets.sh`, que o `make icon` também roda). O CI gera o pacote em todo PR e em cada release como artefato do workflow (nunca como arquivo da release: a Store assina na publicação). Passos de teste e envio em `docs/microsoft-store.md`.
+- A cópia da Microsoft Store nunca consulta o GitHub atrás de versão nova: a Store atualiza o app (`src/platform/distribution.ts`).
 
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
 - **Notas da release com as mudanças:** cada release do GitHub mostra a seção da sua versão no `CHANGELOG.md` (`scripts/release-notes.mjs`) em vez de "veja o CHANGELOG", mais o link da política de assinatura; a release falha se a versão não tiver seção.
