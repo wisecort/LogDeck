@@ -6,6 +6,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+- LogDeck is on the [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4) (published with 1.6.0): signed by Microsoft, no SmartScreen warning, updated by the Store. Both READMEs show the Store badge and recommend it for Windows.
+
 ## [1.6.1] — 2026-10-13
 
 - Fix: on Linux the `.deb`/`.rpm` showed a generic gear instead of the LogDeck icon (GNOME and other desktops). The package now ships the icon in the standard sizes (16 to 512 px, `build/icons/`, made by `make icon`), and the launcher description is in English and no longer says "macOS" only.

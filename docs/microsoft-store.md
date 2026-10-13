@@ -59,4 +59,4 @@ No Partner Center, no produto LogDeck → **Iniciar envio**:
 5. **Classificação etária:** questionário do Partner Center (o app não tem conteúdo de usuários nem compras).
 6. **Notas para certificação:** explicar que o app precisa de `kubectl` e de um cluster; que é só leitura; e que sem cluster dá para testar abrindo um arquivo de log (Ctrl+O).
 
-A certificação costuma levar de 1 a 3 dias úteis.
+A certificação costuma levar de 1 a 3 dias úteis. A 1.6.0 foi publicada em 13/10/2026: https://apps.microsoft.com/detail/9P5LTZ7FBWC4.

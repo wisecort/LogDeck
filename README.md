@@ -24,6 +24,10 @@
   <a href="https://github.com/wisecort/LogDeck/releases/latest">download for macOS, Linux or Windows</a>
 </p>
 
+<p align="center">
+  <a href="https://apps.microsoft.com/detail/9P5LTZ7FBWC4"><img alt="Get it from Microsoft" src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"></a>
+</p>
+
 ![LogDeck: live log, colored levels, histogram and grouped errors](docs/images/en/main.png)
 
 ## Why LogDeck
@@ -147,7 +151,9 @@ To store AI keys, Linux needs a running secret store (GNOME Keyring or KWallet).
 
 ### Windows (x64)
 
-Download and run `LogDeck-<version>-<arch>.exe`. It installs for your user only and does not ask for administrator rights. The app is not signed yet: if SmartScreen warns you, click **More info → Run anyway**.
+**Recommended:** install from the [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4). The Store package is signed by Microsoft, so there is no SmartScreen warning, and the Store keeps it up to date (it may take a few days to get a new version after the GitHub release).
+
+Or download and run `LogDeck-<version>-<arch>.exe`. It installs for your user only and does not ask for administrator rights. The app is not signed yet: if SmartScreen warns you, click **More info → Run anyway**.
 
 All files are on the [Releases](https://github.com/wisecort/LogDeck/releases) page, with SHA-256 checksums.
 
@@ -230,7 +236,7 @@ Tests never touch a real cluster: they use a fake `kubectl` and fictional logs (
 
 ## Code signing policy
 
-Releases are **not code-signed yet**: the Windows installer is unsigned (SmartScreen shows a warning; choose "More info → Run anyway"), and the macOS app is ad-hoc signed (not notarized). We plan to reapply to the [SignPath Foundation](https://signpath.org) free signing program once the project has wider adoption. The rules below are the ones signing will follow.
+Releases are **not code-signed yet** (except the [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4) copy, which Microsoft signs): the Windows installer is unsigned (SmartScreen shows a warning; choose "More info → Run anyway"), and the macOS app is ad-hoc signed (not notarized). We plan to reapply to the [SignPath Foundation](https://signpath.org) free signing program once the project has wider adoption. The rules below are the ones signing will follow.
 
 - **What will be signed:** only binaries built from this repository's source by the [release workflow](.github/workflows/release.yml) on GitHub-hosted runners — the `LogDeck.exe` app and the `LogDeck-<version>-x64.exe` installer. Nothing built elsewhere or from third-party sources is signed.
 - **Committers and reviewers:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort)
