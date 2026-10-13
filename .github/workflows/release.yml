@@ -60,7 +60,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "LogDeck ${TAG#v}" --notes "Veja o [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md). [Code signing policy](https://github.com/${{ github.repository }}#code-signing-policy)." || true
+          node scripts/release-notes.mjs "$TAG" "${{ github.repository }}" > release-notes.md
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "LogDeck ${TAG#v}" --notes-file release-notes.md || true
           gh release upload "$TAG" ${{ matrix.files }} "release/SHA256SUMS-${{ runner.os }}.txt" --clobber
 
   # Opens the "Update: wisecort.LogDeck to X.Y.Z" PR in microsoft/winget-pkgs once the Windows
