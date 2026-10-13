@@ -1,4 +1,4 @@
-.PHONY: harness test dev harness-integration icon tap
+.PHONY: harness test dev harness-integration icon tap winget
 
 harness: ## pipeline completo, igual ao CI
 	bash scripts/harness.sh
@@ -18,3 +18,6 @@ icon: ## gera build/icon.png e build/icon.icns a partir do SVG (ICON=build/icon-
 
 tap: ## aponta o cask do Homebrew para uma release publicada (VERSION=1.2.0)
 	bash scripts/update-tap.sh $(VERSION)
+
+winget: ## abre o PR do winget para uma release publicada (VERSION=1.5.0)
+	bash scripts/update-winget.sh $(VERSION)

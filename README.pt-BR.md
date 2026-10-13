@@ -92,6 +92,7 @@ Nove temas (Escuro, Meia-noite, Claro, Sistema, Alto contraste, Dracula, Nord, T
 - **Abrir arquivo de log** salvo (⌘O ou arrastando para a janela).
 - **Contextos**: um por vez, com renomear e ocultar só no LogDeck; nomes do EKS e do GKE encurtados; contextos de produção marcados com **PROD**.
 - **IA opcional** para explicar erros, com preview do texto mascarado e do destino antes de qualquer envio.
+- **Aviso de versão nova** (só se você aceitar): uma consulta anônima ao GitHub no máximo uma vez por dia, mostrando o comando do `brew`/`winget` ou o link para baixar. O LogDeck nunca baixa nem instala nada sozinho.
 
 ## Instalação
 
@@ -189,6 +190,7 @@ No Windows e no Linux, use Ctrl no lugar de ⌘, Shift no lugar de ⇧ e Alt no 
 - **Seu kubeconfig fica intacto:** cada chamada usa `--context`; o app nunca faz `config use-context` nem lê `config view --raw`, tokens ou certificados.
 - **Sem shell:** o kubectl é chamado com uma lista de argumentos, e nomes de namespace, pod e container são validados.
 - **IA só com clique**, preview e mascaramento. Os logs são tratados como dados, nunca como instruções.
+- **Sem telemetria.** A única outra conexão é o aviso de versão nova, que você precisa aceitar (veja a [política de privacidade](PRIVACY.pt-BR.md)).
 - As chaves de API ficam no **cofre do sistema** (Keychain no macOS, DPAPI no Windows, GNOME Keyring/KWallet no Linux).
 
 As regras completas estão em [`GUARDRAILS.md`](GUARDRAILS.md) e o escopo em [`SPEC.md`](SPEC.md).

@@ -14,6 +14,7 @@ import type {
 import type { ExplainGroupInput, ExplainResult, KeyServiceName, PreviewResult } from '../shared/ai'
 import type { AiSettings, AiStatus } from '../shared/ai-settings'
 import type { NamespacePresets } from '../shared/presets'
+import type { UpdateInfo } from '../shared/update'
 
 export interface LogDeckApi {
   readonly appName: string
@@ -56,8 +57,10 @@ export interface LogDeckApi {
   copyText(text: string): Promise<void>
   /** Interface language, so main can translate the native menu. */
   setLanguage(lang: 'pt-BR' | 'pt-PT' | 'en' | 'es'): Promise<void>
-  /** Opens one of the fixed author links (GitHub, LinkedIn) in the default browser. */
-  openLink(id: 'github' | 'linkedin'): Promise<void>
+  /** Opens one of the fixed links (GitHub, LinkedIn, latest release) in the default browser. */
+  openLink(id: 'github' | 'linkedin' | 'releases'): Promise<void>
+  /** Latest published version (anonymous GET to GitHub, at most once a day); null on any failure. */
+  checkUpdate(): Promise<UpdateInfo | null>
 }
 
 declare global {

@@ -328,6 +328,20 @@ export const ptBR = {
   'theme.nord': 'Nord',
   'theme.tokyo-night': 'Tokyo Night',
   'theme.catppuccin': 'Catppuccin Mocha',
+  'upd.askTitle': 'Avisar quando sair uma versão nova?',
+  'upd.askText': 'Uma consulta anônima ao GitHub, no máximo uma vez por dia. Nada sobre você, o cluster ou os logs é enviado.',
+  'upd.askYes': 'Avisar',
+  'upd.askNo': 'Agora não',
+  'upd.available': '{v} disponível',
+  'upd.title': 'LogDeck {v} disponível',
+  'upd.current': 'Você está na versão {v}.',
+  'upd.how': 'Como atualizar',
+  'upd.download': 'Instalou de outro jeito (.dmg, .exe, AppImage, .deb, .rpm)? Baixe a versão nova na página da release.',
+  'upd.open': 'Abrir página da release',
+  'upd.skip': 'Pular esta versão',
+  'pref.updates': 'Atualizações',
+  'pref.updatesToggle': 'Avisar quando houver versão nova',
+  'pref.updatesNote': 'Uma consulta anônima a api.github.com, no máximo uma vez por dia. O LogDeck nunca baixa nem instala nada sozinho.',
 } as const
 
 export type MessageKey = keyof typeof ptBR

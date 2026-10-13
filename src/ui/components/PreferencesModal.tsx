@@ -9,6 +9,8 @@ interface Props {
   onTheme(t: ThemeId): void
   lang: Lang
   onLang(l: Lang): void
+  updates: boolean
+  onUpdates(on: boolean): void
   onClose(): void
 }
 
@@ -66,6 +68,15 @@ export function PreferencesModal(p: Props) {
             ))}
           </div>
           <p className="muted pref-note">{t('pref.languageNote')}</p>
+        </section>
+
+        <section className="pref-section">
+          <div className="panel-section-title">{t('pref.updates')}</div>
+          <label className="pref-check">
+            <input type="checkbox" checked={p.updates} onChange={(e) => p.onUpdates(e.target.checked)} />
+            {t('pref.updatesToggle')}
+          </label>
+          <p className="muted pref-note">{t('pref.updatesNote')}</p>
         </section>
 
         <section className="pref-section">

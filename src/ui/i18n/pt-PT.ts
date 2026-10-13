@@ -138,4 +138,9 @@ export const ptPT: Record<MessageKey, string> = {
   'bd.started': 'Início',
   'bd.noLog': 'O cluster já removeu o pod deste build, e o log foi junto (o OKD limpa os pods de builds antigos). Para ver o log de um build, abra-o enquanto está a correr ou logo a seguir.',
   'theme.meia-noite': 'Meia-noite',
+  'upd.askText': 'Uma consulta anónima ao GitHub, no máximo uma vez por dia. Nada sobre si, o cluster ou os registos é enviado.',
+  'upd.current': 'Está na versão {v}.',
+  'upd.download': 'Instalou de outra forma (.dmg, .exe, AppImage, .deb, .rpm)? Transfira a versão nova na página da release.',
+  'upd.skip': 'Ignorar esta versão',
+  'pref.updatesNote': 'Uma consulta anónima a api.github.com, no máximo uma vez por dia. O LogDeck nunca transfere nem instala nada sozinho.',
 }
