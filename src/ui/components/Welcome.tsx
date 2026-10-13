@@ -1,7 +1,8 @@
 import logo from '../assets/logo.png'
 import { useI18n } from '../i18n'
 import type { RecentPod } from '../recents'
-import { IconCube, IconFile, IconHistory } from './icons'
+import { useState } from 'react'
+import { IconCopy, IconCube, IconFile, IconHistory } from './icons'
 
 interface Props {
   contexts: number
@@ -23,6 +24,7 @@ interface Props {
 /** Empty tab: what you can do, with shortcuts (Cockpit look). */
 export function Welcome(p: Props) {
   const { t, k } = useI18n()
+  const [copied, setCopied] = useState(false)
   return (
     <div className="welcome" data-testid="welcome">
       <div className="welcome-hero">
@@ -36,8 +38,15 @@ export function Welcome(p: Props) {
           <span className="muted">{t('welcome.kubectlText')}</span>
           <div className="welcome-missing-cmd">
             <code className="mono" data-testid="kubectl-install-hint">{p.kubectlMissing}</code>
-            <button className="icon-btn labeled" onClick={() => p.onCopyHint?.(p.kubectlMissing!)}>
-              {t('welcome.kubectlCopy')}
+            <button
+              className="welcome-missing-copy"
+              onClick={() => {
+                p.onCopyHint?.(p.kubectlMissing!)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+            >
+              <IconCopy /> {copied ? t('common.copied') : t('welcome.kubectlCopy')}
             </button>
             <button className="primary" onClick={() => p.onRecheckKubectl?.()}>
               {t('welcome.kubectlRecheck')}

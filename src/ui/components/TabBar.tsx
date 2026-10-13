@@ -20,11 +20,13 @@ export function TabBar(p: Props) {
         <IconHome />
       </button>
       {p.tabs.map((tab) => {
-        const label = tabLabel(tab) ?? t('tabs.new')
+        // Pod and file names are monospace; the "New tab" placeholder is interface text.
+        const named = tabLabel(tab)
+        const label = named ?? t('tabs.new')
         const on = tab.id === p.active
         return (
           <div key={tab.id} className={`log-tab ${on ? 'on' : ''}`} data-testid="log-tab">
-            <button role="tab" aria-selected={on} className="log-tab-label mono" title={label} onClick={() => p.onActivate(tab.id)}>
+            <button role="tab" aria-selected={on} className={`log-tab-label${named ? ' mono' : ''}`} title={label} onClick={() => p.onActivate(tab.id)}>
               {label}
             </button>
             <button className="icon-btn log-tab-close" aria-label={t('tabs.close', { name: label })} onClick={() => p.onClose(tab.id)}>
