@@ -7,7 +7,7 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 ## [Unreleased]
 
 - **No kubectl? The welcome screen says how to install it:** a highlighted card with the install command for the OS (winget, brew, snap), a **Copy** button and **Check again**, which finds kubectl without restarting the app; meanwhile log files can already be opened. README lists how to install `oc` too.
-- Home is visible: the Home button is lit while the active tab shows the home screen (as it does at startup), and empty tabs are called "Home" instead of "New tab", in the interface font (not the monospace one of pod and file names).
+- **Home is the house button:** the app opens on the home screen with the button lit and no tab; tabs are only for pods, files and builds. The house shows the home screen and leaves the open tabs running (it used to empty the current tab and stop its log). The "+" button is gone: ⌘/Ctrl-click or middle-click a pod opens it in a new tab.
 - Fix: a missing login plugin (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) showed "Resource not found (the pod may have been removed)". It now names the plugin and says to install it or check the PATH.
 
 - **CHANGELOG in English** (`CHANGELOG.md`), with the Portuguese version in `CHANGELOG.pt-BR.md`.

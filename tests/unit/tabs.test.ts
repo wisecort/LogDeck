@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activateTab, addTab, closeTab, initialTabs, MAX_TABS, tabLabel, updateTab, type TabsState } from '../../src/ui/tabs'
+import { activateTab, addTab, closeTab, homeTab, initialTabs, MAX_TABS, tabLabel, updateTab, type TabsState } from '../../src/ui/tabs'
 
 const pod = (name: string) => ({ name, namespace: 'ns', phase: 'Running', status: 'Running', ready: '1/1', restarts: 0, containers: ['app'], initContainers: [], canPrevious: false, kind: 'app' as const })
 
@@ -51,5 +51,45 @@ describe('tabs', () => {
     expect(tabLabel({ ...base, selection: { pod: pod('web-1'), container: 'httpd' } })).toBe('web-1 / httpd')
     expect(tabLabel({ ...base, selection: { pod: pod('web-1') } })).toBe('web-1')
     expect(tabLabel({ ...base, selection: { build: { name: 'app-40', phase: 'Complete', podName: 'app-40-build' } } })).toBe('app-40')
+  })
+})
+
+describe('homeTab (the Home button)', () => {
+  const pod = { context: 'c', namespace: 'n', pod: { name: 'web' } as never, container: 'httpd' }
+  const withPod = (s: TabsState, id: string) => updateTab(s, id, { selection: pod })
+
+  it('stays put when the active tab already shows the home screen', () => {
+    const s = initialTabs()
+    expect(homeTab(s)).toBe(s)
+  })
+
+  it('switches to an existing empty tab and keeps the pod tabs running', () => {
+    const a = initialTabs()
+    const b = addTab(withPod(a, a.active))!
+    const s = withPod(activateTab(b, b.active), b.active)
+    const empty = addTab(s)!
+    const back = activateTab(empty, s.active)
+    const home = homeTab(back)!
+    expect(home.active).toBe(empty.active)
+    expect(home.tabs).toHaveLength(3)
+  })
+
+  it('adds an empty tab when every tab has a pod, without touching them', () => {
+    const a = initialTabs()
+    const s = withPod(a, a.active)
+    const home = homeTab(s)!
+    expect(home.tabs).toHaveLength(2)
+    expect(home.tabs.find((t) => t.id === a.active)?.selection).toEqual(pod)
+    expect(tabLabel(home.tabs.find((t) => t.id === home.active)!)).toBeUndefined()
+  })
+
+  it('is undefined at the tab limit with no empty tab', () => {
+    let s = initialTabs()
+    s = withPod(s, s.active)
+    while (s.tabs.length < MAX_TABS) {
+      s = addTab(s)!
+      s = withPod(s, s.active)
+    }
+    expect(homeTab(s)).toBeUndefined()
   })
 })
