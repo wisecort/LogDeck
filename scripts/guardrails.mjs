@@ -42,7 +42,7 @@ const RULES = [
   { id: 'G3-raw', scope: ['src/'], re: /--raw\b|--flatten\b/, msg: 'config view --raw/--flatten' },
   { id: 'G3-kubeconfig', scope: ['src/'], re: /\.kube[/\\]config|client-key-data|client-certificate-data|certificate-authority-data/, msg: 'acesso a kubeconfig/credenciais' },
   { id: 'G4-context-switch', scope: ['src/'], re: /\b(use-context|set-context)\b/, msg: 'troca de contexto global' },
-  { id: 'G6-network-scope', scope: ['src/'], except: ['src/ai/providers/'], re: /\bfetch\s*\(|(from\s+|require\(\s*)['"](node:)?(https?|net|tls|undici)['"]|(from\s+|require\(\s*)['"]@anthropic-ai\/sdk/, msg: 'rede/SDK de IA fora de src/ai/providers/' },
+  { id: 'G6-network-scope', scope: ['src/'], except: ['src/ai/providers/', 'src/main/update-check.ts'], re: /\bfetch\s*\(|(from\s+|require\(\s*)['"](node:)?(https?|net|tls|undici)['"]|(from\s+|require\(\s*)['"]@anthropic-ai\/sdk/, msg: 'rede/SDK de IA fora de src/ai/providers/' },
   { id: 'G6-agent-bypass', scope: ['src/'], re: /bypassPermissions|acceptEdits|dangerously-(skip|bypass)|['"`]--tools['"`]\s*,\s*['"`]default['"`]/, msg: 'agente de IA com permissões ou ferramentas liberadas' },
   { id: 'G7-html-sink', scope: ['src/'], re: /dangerouslySetInnerHTML|\b(innerHTML|outerHTML)\s*=(?!=)|insertAdjacentHTML|document\.write\s*\(/, msg: 'renderização de HTML' },
   { id: 'G7-eval', scope: ['src/'], re: /(^|[^.\w])eval\s*\(|\bnew\s+Function\s*\(/, msg: 'eval/new Function' },

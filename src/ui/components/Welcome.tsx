@@ -11,6 +11,9 @@ interface Props {
   onPods(): void
   onFile(): void
   onRecent(r: RecentPod): void
+  /** Shown once, until the user answers whether LogDeck may check for new versions. */
+  askUpdates?: boolean
+  onUpdates?(on: boolean): void
 }
 
 /** Empty tab: what you can do, with shortcuts (Cockpit look). */
@@ -59,6 +62,20 @@ export function Welcome(p: Props) {
           </>
         )}
       </div>
+      {p.askUpdates && (
+        <div className="welcome-ask" data-testid="update-ask">
+          <div>
+            <strong>{t('upd.askTitle')}</strong>
+            <span className="muted">{t('upd.askText')}</span>
+          </div>
+          <button className="icon-btn labeled" onClick={() => p.onUpdates?.(false)}>
+            {t('upd.askNo')}
+          </button>
+          <button className="primary" onClick={() => p.onUpdates?.(true)}>
+            {t('upd.askYes')}
+          </button>
+        </div>
+      )}
       <p className="welcome-tip">{t('welcome.tip')}</p>
     </div>
   )

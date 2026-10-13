@@ -31,6 +31,7 @@ export const IPC = {
   copyText: 'clipboard:copy-text',
   setLanguage: 'app:set-language',
   openLink: 'app:open-link',
+  checkUpdate: 'app:check-update',
 } as const
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }

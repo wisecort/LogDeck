@@ -15,6 +15,9 @@ interface Props {
   contextName?: string
   /** Production context (G5): a red PROD badge next to the location. */
   production?: boolean
+  /** Newer LogDeck version available (only after the user opted in to the check). */
+  update?: string
+  onUpdate?(): void
 }
 
 function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
@@ -71,6 +74,11 @@ export function StatusBar(p: Props) {
       )}
       <span data-testid="match-count">{t('st.lines', { shown: n(p.shown), total: n(p.total) })}</span>
       <span>{t('st.ai', { label: p.aiLabel })}</span>
+      {p.update && (
+        <button className="pill ok update-pill" data-testid="update-pill" title={t('upd.title', { v: p.update })} onClick={p.onUpdate}>
+          {t('upd.available', { v: p.update })}
+        </button>
+      )}
     </footer>
   )
 }

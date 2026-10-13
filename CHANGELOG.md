@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [Não lançado]
+
+- **README em inglês** (`README.md`, com capturas da interface em inglês em `docs/images/en/`) e versão em português em `README.pt-BR.md`, com links entre elas.
+- **winget:** manifestos do pacote `wisecort.LogDeck` 1.4.0 em `packaging/winget/` (instalador por usuário, depende de `Kubernetes.kubectl`), prontos para o PR no `microsoft/winget-pkgs`.
+- **Política de assinatura de código** (seção nos READMEs) e **política de privacidade** (`PRIVACY.md` / `PRIVACY.pt-BR.md`), exigidas para o pedido de assinatura grátis na SignPath Foundation.
+- **Aviso de versão nova** (só com consentimento): a tela inicial pergunta uma vez se pode avisar; se sim, o main faz no máximo um GET anônimo por dia a `api.github.com/repos/wisecort/LogDeck/releases/latest` (URL fixa, sem credenciais, sem redirecionamento, resposta tratada como dado). Quando há versão nova, a barra de status mostra "X.Y.Z disponível", e o modal traz os comandos do Homebrew e do winget e o link da release, com "Pular esta versão". O LogDeck nunca baixa nem instala nada. Liga/desliga em Preferências → Atualizações. G6, política de privacidade e READMEs atualizados.
+- **winget automático:** o workflow de release abre o PR "Update: wisecort.LogDeck to X.Y.Z" no `microsoft/winget-pkgs` (`scripts/update-winget.sh`, manifestos gerados por `scripts/winget-manifests.mjs` a partir da versão anterior), sem actions de terceiros; precisa do secret `WINGET_TOKEN`. Localmente: `make winget VERSION=X.Y.Z`.
+
 ## [1.4.0] — 12/10/2026
 
 - **README novo** com tour visual: boas-vindas, detalhes, erros, builds do OKD, comparação com o anterior, tema claro, Preferências e Atalhos (capturas feitas com dados fictícios).

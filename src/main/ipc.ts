@@ -25,6 +25,7 @@ import {
 } from '../shared/ipc'
 import type { NamespacePresets } from '../shared/presets'
 import type { PresetStore } from './presets-store'
+import type { UpdateInfo } from '../shared/update'
 
 export interface IpcDeps {
   service: K8sService
@@ -38,6 +39,8 @@ export interface IpcDeps {
   trusted: () => WebContents | undefined
   /** Rebuilds the native menu in the interface language. */
   onLanguage?: (lang: MenuLang) => void
+  /** New-version check (one anonymous GET to GitHub; the renderer calls it only after the user opted in). */
+  checkUpdate?: () => Promise<UpdateInfo | null>
 }
 
 const DEFAULT_TAIL = 1000
@@ -237,4 +240,6 @@ export function registerIpc(deps: IpcDeps): void {
     if (typeof id !== 'string' || !Object.hasOwn(APP_LINKS, id)) throw new Error('link inválido')
     await shell.openExternal(APP_LINKS[id as AppLink])
   })
+
+  handle(deps, IPC.checkUpdate, async () => (deps.checkUpdate ? deps.checkUpdate() : null))
 }

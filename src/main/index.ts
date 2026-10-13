@@ -11,6 +11,8 @@ import { buildMenu, disableSystemMenuItems } from './menu'
 import { messagesLanguage, setMessagesLanguage } from '../k8s/messages'
 import { AiSettingsStore } from './ai-settings-store'
 import { PresetStore } from './presets-store'
+import { checkLatestRelease } from './update-check'
+import { UPDATE_INTERVAL_MS, type UpdateInfo } from '../shared/update'
 
 const APP_NAME = 'LogDeck'
 
@@ -94,7 +96,15 @@ void app.whenReady().then(() => {
   // Tests point the Keychain path at a fake `security` so they never read the user's vault.
   const keychain = createSecretStore(app.getPath('userData'), process.env['LOGDECK_SECURITY_BIN'])
   const explain = new ExplainService({ provider: () => createProvider(aiSettings.get(), { keychain }), language: messagesLanguage })
-  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, trusted: () => mainWindow?.webContents, onLanguage: (lang) => {
+  // main also throttles: a renderer bug can never turn the check into more than one GET a day.
+  let lastUpdate: { at: number; info: UpdateInfo | null } | null = null
+  const checkUpdate = async (): Promise<UpdateInfo | null> => {
+    if (lastUpdate && Date.now() - lastUpdate.at < UPDATE_INTERVAL_MS) return lastUpdate.info
+    const info = await checkLatestRelease({ current: app.getVersion(), feedFile: process.env['LOGDECK_UPDATE_FEED'] })
+    lastUpdate = { at: Date.now(), info }
+    return info
+  }
+  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, checkUpdate, trusted: () => mainWindow?.webContents, onLanguage: (lang) => {
       buildMenu(APP_NAME, lang)
       setMessagesLanguage(lang)
     },

@@ -33,6 +33,8 @@ import { useNavigation } from './useNavigation'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
+import { useUpdateCheck } from './useUpdateCheck'
+import { UpdateModal } from './components/UpdateModal'
 
 const POD_REFRESH_MS = 5000
 const REGEX_DEBOUNCE_MS = 250
@@ -77,6 +79,8 @@ export function App() {
   const [prefs, setPrefs] = useState(false)
   const [recents, setRecents] = useState<RecentPod[]>(loadRecents)
   const [kubectlVersion, setKubectlVersion] = useState<string>()
+  const updates = useUpdateCheck()
+  const [updateOpen, setUpdateOpen] = useState(false)
   const t = useMemo(() => translator(lang), [lang])
   const searchRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -392,6 +396,7 @@ export function App() {
       } else if (e.key === 'Escape') {
         setSelectedSeq(undefined)
         setShortcuts(false)
+        setUpdateOpen(false)
       } else if (e.key === '?' && !typing) {
         setShortcuts(true)
       }
@@ -491,6 +496,8 @@ export function App() {
               onPods={() => document.getElementById('pod-search')?.focus()}
               onFile={() => fileRef.current?.click()}
               onRecent={(r) => void openRecent(r)}
+              askUpdates={updates.consent === null}
+              onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')}
             />
           ) : (
             <>
@@ -632,7 +639,7 @@ export function App() {
         />
         )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {
@@ -642,7 +649,17 @@ export function App() {
         />
       )}
       {shortcuts && <ShortcutsModal onClose={() => setShortcuts(false)} />}
-      {prefs && <PreferencesModal theme={theme} onTheme={setTheme} lang={lang} onLang={setLang} onClose={() => setPrefs(false)} />}
+      {prefs && <PreferencesModal theme={theme} onTheme={setTheme} lang={lang} onLang={setLang} updates={updates.consent === 'on'} onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')} onClose={() => setPrefs(false)} />}
+      {updateOpen && updates.available && (
+        <UpdateModal
+          version={updates.available}
+          onSkip={() => {
+            if (updates.available) updates.skip(updates.available)
+            setUpdateOpen(false)
+          }}
+          onClose={() => setUpdateOpen(false)}
+        />
+      )}
     </div>
     </I18nProvider>
   )

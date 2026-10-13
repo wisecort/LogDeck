@@ -14,6 +14,7 @@ Vale para qualquer IA que mexa neste repositório (Claude Code, Codex, Copilot e
 - **Uma fase = um commit**, em Conventional Commits: `feat(logs): ...`, `fix(shell): ...`, `test(parsers): ...`, `docs(runbook): ...`, `chore(ci): ...`.
 - Commits **sem** o trailer `Co-Authored-By` (decisão do autor em 12/10/2026).
 - Código, nomes de arquivos e commits em inglês. Documentação e respostas ao usuário em português.
+  Exceção: o `README.md` e o `PRIVACY.md` são em inglês, com a versão em português em `README.pt-BR.md` e `PRIVACY.pt-BR.md`; mudou um, atualize o outro (capturas em `docs/images/en/` e `docs/images/`).
 - Mudança fora do escopo do MVP 1 → anote em [`docs/backlog-mvp2.md`](docs/backlog-mvp2.md) e não implemente.
 - Dependência nova → justifique (nome, motivo, licença) em `docs/dependencies.md` e no PR (G9).
 - Na dúvida entre duas abordagens, **pergunte**. Não decida sozinho nada irreversível (renomear pacote, trocar stack, apagar histórico, mudar contrato de IPC).

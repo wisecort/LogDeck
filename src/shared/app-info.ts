@@ -6,6 +6,7 @@ export const APP_REPOSITORY = 'https://github.com/wisecort/LogDeck'
 export const APP_LINKS = {
   github: APP_REPOSITORY,
   linkedin: 'https://www.linkedin.com/in/cortelettimatheus/',
+  releases: `${APP_REPOSITORY}/releases/latest`,
 } as const
 
 export type AppLink = keyof typeof APP_LINKS

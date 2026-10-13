@@ -62,3 +62,23 @@ jobs:
         run: |
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "LogDeck ${TAG#v}" --notes "Veja o CHANGELOG.md." || true
           gh release upload "$TAG" ${{ matrix.files }} "release/SHA256SUMS-${{ runner.os }}.txt" --clobber
+
+  # Opens the "Update: wisecort.LogDeck to X.Y.Z" PR in microsoft/winget-pkgs once the Windows
+  # installer and its checksum are in the release. Needs the WINGET_TOKEN secret (classic PAT with
+  # public_repo, from the owner of the wisecort/winget-pkgs fork); without it the job only leaves a notice.
+  winget:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: No token
+        if: env.WINGET_TOKEN == ''
+        run: echo "::notice::WINGET_TOKEN não configurado; rode 'make winget VERSION=${GITHUB_REF_NAME#v}' localmente"
+      - name: Open the winget-pkgs PR
+        if: env.WINGET_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: bash scripts/update-winget.sh "${GITHUB_REF_NAME#v}"
