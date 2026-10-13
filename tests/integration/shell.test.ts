@@ -20,6 +20,16 @@ async function waitFor(cond: () => boolean, timeoutMs = PTY_TIMEOUT_MS) {
   }
 }
 
+// ConPTY on Windows can drop keystrokes sent right after the prompt shows up; retype until echoed.
+async function typeUntilEchoed(s: ReturnType<typeof open>, text: string) {
+  const t0 = Date.now()
+  while (!s.out().includes(text)) {
+    if (Date.now() - t0 > PTY_TIMEOUT_MS) throw new Error(`no echo of "${text}"`)
+    s.shell.write(`${text}\r`)
+    await waitFor(() => s.out().includes(text), 2000).catch(() => undefined)
+  }
+}
+
 function open(target = TARGET) {
   const fake = fakeKubectlEnv()
   let out = ''
@@ -49,8 +59,7 @@ describe('PodShell (P5)', () => {
   it('forwards input and window resizes', async () => {
     const s = open()
     await waitFor(() => s.out().includes('$ '))
-    s.shell.write('echo hello\r')
-    await waitFor(() => s.out().includes('echo hello'))
+    await typeUntilEchoed(s, 'echo hello')
     s.shell.resize(120, 40)
     // The fake learns about resizes through SIGWINCH, which ConPTY does not send on Windows.
     if (process.platform !== 'win32') await waitFor(() => s.out().includes('resize cols=120 rows=40'))
