@@ -6,6 +6,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+- **Wider Preferences:** two columns when there is room (themes on the left; language, updates and About on the right), so everything shows without scrolling in the default window; one column in narrow windows.
+
 - **CHANGELOG in English** (`CHANGELOG.md`), with the Portuguese version in `CHANGELOG.pt-BR.md`.
 - **Release notes with the changes:** each GitHub Release shows its version's section from `CHANGELOG.md` (`scripts/release-notes.mjs`) instead of "see the CHANGELOG", plus the code signing policy link; the release fails if the version has no section.
 
