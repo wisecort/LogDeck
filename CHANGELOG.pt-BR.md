@@ -19,6 +19,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
 - **Notas da release com as mudanças:** cada release do GitHub mostra a seção da sua versão no `CHANGELOG.md` (`scripts/release-notes.mjs`) em vez de "veja o CHANGELOG", mais o link da política de assinatura; a release falha se a versão não tiver seção.
 - README: situação da assinatura de código atualizada. A SignPath Foundation recusou o primeiro pedido (projeto novo demais); as versões seguem sem assinatura, e vamos pedir de novo quando o projeto tiver mais uso.
+- Teste de integração do shell estável no Windows: também redigita o `exit` quando o ConPTY perde as primeiras teclas.
 - Capturas do README refeitas pelo `make screenshots` (`tests/screenshots`, kubectl falso e logs fictícios, em inglês e português).
 
 ## [1.5.0] — 12/10/2026
