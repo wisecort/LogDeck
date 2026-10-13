@@ -2,6 +2,11 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
 
+## [Não lançado]
+
+- **README em inglês** (`README.md`, com capturas da interface em inglês em `docs/images/en/`) e versão em português em `README.pt-BR.md`, com links entre elas.
+- **winget:** manifestos do pacote `wisecort.LogDeck` 1.4.0 em `packaging/winget/` (instalador por usuário, depende de `Kubernetes.kubectl`), prontos para o PR no `microsoft/winget-pkgs`.
+
 ## [1.4.0] — 12/10/2026
 
 - **README novo** com tour visual: boas-vindas, detalhes, erros, builds do OKD, comparação com o anterior, tema claro, Preferências e Atalhos (capturas feitas com dados fictícios).
