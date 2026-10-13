@@ -162,7 +162,7 @@ export const ptBR = {
   'det.stack': 'Stack trace ({n} linhas)',
   'det.mask': 'Mascarar dados sensíveis',
   'det.maskHint': 'Ao copiar, esconde senhas, tokens, chaves, e-mails e IPs internos (10.x, 172.16–31.x, 192.168.x)',
-  'det.ticket': 'Copiar para chamado',
+  'det.ticket': 'Copiar com detalhes',
   'det.ticketHint': 'Copia pod, horários (UTC), nível e a linha, com senhas e tokens mascarados',
   'ticket.file': 'Arquivo',
   'ticket.pod': 'Pod',

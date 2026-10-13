@@ -43,7 +43,7 @@ A tela inicial mostra o contexto atual, a versão do kubectl e atalhos para abri
 
 ### Detalhes de qualquer linha
 
-Clique numa linha para ver os horários do log e do kubectl, os campos reconhecidos, o JSON formatado e o stack trace. **Copiar para chamado** gera um texto pronto com pod, horários em UTC, nível e a linha, com senhas e tokens mascarados.
+Clique numa linha para ver os horários do log e do kubectl, os campos reconhecidos, o JSON formatado e o stack trace. **Copiar com detalhes** gera um texto pronto com pod, horários em UTC, nível e a linha, com senhas e tokens mascarados.
 
 ![Detalhes de uma linha de erro](docs/images/details.png)
 
@@ -85,7 +85,7 @@ Nove temas (Escuro, Meia-noite, Claro, Sistema, Alto contraste, Dracula, Nord, T
 - **Níveis com cores** (TRACE a FATAL) em JSON, Laravel, Apache, Nginx, PHP-FPM, Java, builds do OKD (buildah/docker/s2i) e texto livre; stack traces ficam juntos da linha de origem.
 - **Busca** por texto ou regex (com proteção contra regex que trava), **exclusões** e presets por namespace, como esconder health checks.
 - **Histograma de volume**: arraste sobre as barras para ver só aquele intervalo.
-- **Painel de erros e timeouts** com contagem e período, e **detalhes da linha** com **Copiar para chamado**.
+- **Painel de erros e timeouts** com contagem e período, e **detalhes da linha** com **Copiar com detalhes**.
 - **Abas**, **pods recentes** (com × para tirar da lista) e **Comparar com o anterior** (`--previous`).
 - **Builds do OKD**: histórico, log do container do build e detalhes quando o pod já foi removido.
 - **Terminal no container**, aberto só quando você clica.
@@ -156,7 +156,7 @@ Todos os arquivos ficam na página de [Releases](https://github.com/wisecort/Log
 2. **Abra um namespace** e clique num pod (bolinha verde: rodando; vermelha: com problema; ↻ = restarts). Se o pod tiver mais de um container, escolha o container. ⌘-clique abre numa aba nova.
 3. **Acompanhe o log ao vivo.** Rolar para cima ou clicar numa linha pausa a tela; **Ao vivo** volta para o fim.
 4. **Filtre:** níveis (⌥+clique mostra só um), busca (⌘F, `Aa`, `.*`), exclusões e presets, **Tempo** (tail, desde quando, `--previous`) e o histograma.
-5. **Investigue:** painel **Erros**, **Detalhes** da linha, **Copiar para chamado**, **Comparar com o anterior** e **Terminal** no container.
+5. **Investigue:** painel **Erros**, **Detalhes** da linha, **Copiar com detalhes**, **Comparar com o anterior** e **Terminal** no container.
 6. **No OKD:** abra a pasta **Builds e deploys** e clique num build para ver o log dele.
 7. **Volte ao início** pelo ícone de casa, à esquerda das abas.
 
