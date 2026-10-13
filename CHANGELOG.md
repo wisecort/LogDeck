@@ -6,6 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 - **README em inglês** (`README.md`, com capturas da interface em inglês em `docs/images/en/`) e versão em português em `README.pt-BR.md`, com links entre elas.
 - **winget:** manifestos do pacote `wisecort.LogDeck` 1.4.0 em `packaging/winget/` (instalador por usuário, depende de `Kubernetes.kubectl`), prontos para o PR no `microsoft/winget-pkgs`.
+- **Política de assinatura de código** (seção nos READMEs) e **política de privacidade** (`PRIVACY.md` / `PRIVACY.pt-BR.md`), exigidas para o pedido de assinatura grátis na SignPath Foundation.
 
 ## [1.4.0] — 12/10/2026
 
