@@ -227,13 +227,11 @@ Os testes nunca acessam um cluster de verdade: usam um `kubectl` falso e logs fi
 
 ## Política de assinatura de código
 
-As versões de Windows serão assinadas quando o projeto for aceito pela SignPath Foundation (pedido em andamento). Até lá, o instalador de Windows não é assinado e o app de macOS tem assinatura ad-hoc (sem notarização).
+As versões **ainda não têm assinatura de código**: o instalador de Windows não é assinado (o SmartScreen mostra um aviso; escolha "Mais informações → Executar assim mesmo"), e o app de macOS tem assinatura ad-hoc (sem notarização). Pretendemos pedir de novo a assinatura grátis da [SignPath Foundation](https://signpath.org) quando o projeto tiver mais uso. As regras abaixo são as que a assinatura vai seguir.
 
-Assinatura de código gratuita fornecida por [SignPath.io](https://about.signpath.io), certificado da [SignPath Foundation](https://signpath.org).
-
-- **O que é assinado:** só binários gerados a partir do código deste repositório pelo [workflow de release](.github/workflows/release.yml), em runners hospedados pelo GitHub: o app `LogDeck.exe` e o instalador `LogDeck-<versão>-x64.exe`. Nada gerado em outro lugar ou a partir de código de terceiros é assinado.
+- **O que será assinado:** só binários gerados a partir do código deste repositório pelo [workflow de release](.github/workflows/release.yml), em runners hospedados pelo GitHub: o app `LogDeck.exe` e o instalador `LogDeck-<versão>-x64.exe`. Nada gerado em outro lugar ou a partir de código de terceiros é assinado.
 - **Commits e revisão:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort)
-- **Aprovação:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort). Cada release é aprovada manualmente antes de ser assinada.
+- **Aprovação:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort). Cada release será aprovada manualmente antes de ser assinada.
 - **Privacidade:** este programa não transfere nenhuma informação para outros sistemas em rede, a não ser quando o usuário, ou quem instala ou opera o programa, pede isso explicitamente. Veja a [política de privacidade](PRIVACY.pt-BR.md).
 
 ## Licença

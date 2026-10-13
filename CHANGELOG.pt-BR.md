@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- README: situação da assinatura de código atualizada. A SignPath Foundation recusou o primeiro pedido (projeto novo demais); as versões seguem sem assinatura, e vamos pedir de novo quando o projeto tiver mais uso.
+
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
 - **Notas da release com as mudanças:** cada release do GitHub mostra a seção da sua versão no `CHANGELOG.md` (`scripts/release-notes.mjs`) em vez de "veja o CHANGELOG", mais o link da política de assinatura; a release falha se a versão não tiver seção.
 

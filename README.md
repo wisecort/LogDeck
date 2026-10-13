@@ -228,13 +228,11 @@ Tests never touch a real cluster: they use a fake `kubectl` and fictional logs (
 
 ## Code signing policy
 
-Windows releases will be signed once the project is accepted by the SignPath Foundation (application pending). Until then the Windows installer is unsigned, and the macOS app is ad-hoc signed (not notarized).
+Releases are **not code-signed yet**: the Windows installer is unsigned (SmartScreen shows a warning; choose "More info → Run anyway"), and the macOS app is ad-hoc signed (not notarized). We plan to reapply to the [SignPath Foundation](https://signpath.org) free signing program once the project has wider adoption. The rules below are the ones signing will follow.
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
-
-- **What is signed:** only binaries built from this repository's source by the [release workflow](.github/workflows/release.yml) on GitHub-hosted runners — the `LogDeck.exe` app and the `LogDeck-<version>-x64.exe` installer. Nothing built elsewhere or from third-party sources is signed.
+- **What will be signed:** only binaries built from this repository's source by the [release workflow](.github/workflows/release.yml) on GitHub-hosted runners — the `LogDeck.exe` app and the `LogDeck-<version>-x64.exe` installer. Nothing built elsewhere or from third-party sources is signed.
 - **Committers and reviewers:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort)
-- **Approvers:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort) — every release is approved by hand before it is signed.
+- **Approvers:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort) — every release will be approved by hand before it is signed.
 - **Privacy:** this program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. See the [privacy policy](PRIVACY.md).
 
 ## License
