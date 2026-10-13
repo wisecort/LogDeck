@@ -58,7 +58,7 @@ export function updateTab(s: TabsState, id: string, patch: Partial<Omit<Tab, 'id
   return { ...s, tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch } : t)) }
 }
 
-/** Undefined for an empty tab (the UI shows "Nova aba"). */
+/** Undefined for an empty tab (the UI shows "Início": empty tabs show the home screen). */
 export function tabLabel(tab: Tab): string | undefined {
   if (tab.file) return tab.file
   const { pod, container, build } = tab.selection

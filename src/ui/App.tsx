@@ -484,6 +484,7 @@ export function App() {
               void session.close(id)
               afterTabChange()
             }}
+            homeActive={isEmptyTab}
             onHome={() => {
               void session.goHome()
               setShell(undefined)

@@ -286,7 +286,6 @@ export const ptBR = {
   'tabs.label': 'Abas',
   'tabs.home': 'Início',
   'tabs.homeHint': 'Voltar para a tela inicial nesta aba (para o log)',
-  'tabs.new': 'Nova aba',
   'tabs.add': 'Nova aba',
   'tabs.addHint': 'Nova aba (⌘-clique num pod também abre em nova aba)',
   'tabs.close': 'Fechar aba {name}',

@@ -287,7 +287,6 @@ export const en: Record<MessageKey, string> = {
   'tabs.label': 'Tabs',
   'tabs.home': 'Home',
   'tabs.homeHint': 'Back to the welcome screen in this tab (stops the log)',
-  'tabs.new': 'New tab',
   'tabs.add': 'New tab',
   'tabs.addHint': 'New tab (⌘-click a pod to open it in a new tab too)',
   'tabs.close': 'Close tab {name}',
