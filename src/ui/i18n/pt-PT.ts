@@ -71,7 +71,7 @@ export const ptPT: Record<MessageKey, string> = {
   'det.logTime': 'Hora do log',
   'det.k8sTime': 'Hora do kubectl',
   'det.mask': 'Mascarar dados sensíveis',
-  'det.maskHint': 'Ao copiar, oculta palavras-passe, tokens, chaves, e-mails e IPs internos (10.x, 172.16–31.x, 192.168.x)',
+  'det.maskHint': 'Ao copiar, oculta palavras-passe, tokens, chaves, e-mails, IPs internos (10.x, 172.16–31.x, 192.168.x) e, no Copiar com detalhes, o contexto',
   'det.ticket': 'Copiar com detalhes',
   'det.ticketHint': 'Copia pod, horas (UTC), nível e a linha, com palavras-passe e tokens ocultados',
   'ticket.file': 'Ficheiro',

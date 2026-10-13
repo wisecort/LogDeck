@@ -162,7 +162,7 @@ export const en: Record<MessageKey, string> = {
   'det.line': 'Line',
   'det.stack': 'Stack trace ({n} lines)',
   'det.mask': 'Mask sensitive data',
-  'det.maskHint': 'When copying, hides passwords, tokens, keys, emails and internal IPs (10.x, 172.16–31.x, 192.168.x)',
+  'det.maskHint': 'When copying, hides passwords, tokens, keys, emails, internal IPs (10.x, 172.16–31.x, 192.168.x) and, in Copy with details, the context',
   'det.ticket': 'Copy with details',
   'det.ticketHint': 'Copies pod, times (UTC), level and the line, with passwords and tokens masked',
   'ticket.file': 'File',

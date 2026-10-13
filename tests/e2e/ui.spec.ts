@@ -277,6 +277,17 @@ test('copy with details: pod, UTC times, level and the line', async () => {
   expect(text).toContain('Pod: portal-hml / portal-web-7d9f8c6b5-x2k4p / httpd')
   expect(text).toMatch(/Horário \(kubectl\): 2026-10-09 \d\d:\d\d:\d\d\.\d{3} UTC/)
   expect(text).toContain('AH01075')
+  // the button says "Copiado" for a moment, then goes back
+  await expect(win.getByRole('button', { name: 'Copiado' })).toBeVisible()
+  await expect(win.getByRole('button', { name: 'Copiar com detalhes' })).toBeVisible({ timeout: 5000 })
+
+  // "Mascarar dados sensíveis" also hides the context (cluster host and user) and internal IPs
+  await win.getByTestId('log-details').getByLabel('Mascarar dados sensíveis').check()
+  await win.getByRole('button', { name: 'Copiar com detalhes' }).click()
+  const masked = await app.evaluate(({ clipboard }) => clipboard.readText())
+  expect(masked).toContain('[REDACTED:CONTEXT]')
+  expect(masked).not.toContain('api-hml-example-internal')
+  expect(masked).toContain('[client [REDACTED:IP]:')
 })
 
 test('copy the line from Details, with or without masking secrets and internal IPs', async () => {
