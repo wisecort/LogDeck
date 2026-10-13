@@ -24,6 +24,10 @@
   <a href="https://github.com/wisecort/LogDeck/releases/latest">baixar para macOS, Linux ou Windows</a>
 </p>
 
+<p align="center">
+  <a href="https://apps.microsoft.com/detail/9P5LTZ7FBWC4"><img alt="Baixar na Microsoft" src="https://get.microsoft.com/images/pt-br%20dark.svg" width="200"></a>
+</p>
+
 ![LogDeck: log ao vivo, níveis com cores, histograma e erros agrupados](docs/images/main.png)
 
 ## Por que o LogDeck
@@ -146,7 +150,9 @@ Para guardar chaves de IA, o Linux precisa de um cofre de senhas ativo (GNOME Ke
 
 ### Windows (x64)
 
-Baixe e rode `LogDeck-<versão>-<arq>.exe`. A instalação é só para o seu usuário e não pede administrador. O app ainda não é assinado: se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
+**Recomendado:** instale pela [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4). O pacote da Store é assinado pela Microsoft, então o SmartScreen não avisa nada, e a própria Store mantém o app atualizado (uma versão nova pode levar alguns dias para chegar lá depois da release do GitHub).
+
+Ou baixe e rode `LogDeck-<versão>-<arq>.exe`. A instalação é só para o seu usuário e não pede administrador. O app ainda não é assinado: se o SmartScreen avisar, clique em **Mais informações → Executar assim mesmo**.
 
 Todos os arquivos ficam na página de [Releases](https://github.com/wisecort/LogDeck/releases), com os checksums SHA-256.
 
@@ -229,7 +235,7 @@ Os testes nunca acessam um cluster de verdade: usam um `kubectl` falso e logs fi
 
 ## Política de assinatura de código
 
-As versões **ainda não têm assinatura de código**: o instalador de Windows não é assinado (o SmartScreen mostra um aviso; escolha "Mais informações → Executar assim mesmo"), e o app de macOS tem assinatura ad-hoc (sem notarização). Pretendemos pedir de novo a assinatura grátis da [SignPath Foundation](https://signpath.org) quando o projeto tiver mais uso. As regras abaixo são as que a assinatura vai seguir.
+As versões **ainda não têm assinatura de código** (exceto a cópia da [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4), que a Microsoft assina): o instalador de Windows não é assinado (o SmartScreen mostra um aviso; escolha "Mais informações → Executar assim mesmo"), e o app de macOS tem assinatura ad-hoc (sem notarização). Pretendemos pedir de novo a assinatura grátis da [SignPath Foundation](https://signpath.org) quando o projeto tiver mais uso. As regras abaixo são as que a assinatura vai seguir.
 
 - **O que será assinado:** só binários gerados a partir do código deste repositório pelo [workflow de release](.github/workflows/release.yml), em runners hospedados pelo GitHub: o app `LogDeck.exe` e o instalador `LogDeck-<versão>-x64.exe`. Nada gerado em outro lugar ou a partir de código de terceiros é assinado.
 - **Commits e revisão:** [Matheus Corteletti (@wisecort)](https://github.com/wisecort)
