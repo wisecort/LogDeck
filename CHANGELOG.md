@@ -6,6 +6,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+- Fix: on Linux the `.deb`/`.rpm` showed a generic gear instead of the LogDeck icon (GNOME and other desktops). The package now ships the icon in the standard sizes (16 to 512 px, `build/icons/`, made by `make icon`), and the launcher description is in English and no longer says "macOS" only.
+
 ## [1.6.0] — 2026-10-13
 
 - **Microsoft Store package (appx/MSIX):** `npm run release:store` builds it (`build.appx` with the Partner Center identity, Store logos in `build/appx/` made by `scripts/build-appx-assets.sh`, also run by `make icon`). CI builds it on every PR and on each release as a workflow artifact (never a release asset: the Store signs it on submission). Testing and submission steps in `docs/microsoft-store.md`.

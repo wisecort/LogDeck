@@ -2,7 +2,7 @@
   "name": "logdeck",
   "productName": "LogDeck",
   "version": "1.6.0",
-  "description": "Log explorer de Kubernetes para macOS (somente leitura)",
+  "description": "Read-only Kubernetes and OKD/OpenShift log explorer for macOS, Linux and Windows",
   "private": true,
   "license": "MIT",
   "author": "Matheus Corteletti (Wise)",
@@ -93,8 +93,8 @@
       ],
       "category": "Development",
       "maintainer": "Matheus Corteletti <61605704+wisecort@users.noreply.github.com>",
-      "synopsis": "Explorador de logs de Kubernetes/OKD (somente leitura)",
-      "icon": "build/icon.png"
+      "synopsis": "Read-only Kubernetes and OKD/OpenShift log explorer",
+      "icon": "build/icons"
     },
     "win": {
       "target": [
