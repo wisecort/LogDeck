@@ -41,6 +41,17 @@ export function addTab(s: TabsState): TabsState | undefined {
   return { tabs: [...s.tabs.slice(0, at), tab, ...s.tabs.slice(at)], active: tab.id }
 }
 
+/**
+ * The Home button: an empty tab (shown as the home screen, never in the tab bar) becomes active.
+ * Reuses one if there is any, so pod tabs keep their logs; undefined at the limit with no empty tab.
+ */
+export function homeTab(s: TabsState): TabsState | undefined {
+  const isEmpty = (t: Tab) => tabLabel(t) === undefined
+  if (s.tabs.some((t) => t.id === s.active && isEmpty(t))) return s
+  const empty = s.tabs.find(isEmpty)
+  return empty ? { ...s, active: empty.id } : addTab(s)
+}
+
 export function closeTab(s: TabsState, id: string): TabsState {
   const index = s.tabs.findIndex((t) => t.id === id)
   if (index < 0) return s
@@ -58,7 +69,7 @@ export function updateTab(s: TabsState, id: string, patch: Partial<Omit<Tab, 'id
   return { ...s, tabs: s.tabs.map((t) => (t.id === id ? { ...t, ...patch } : t)) }
 }
 
-/** Undefined for an empty tab (the UI shows "Início": empty tabs show the home screen). */
+/** Undefined for an empty tab: it shows the home screen and stays out of the tab bar. */
 export function tabLabel(tab: Tab): string | undefined {
   if (tab.file) return tab.file
   const { pod, container, build } = tab.selection

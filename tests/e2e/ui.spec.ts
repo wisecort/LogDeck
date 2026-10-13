@@ -102,7 +102,7 @@ test('recent pods: the last ones opened reopen with the same container', async (
   await expect(navTree(win).getByRole('list', { name: 'Recentes' }).getByRole('button', { name: /^portal-worker/ })).toHaveCount(0)
 })
 
-test('tabs: two pods stream side by side, switch, close and add a new one', async () => {
+test('tabs: two pods stream side by side, switch, close, and Home keeps them running', async () => {
   await openWebPod(win)
   const tabs = win.getByTestId('log-tab')
   const tabList = win.getByRole('tablist', { name: 'Abas' })
@@ -122,10 +122,14 @@ test('tabs: two pods stream side by side, switch, close and add a new one', asyn
   await win.getByRole('button', { name: /Fechar aba portal-worker/ }).click()
   await expect(tabs).toHaveCount(1)
 
-  await win.getByRole('button', { name: 'Nova aba', exact: true }).click()
-  await expect(tabs).toHaveCount(2)
-  await expect(tabList.getByRole('tab', { selected: true })).toContainText('Início')
-  await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
+  // Home is the house button, not a tab: the pod tab stays open and keeps its log
+  await expect(win.getByRole('button', { name: 'Nova aba', exact: true })).toHaveCount(0)
+  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await expect(win.getByTestId('welcome')).toBeVisible()
+  await expect(tabs).toHaveCount(1)
+  await expect(tabList.getByRole('tab', { selected: true })).toHaveCount(0)
+  await tabList.getByRole('tab', { name: /portal-web/ }).click()
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
 })
 
 test('compare with --previous: current and previous container side by side', async () => {
@@ -204,9 +208,9 @@ test('OKD builds folder: Build history after the pods; log while the pod exists,
 test('welcome screen on empty tabs and the Home button brings it back', async () => {
   const home = win.getByRole('button', { name: 'Início', exact: true })
   await expect(win.getByTestId('welcome')).toBeVisible()
-  // The app opens on the home screen: the Home button is lit and the empty tab is called "Início".
+  // The app opens on the home screen: the Home button is lit and there is no tab yet.
   await expect(home).toHaveAttribute('aria-pressed', 'true')
-  await expect(win.getByRole('tab', { selected: true })).toHaveText('Início')
+  await expect(win.getByTestId('log-tab')).toHaveCount(0)
   await expect(win.getByRole('tab', { name: 'Erros (0)' })).toHaveCount(0)
   await openWebPod(win)
   await expect(win.getByTestId('welcome')).toHaveCount(0)

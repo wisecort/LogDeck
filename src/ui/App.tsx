@@ -486,13 +486,7 @@ export function App() {
             }}
             homeActive={isEmptyTab}
             onHome={() => {
-              void session.goHome()
-              setShell(undefined)
-              resetView()
-              setPresets(undefined)
-            }}
-            onNew={() => {
-              if (!session.newTab()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+              if (!session.openHome()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
               afterTabChange()
             }}
           />

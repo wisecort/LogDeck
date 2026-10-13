@@ -4,7 +4,7 @@ import type { Level } from '../logs/types'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
 import type { LogOptions, Selection } from './view-types'
 import { LogEngine } from './engine'
-import { activateTab, addTab, closeTab, companionKey, initialTabs, updateTab, type TabsState } from './tabs'
+import { activateTab, addTab, closeTab, companionKey, homeTab, initialTabs, type TabsState, updateTab } from './tabs'
 
 const RENDER_MS = 100
 const FILE_CHUNK = 5000
@@ -165,6 +165,17 @@ export function useLogTabs() {
     return next.active
   }, [commit])
 
+  /** The Home button: shows the home screen and leaves the pod tabs running. False at the tab limit. */
+  const openHome = useCallback((): boolean => {
+    const next = homeTab(stateRef.current)
+    if (!next) return false
+    if (next !== stateRef.current) {
+      commit(next)
+      setVersion((v) => v + 1)
+    }
+    return true
+  }, [commit])
+
   /** Back to the welcome screen in this tab: stops its streams and forgets the pod/file. */
   const goHome = useCallback(
     async (tabId: string = stateRef.current.active) => {
@@ -245,6 +256,7 @@ export function useLogTabs() {
     stop,
     openFile,
     newTab,
+    openHome,
     goHome,
     close,
     activate,

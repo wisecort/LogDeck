@@ -1,13 +1,12 @@
 import { useI18n } from '../i18n'
 import { tabLabel, type Tab } from '../tabs'
-import { IconHome, IconPlus, IconX } from './icons'
+import { IconHome, IconX } from './icons'
 
 interface Props {
   tabs: Tab[]
   active: string
   onActivate(id: string): void
   onClose(id: string): void
-  onNew(): void
   onHome(): void
   /** The active tab shows the home screen: the Home button is lit. */
   homeActive?: boolean
@@ -22,13 +21,13 @@ export function TabBar(p: Props) {
         <IconHome />
       </button>
       {p.tabs.map((tab) => {
-        // Pod and file names are monospace; an empty tab shows the home screen and is called "Início".
-        const named = tabLabel(tab)
-        const label = named ?? t('tabs.home')
+        // An empty tab is the home screen: the house button stands for it, it has no tab of its own.
+        const label = tabLabel(tab)
+        if (label === undefined) return null
         const on = tab.id === p.active
         return (
           <div key={tab.id} className={`log-tab ${on ? 'on' : ''}`} data-testid="log-tab">
-            <button role="tab" aria-selected={on} className={`log-tab-label${named ? ' mono' : ''}`} title={label} onClick={() => p.onActivate(tab.id)}>
+            <button role="tab" aria-selected={on} className="log-tab-label mono" title={label} onClick={() => p.onActivate(tab.id)}>
               {label}
             </button>
             <button className="icon-btn log-tab-close" aria-label={t('tabs.close', { name: label })} onClick={() => p.onClose(tab.id)}>
@@ -37,9 +36,6 @@ export function TabBar(p: Props) {
           </div>
         )
       })}
-      <button className="icon-btn log-tab-add" aria-label={t('tabs.add')} title={t('tabs.addHint')} onClick={p.onNew}>
-        <IconPlus />
-      </button>
     </div>
   )
 }

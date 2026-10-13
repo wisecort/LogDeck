@@ -44,8 +44,8 @@ test('with kubectl installed there is no install card', async () => {
     const win = await app.firstWindow()
     await expect(win.getByTestId('welcome-status')).toContainText('kubectl')
     await expect(win.getByTestId('kubectl-missing')).toHaveCount(0)
-    // "Início" is interface text, not a pod or file name: no monospace font.
-    await expect(win.getByRole('tab', { name: 'Início' })).not.toHaveClass(/\bmono\b/)
+    // Home is the house button: no empty "Início" tab in the bar.
+    await expect(win.getByTestId('log-tab')).toHaveCount(0)
   } finally {
     await app.close()
   }
