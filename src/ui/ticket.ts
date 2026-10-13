@@ -1,5 +1,5 @@
-// "Copiar para chamado": one log line as plain text to paste into a ticket.
-// Secrets are masked (same rules as the AI redaction); internal IPs are kept, they help the investigation.
+// Copying one log line from Details. "Copiar para chamado": plain text to paste into a ticket, with secrets
+// masked (same rules as the AI redaction) and internal IPs kept. "Copiar": the line itself, optionally masked.
 import { redact } from '../ai/redact'
 import type { LogEntry } from '../logs/types'
 
@@ -37,4 +37,10 @@ export function ticketText(e: LogEntry, src: TicketSource, l: TicketLabels = PT_
   const body = redact([e.raw, ...e.continuation].join('\n')).text
   lines.push('', '```', body, '```')
   return lines.join('\n')
+}
+
+/** Details → Copiar: the line and its stack trace; `mask` hides secrets and internal (RFC 1918) IPs. */
+export function lineText(e: LogEntry, { mask = false }: { mask?: boolean } = {}): string {
+  const text = [e.raw, ...e.continuation].join('\n')
+  return mask ? redact(text, { maskInternalIps: true }).text : text
 }

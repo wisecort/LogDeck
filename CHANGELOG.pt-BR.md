@@ -11,6 +11,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - A cópia da Microsoft Store nunca consulta o GitHub atrás de versão nova: a Store atualiza o app (`src/platform/distribution.ts`).
 - **Sem kubectl? A tela inicial diz como instalar:** um cartão destacado com o comando de instalação do sistema (winget, brew, snap), botão **Copiar** e **Verificar de novo**, que acha o kubectl sem reiniciar o app; enquanto isso, já dá para abrir arquivos de log. O README também diz como instalar o `oc`.
 - Correção: um plugin de login ausente (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) aparecia como "Recurso não encontrado (o pod pode ter sido removido)". Agora a mensagem diz qual plugin falta e pede para instalar ou conferir o PATH.
+- **Copiar com máscara:** os Detalhes têm a opção "Mascarar dados sensíveis" para o **Copiar**: esconde senhas, tokens, chaves, e-mails e IPs internos (10.x, 172.16–31.x, 192.168.x) na linha e no stack trace copiados. Desligada por padrão e lembrada nesta máquina; o log na tela não muda.
 
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
 - **Notas da release com as mudanças:** cada release do GitHub mostra a seção da sua versão no `CHANGELOG.md` (`scripts/release-notes.mjs`) em vez de "veja o CHANGELOG", mais o link da política de assinatura; a release falha se a versão não tiver seção.

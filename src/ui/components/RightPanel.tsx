@@ -7,7 +7,7 @@ import type { AiStatus } from '../../shared/ai-settings'
 import { formatDateTime } from '../format'
 import { useI18n, type Translate } from '../i18n'
 import { groupTitle } from '../group-title'
-import { ticketText, type TicketSource } from '../ticket'
+import { lineText, ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
 import { IconBookmark, IconCheckCircle, IconCopy, IconGear, IconRows, IconSparkle } from './icons'
 
@@ -134,8 +134,31 @@ function TicketButton({ entry, source }: { entry: LogEntry; source: TicketSource
   )
 }
 
+const MASK_KEY = 'logdeck.copyMasked'
+
+/** Details → "Mascarar dados sensíveis", remembered on this machine (a per-user convenience). */
+function useCopyMasked(): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(() => {
+    try {
+      return localStorage.getItem(MASK_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const set = (next: boolean) => {
+    setOn(next)
+    try {
+      localStorage.setItem(MASK_KEY, next ? '1' : '0')
+    } catch {
+      // storage unavailable: the choice lasts until the window closes
+    }
+  }
+  return [on, set]
+}
+
 function DetailsTab(p: Props) {
   const { t } = useI18n()
+  const [masked, setMasked] = useCopyMasked()
   const e = p.entry
   if (!e)
     return (
@@ -148,7 +171,6 @@ function DetailsTab(p: Props) {
     )
   const time = displayTime(e)
   const json = prettyJson(e.raw)
-  const full = [e.raw, ...e.continuation].join('\n')
   return (
     <div data-testid="log-details" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div className="det-head">
@@ -203,11 +225,15 @@ function DetailsTab(p: Props) {
       )}
       <div className="panel-section-title">
         {t('det.line')} <span className="spacer" />
-        <button className="icon-btn" onClick={() => void window.logdeck.copyText(full)}>
+        <button className="icon-btn" onClick={() => void window.logdeck.copyText(lineText(e, { mask: masked }))}>
           <IconCopy /> {t('common.copy')}
         </button>
         <TicketButton entry={e} source={p.ticketSource} />
       </div>
+      <label className="det-mask" title={t('det.maskHint')}>
+        <input type="checkbox" checked={masked} onChange={(ev) => setMasked(ev.target.checked)} />
+        {t('det.mask')}
+      </label>
       <pre className="code-box">{e.raw}</pre>
       {e.continuation.length > 0 && (
         <>
