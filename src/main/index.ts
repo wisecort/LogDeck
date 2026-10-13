@@ -34,7 +34,8 @@ disableSystemMenuItems()
 // Tests point userData to a temp dir so they never touch the user's presets.
 if (process.env['LOGDECK_USER_DATA']) app.setPath('userData', process.env['LOGDECK_USER_DATA'])
 
-const service = new K8sService()
+// Tests point main at a kubectl that does not exist to show the install card (like LOGDECK_SECURITY_BIN).
+const service = new K8sService(process.env['LOGDECK_KUBECTL_BIN'] ? { binary: process.env['LOGDECK_KUBECTL_BIN'] } : {})
 const registry = new StreamRegistry()
 const shells = new ShellRegistry()
 let mainWindow: BrowserWindow | undefined

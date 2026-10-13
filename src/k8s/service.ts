@@ -10,6 +10,7 @@ import {
 } from './args'
 import { listContexts, type KubeContext } from './contexts'
 import { friendlyError, KubectlError, runKubectl, type KubectlOptions, type KubectlResult } from './kubectl'
+import { kubectlInstallHint } from '../platform/paths'
 import type { NamespaceList, VersionInfo } from '../shared/ipc'
 import { parseNamespaces, parsePods, type PodSummary } from './pods'
 import { parseBuilds, type BuildSummary } from './builds'
@@ -49,7 +50,8 @@ export class K8sService {
       const parsed = JSON.parse(out) as { clientVersion?: { gitVersion?: string } }
       return { installed: true, version: parsed.clientVersion?.gitVersion ?? 'desconhecida' }
     } catch (err) {
-      return { installed: false, message: (err as Error).message }
+      const missing = err instanceof KubectlError && err.missing
+      return { installed: false, message: (err as Error).message, ...(missing && { missing: true, installHint: kubectlInstallHint() }) }
     }
   }
 

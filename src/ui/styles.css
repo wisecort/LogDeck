@@ -3072,6 +3072,34 @@ button.primary:disabled {
   font-size: 12px;
 }
 
+.welcome-missing {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 640px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--warn) 55%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 10%, var(--bg-2));
+  font-size: 12px;
+  text-align: left;
+}
+
+.welcome-missing-cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.welcome-missing-cmd code {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  user-select: all;
+}
+
 .welcome-ask > div {
   display: flex;
   flex-direction: column;

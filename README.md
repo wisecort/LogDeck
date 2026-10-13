@@ -107,7 +107,9 @@ Nine themes (Dark, Midnight, Light, System, High contrast, Dracula, Nord, Tokyo 
   | Linux | `sudo snap install kubectl --classic` or your distribution's `kubectl` package |
   | Windows | `winget install -e --id Kubernetes.kubectl` |
 
-- A kubeconfig with access to the cluster (the default `~/.kube/config` or the `KUBECONFIG` variable). On OKD/OpenShift, just run `oc login` first.
+  If kubectl is missing, LogDeck's welcome screen shows this command with a copy button; after installing, click **Check again** (no restart needed).
+
+- A kubeconfig with access to the cluster (the default `~/.kube/config` or the `KUBECONFIG` variable). On OKD/OpenShift, just run `oc login` first. To install `oc`: `brew install openshift-cli` (macOS), `winget install -e --id RedHat.OpenShift-Client` (Windows), or the client from your cluster's console (**?** → **Command line tools**).
 
 ### macOS (Apple Silicon or Intel)
 
