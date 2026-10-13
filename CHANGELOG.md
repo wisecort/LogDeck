@@ -1,177 +1,184 @@
 # Changelog
 
-Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). Uma entrada por fase.
+**English** · [Português](CHANGELOG.pt-BR.md)
 
-## [Não lançado]
+Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per phase.
 
-## [1.5.0] — 12/10/2026
+## [Unreleased]
 
-- **README em inglês** (`README.md`, com capturas da interface em inglês em `docs/images/en/`) e versão em português em `README.pt-BR.md`, com links entre elas.
-- **winget:** manifestos do pacote `wisecort.LogDeck` 1.4.0 em `packaging/winget/` (instalador por usuário, depende de `Kubernetes.kubectl`), prontos para o PR no `microsoft/winget-pkgs`.
-- **Política de assinatura de código** (seção nos READMEs) e **política de privacidade** (`PRIVACY.md` / `PRIVACY.pt-BR.md`), exigidas para o pedido de assinatura grátis na SignPath Foundation; as notas de cada release trazem o link "Code signing policy".
-- **Aviso de versão nova** (só com consentimento): a tela inicial pergunta uma vez se pode avisar; se sim, o main faz no máximo um GET anônimo por dia a `api.github.com/repos/wisecort/LogDeck/releases/latest` (URL fixa, sem credenciais, sem redirecionamento, resposta tratada como dado). Quando há versão nova, a barra de status mostra "X.Y.Z disponível", e o modal traz os comandos do Homebrew e do winget e o link da release, com "Pular esta versão". O LogDeck nunca baixa nem instala nada. Liga/desliga em Preferências → Atualizações. G6, política de privacidade e READMEs atualizados.
-- **winget automático:** o workflow de release abre o PR "Update: wisecort.LogDeck to X.Y.Z" no `microsoft/winget-pkgs` (`scripts/update-winget.sh`, manifestos gerados por `scripts/winget-manifests.mjs` a partir da versão anterior), sem actions de terceiros; precisa do secret `WINGET_TOKEN`. Localmente: `make winget VERSION=X.Y.Z`.
-- Teste de integração do shell estável no Windows: redigita o comando quando o ConPTY perde as primeiras teclas.
+- **CHANGELOG in English** (`CHANGELOG.md`), with the Portuguese version in `CHANGELOG.pt-BR.md`.
+- **Release notes with the changes:** each GitHub Release shows its version's section from `CHANGELOG.md` (`scripts/release-notes.mjs`) instead of "see the CHANGELOG", plus the code signing policy link; the release fails if the version has no section.
 
-## [1.4.0] — 12/10/2026
+## [1.5.0] — 2026-10-12
 
-- **README novo** com tour visual: boas-vindas, detalhes, erros, builds do OKD, comparação com o anterior, tema claro, Preferências e Atalhos (capturas feitas com dados fictícios).
-- **Recentes:** um × ao passar o mouse tira o pod da lista (fica salvo).
-- **Visual Cockpit:** tela de boas-vindas nas abas vazias (logo, cartões Pods / Arquivo / Último pod com atalhos, status do contexto e do kubectl), botão **Início** na barra de abas, indicador ao vivo pulsando, superfícies de vidro e brilho na cor de destaque.
-- **Preferências** redesenhadas: temas em miniaturas com as cores reais, idiomas em botões, cartão Sobre com logo. **Atalhos** agrupados (Geral, Busca, Mouse) com teclas desenhadas (Ctrl no Windows/Linux).
-- **Builds do OKD** numa pasta dentro do namespace, depois dos pods: o histórico de builds (`kubectl get builds.build.openshift.io`, só leitura) com status, commit, duração e idade; abre o log do container principal do build quando o pod ainda existe; quando o cluster já removeu o pod, abre um painel com os detalhes do build (status, motivo, commit, duração) e o comando `oc describe` para copiar. Pods de deploy na mesma pasta.
-- **Produção (G5):** sem a faixa vermelha no topo; a marca PROD fica no seletor de contexto e na barra de status.
-- **Logs de build do OKD reconhecidos:** parser para buildah/docker/s2i (`STEP n/m`, camadas `-->`, `Copying blob`, `COMMIT`, push, `git clone`, `error: build error`, `ERRO:`), com passo e instrução em campos; a saída dos `RUN` vira INFO em vez de UNKNOWN; regra "Falha no build" no painel de erros. Abrir um build mostra só o container do build (sem as etapas de init).
-- **Pods já terminados** (builds concluídos, Jobs) são lidos uma vez, sem `-f`: antes o app ficava reconectando a cada 1–10 s.
-- **Refinamento visual:** escala de espaçamento, raios, sombras e tipografia em variáveis CSS; barras de rolagem finas; foco de teclado visível e animações que respeitam `prefers-reduced-motion`.
-  - Linhas de log mais fáceis de escanear: INFO/DEBUG discretos, WARN/ERROR/FATAL com etiqueta preenchida, marcador à esquerda e fundo levemente tingido; milissegundos esmaecidos; seleção com borda de destaque.
-  - Barra de níveis numa linha só (filtros de nível segmentados, grupos de ícones com separadores, Terminal); **Ao vivo / Pausado** e pausar juntos no fim da barra de cima. Presets e Tempo como botões com contador e seta.
-  - Barra lateral com guias de indentação na árvore, contadores nas pastas, estrela de favorito só ao passar o mouse; o pod fica discreto quando um container dele está selecionado.
-  - Painel direito: abas segmentadas, grupos de erro em cartões, cabeçalho da linha selecionada com ações, campos em tabela, estados vazios com ícone; botão principal desabilitado neutro.
-  - Abas com linha de destaque na aba ativa; barra de status com ponto de estado pulsando e caminho com separadores; janela estreita (≤1280 px) dá mais espaço ao log.
-- Tempo esgotado do kubectl com mensagem útil e traduzida (qual comando demorou e o que verificar: VPN/rede, login do contexto).
+- **English README** (`README.md`, with English UI screenshots in `docs/images/en/`) and a Portuguese version in `README.pt-BR.md`, linked to each other.
+- **winget:** manifests for the `wisecort.LogDeck` 1.4.0 package in `packaging/winget/` (per-user installer, depends on `Kubernetes.kubectl`), ready for the `microsoft/winget-pkgs` PR.
+- **Code signing policy** (section in the READMEs) and **privacy policy** (`PRIVACY.md` / `PRIVACY.pt-BR.md`), required to apply for free signing from the SignPath Foundation; every release's notes link to the "Code signing policy".
+- **New-version notice** (opt-in only): the welcome screen asks once whether it may notify you; if yes, the main process makes at most one anonymous GET a day to `api.github.com/repos/wisecort/LogDeck/releases/latest` (fixed URL, no credentials, no redirects, response treated as data). When a new version exists, the status bar shows "X.Y.Z available", and the modal shows the Homebrew and winget commands and the release link, with "Skip this version". LogDeck never downloads or installs anything. Toggle it in Preferences → Updates. G6, the privacy policy and the READMEs were updated.
+- **Automated winget:** the release workflow opens the "Update: wisecort.LogDeck to X.Y.Z" PR in `microsoft/winget-pkgs` (`scripts/update-winget.sh`, manifests generated by `scripts/winget-manifests.mjs` from the previous version), with no third-party actions; needs the `WINGET_TOKEN` secret. Locally: `make winget VERSION=X.Y.Z`.
+- Stable shell integration test on Windows: retypes the command when ConPTY drops the first keystrokes.
 
-## [1.3.0] — 12/10/2026
+## [1.4.0] — 2026-10-12
 
-- **Pods de build e de deploy do OKD ocultos:** pods criados por BuildConfig (`openshift.io/build.name`) e por DeploymentConfig (`openshift.io/deployer-pod-for.name`) ficam escondidos na árvore; "+ N builds/deploys do OKD" mostra todos, com a marca `build`/`deploy`, e a escolha é lembrada.
+- **New README** with a visual tour: welcome, details, errors, OKD builds, compare with previous, light theme, Preferences and Shortcuts (screenshots made with fictional data).
+- **Recent:** an × on hover removes the pod from the list (saved).
+- **Cockpit look:** welcome screen in empty tabs (logo, Pods / File / Last pod cards with shortcuts, context and kubectl status), **Home** button in the tab bar, pulsing live indicator, glass surfaces and accent-color glow.
+- Redesigned **Preferences**: themes as thumbnails with their real colors, languages as buttons, About card with logo. **Shortcuts** grouped (General, Search, Mouse) with drawn keys (Ctrl on Windows/Linux).
+- **OKD builds** in a folder inside the namespace, after the pods: the build history (`kubectl get builds.build.openshift.io`, read-only) with status, commit, duration and age; opens the log of the build's main container while the pod still exists; when the cluster has already removed the pod, opens a panel with the build details (status, reason, commit, duration) and the `oc describe` command to copy. Deployer pods in the same folder.
+- **Production (G5):** no red banner at the top; the PROD badge sits in the context picker and in the status bar.
+- **OKD build logs recognized:** parser for buildah/docker/s2i (`STEP n/m`, `-->` layers, `Copying blob`, `COMMIT`, push, `git clone`, `error: build error`, `ERRO:`), with step and instruction as fields; `RUN` output becomes INFO instead of UNKNOWN; "Build failed" rule in the errors panel. Opening a build shows only the build container (no init steps).
+- **Finished pods** (completed builds, Jobs) are read once, without `-f`: the app used to reconnect every 1–10 s.
+- **Visual polish:** spacing, radius, shadow and typography scales as CSS variables; thin scrollbars; visible keyboard focus and animations that respect `prefers-reduced-motion`.
+  - Log lines easier to scan: subdued INFO/DEBUG, WARN/ERROR/FATAL with a filled tag, left marker and lightly tinted background; dimmed milliseconds; selection with an accent border.
+  - Single-row level bar (segmented level filters, icon groups with separators, Terminal); **Live / Paused** and pause together at the end of the top bar. Presets and Time as buttons with a counter and a chevron.
+  - Sidebar with indent guides in the tree, counters on folders, favorite star only on hover; the pod is subdued when one of its containers is selected.
+  - Right panel: segmented tabs, error groups as cards, selected-line header with actions, fields as a table, empty states with an icon; neutral disabled primary button.
+  - Tabs with an accent line on the active tab; status bar with a pulsing state dot and a path with separators; narrow window (≤1280 px) gives the log more room.
+- kubectl timeout with a useful, translated message (which command took too long and what to check: VPN/network, context login).
 
-## [1.2.1] — 12/10/2026
+## [1.3.0] — 2026-10-12
 
-- Correção: o app do macOS baixado da internet aparecia como "danificado e não pode ser aberto". A assinatura estava incompleta (`identity: null`); agora o pacote inteiro é assinado ad-hoc (sem hardened runtime), e o macOS mostra o aviso normal de desenvolvedor não verificado, com "Abrir mesmo assim".
-- README: passo a passo do Homebrew (instalar, liberar a primeira abertura, atualizar, reinstalar por cima do `.dmg`, remover).
+- **OKD build and deployer pods hidden:** pods created by BuildConfig (`openshift.io/build.name`) and by DeploymentConfig (`openshift.io/deployer-pod-for.name`) are hidden in the tree; "+ N OKD builds/deploys" shows them all, tagged `build`/`deploy`, and the choice is remembered.
 
-## [1.2.0] — 12/10/2026
+## [1.2.1] — 2026-10-12
 
-- **Windows no CI completo:** testes de integração e E2E também no Windows (os fakes viram `.exe` com o Node SEA).
-- Correção no Windows: a limpeza da pasta temporária do Claude CLI não esconde mais o erro de tempo esgotado.
-- **Comparar com o anterior:** o log do container anterior (`--previous`) aparece ao lado do atual, com os mesmos filtros de nível e texto; útil para CrashLoopBackOff.
-- **Abas:** vários pods ou arquivos abertos ao mesmo tempo, cada um com seu stream rodando em segundo plano; "+" abre uma aba nova e ⌘/Ctrl+clique (ou clique do meio) num pod abre direto numa aba nova; até 8 abas.
-- **Tradução completa:** mensagens de erro do kubectl, títulos dos grupos de erro do catálogo e respostas da IA seguem o idioma escolhido (pt-BR, pt-PT, inglês, espanhol); a "Estimativa da IA" é lida em qualquer um deles.
-- **Pods recentes:** os últimos 5 pods abertos aparecem em "Recentes" na barra lateral e reabrem no mesmo container; se o pod foi recriado, o app avisa e abre o namespace.
+- Fix: the macOS app downloaded from the internet showed as "damaged and can't be opened". The signature was incomplete (`identity: null`); now the whole bundle is ad-hoc signed (no hardened runtime), and macOS shows the normal unidentified-developer warning, with "Open Anyway".
+- README: Homebrew step by step (install, allow the first launch, upgrade, reinstall over the `.dmg`, uninstall).
 
-## [1.1.0] — 12/10/2026
+## [1.2.0] — 2026-10-12
 
-### Multiplataforma
+- **Full Windows CI:** integration and E2E tests on Windows too (the fakes become `.exe` files with Node SEA).
+- Windows fix: cleaning up the Claude CLI temporary folder no longer hides the timeout error.
+- **Compare with previous:** the previous container's log (`--previous`) shows next to the current one, with the same level and text filters; useful for CrashLoopBackOff.
+- **Tabs:** several pods or files open at once, each with its stream running in the background; "+" opens a new tab and ⌘/Ctrl+click (or middle click) on a pod opens it straight in a new tab; up to 8 tabs.
+- **Full translation:** kubectl error messages, catalog error group titles and AI answers follow the chosen language (pt-BR, pt-PT, English, Spanish); the "AI estimate" is read in any of them.
+- **Recent pods:** the last 5 opened pods show under "Recent" in the sidebar and reopen on the same container; if the pod was recreated, the app says so and opens the namespace.
 
-- **Linux** (AppImage, `.deb`, `.rpm`, x64), **Windows** (instalador `.exe`, x64) e **macOS Intel** (`.dmg`/`.zip` x64), além do Apple Silicon.
-- Código de plataforma isolado em `src/platform/` (G10 atualizado e verificado pelo guardrails): PATH extra de cada sistema, busca de `.exe` no Windows (nunca `.cmd`/`.bat`, que exigiriam shell), dica de instalação do kubectl por sistema.
-- Chaves de IA no cofre de cada sistema: Keychain (macOS), DPAPI (Windows), GNOME Keyring/KWallet (Linux) via `safeStorage`; no Linux sem cofre a chave não é gravada.
-- Atalhos com Ctrl no Windows e no Linux (rótulos trocam ⌘ por Ctrl); sem barra de menu fora do macOS; ícone na janela e na barra de tarefas.
-- CI em macOS, Linux (xvfb) e Windows; `.gitattributes` mantém LF (os logs de teste dependem disso).
-- Release automática: tag `v*` gera os pacotes nos três sistemas e anexa à Release com os checksums.
+## [1.1.0] — 2026-10-12
+
+### Cross-platform
+
+- **Linux** (AppImage, `.deb`, `.rpm`, x64), **Windows** (`.exe` installer, x64) and **Intel macOS** (`.dmg`/`.zip` x64), in addition to Apple Silicon.
+- Platform code isolated in `src/platform/` (G10 updated and checked by guardrails): extra PATH per OS, `.exe` lookup on Windows (never `.cmd`/`.bat`, which would need a shell), kubectl install hint per OS.
+- AI keys in each OS's secret store: Keychain (macOS), DPAPI (Windows), GNOME Keyring/KWallet (Linux) via `safeStorage`; on Linux without a secret store the key is not saved.
+- Ctrl shortcuts on Windows and Linux (labels swap ⌘ for Ctrl); no menu bar outside macOS; icon on the window and taskbar.
+- CI on macOS, Linux (xvfb) and Windows; `.gitattributes` keeps LF (the test logs depend on it).
+- Automated release: a `v*` tag builds the packages on the three OSes and attaches them to the Release with checksums.
 - ADR 0003.
-- Homebrew: `brew install --cask wisecort/tap/logdeck` (tap em github.com/wisecort/homebrew-tap, instala o `kubectl` junto); `make tap VERSION=x.y.z` atualiza o cask a partir dos checksums da release.
+- Homebrew: `brew install --cask wisecort/tap/logdeck` (tap at github.com/wisecort/homebrew-tap, installs `kubectl` too); `make tap VERSION=x.y.z` updates the cask from the release checksums.
 
-## [1.0.0] — 12/10/2026
+## [1.0.0] — 2026-10-12
 
-Primeira versão pública (macOS, Apple Silicon). As seções abaixo registram cada fase do desenvolvimento.
+First public version (macOS, Apple Silicon). The sections below record each development phase.
 
-### Fase 1 — Governança
+### Phase 1 — Governance
 
-- Identidade do app: LogDeck (`package.json`, bundle id `io.github.wisecort.logdeck`), licença MIT..
-- `SPEC.md` com F1–F7, P1–P5, requisitos não funcionais e fora de escopo.
-- `GUARDRAILS.md` (G1–G10 e como cada regra é verificada), `AGENTS.md`, `CLAUDE.md`.
-- ADR 0001: greenfield em Electron + TypeScript (código do Logui indisponível).
+- App identity: LogDeck (`package.json`, bundle id `io.github.wisecort.logdeck`), MIT license.
+- `SPEC.md` with F1–F7, P1–P5, non-functional requirements and out of scope.
+- `GUARDRAILS.md` (G1–G10 and how each rule is checked), `AGENTS.md`, `CLAUDE.md`.
+- ADR 0001: greenfield in Electron + TypeScript (Logui source unavailable).
 - `docs/backlog-mvp2.md`.
 
-### Fase 2 — Proteções
+### Phase 2 — Safeguards
 
-- Esqueleto do app Electron + React + Vite (janela, menu e bundle como LogDeck; renderer com sandbox, contextIsolation e CSP).
-- `scripts/guardrails.mjs` (G1–G10, sem dependências) com testes; `--hook` para o Claude Code e allowlist com justificativa obrigatória.
-- `scripts/harness.sh` (10 etapas, ✅/❌/⚠️), `Makefile`, `.github/workflows/ci.yml` (macos-latest), `.pre-commit-config.yaml`.
-- `.claude/settings.json` (deny list + hook) e subagentes `parser-author`, `security-reviewer`, `test-runner`.
-- `docs/dependencies.md` com motivo e licença de cada dependência.
-- Bundle passa a se chamar `LogDeck.app` (sem `executableName`).
+- Electron + React + Vite app skeleton (window, menu and bundle as LogDeck; renderer with sandbox, contextIsolation and CSP).
+- `scripts/guardrails.mjs` (G1–G10, no dependencies) with tests; `--hook` for Claude Code and an allowlist with mandatory justification.
+- `scripts/harness.sh` (10 steps, ✅/❌/⚠️), `Makefile`, `.github/workflows/ci.yml` (macos-latest), `.pre-commit-config.yaml`.
+- `.claude/settings.json` (deny list + hook) and the `parser-author`, `security-reviewer`, `test-runner` subagents.
+- `docs/dependencies.md` with the reason and license of each dependency.
+- The bundle is now named `LogDeck.app` (no `executableName`).
 
-### Fase 3 — Fixtures e testes vermelhos
+### Phase 3 — Fixtures and red tests
 
-- Fixtures anonimizadas (G8) de P1–P4: access/error do Apache, PHP-FPM, Laravel, JSON (Monolog/pino/zap), Nginx, Java, startup e um log realista de pod OKD com `--timestamps` (475 linhas, gerado de forma determinística).
-- kubectl fake (`tests/bin/kubectl`): contextos, namespaces, pods, `logs -f` com atraso, `--tail`/`--since-time`/`--previous`, erro de autenticação, queda de conexão, exec sem TTY; recusa verbos de escrita (exit 99). Contrato coberto por 15 testes de integração.
-- Testes unitários de parsers (7), classify, buffer, search (com ReDoS), signatures, args, contexts e redact, contra stubs que lançam "not implemented".
-- Guardrails: hosts em fixtures não confundem mais pacotes Java (`java.net.…`).
-- SPEC: heurística com token de nível explícito e regras de continuação de stack trace do Laravel/Java.
+- Anonymized fixtures (G8) for P1–P4: Apache access/error, PHP-FPM, Laravel, JSON (Monolog/pino/zap), Nginx, Java, startup and a realistic OKD pod log with `--timestamps` (475 lines, generated deterministically).
+- Fake kubectl (`tests/bin/kubectl`): contexts, namespaces, pods, `logs -f` with delay, `--tail`/`--since-time`/`--previous`, auth error, dropped connection, exec without TTY; refuses write verbs (exit 99). Contract covered by 15 integration tests.
+- Unit tests for parsers (7), classify, buffer, search (with ReDoS), signatures, args, contexts and redact, against stubs that throw "not implemented".
+- Guardrails: hosts in fixtures are no longer mistaken for Java packages (`java.net.…`).
+- SPEC: heuristic with an explicit level token and stack trace continuation rules for Laravel/Java.
 
-### Fase 4 — Núcleo de logs
+### Phase 4 — Log core
 
-- 7 parsers plugáveis (JSON/Monolog/pino/zap, Laravel, access Apache/Nginx, error Apache 2.2/2.4, PHP-FPM, error Nginx, heurística) com ordem de tentativa; UNKNOWN em 0,56% das fixtures (meta < 5%).
-- `classify`: prefixo `--timestamps` (RFC3339Nano), stack traces multiline, horário do log × k8s com aviso de divergência > 2 s; horário de ingestão nunca exibido (P2).
-- `buffer`: ring buffer de 50k (1–500k) com descarte das antigas, contadores por nível e busca por `seq`.
-- `search`: texto (padrão) e regex, exclusões, destaque sem HTML; regex com quantificador aninhado recusada e regex patológica abortada em 250 ms num worker descartável (F5.4).
-- `signatures`: catálogo do F6 (Timeout Apache → PHP-FPM, Permissão no startup, etc.) e agrupamento genérico por mensagem normalizada.
-- Cobertura de `src/logs/`: 99% linhas, 96% branches.
+- 7 pluggable parsers (JSON/Monolog/pino/zap, Laravel, Apache/Nginx access, Apache 2.2/2.4 error, PHP-FPM, Nginx error, heuristic) with a try order; UNKNOWN in 0.56% of the fixtures (target < 5%).
+- `classify`: `--timestamps` prefix (RFC3339Nano), multiline stack traces, log time × k8s time with a warning when they differ by > 2 s; ingestion time never shown (P2).
+- `buffer`: 50k ring buffer (1–500k) dropping the oldest lines, per-level counters and lookup by `seq`.
+- `search`: text (default) and regex, exclusions, highlighting without HTML; regex with nested quantifiers refused and pathological regex aborted at 250 ms in a disposable worker (F5.4).
+- `signatures`: the F6 catalog (Apache → PHP-FPM timeout, startup permission, etc.) and generic grouping by normalized message.
+- `src/logs/` coverage: 99% lines, 96% branches.
 
-### Fase 5 — Kubernetes
+### Phase 5 — Kubernetes
 
-- `args.ts`: builders e portão final `assertReadOnly` (allowlist de verbos, recursos e flags; `--context` obrigatório); nomes DNS-1123; contexto validado contra `get-contexts`.
-- `contexts.ts`: contextos só via `config get-contexts`, sem credenciais; aviso de produção (`prod`/`prd`).
-- `kubectl.ts`: único `spawn` (sem shell), PATH com Homebrew para apps abertos pelo Finder, mensagens acionáveis (kubectl ausente, sessão expirada, RBAC, cluster inacessível).
-- `pods.ts` e `service.ts`: navegação contexto → namespace → pod → container com status efetivo (CrashLoopBackOff, Init:…, Completed), restarts e fallback para o namespace padrão quando o RBAC não permite listar (OKD).
-- `stream.ts`: log ao vivo com lotes de 100 ms, reconexão 1/2/5/10 s com `--since-time` e sem linhas duplicadas, `--previous`, erros não recuperáveis sem retry, SIGTERM→SIGKILL no `stop`; `StreamRegistry` encerra tudo ao fechar janela ou app.
-- IPC tipado (`src/shared/ipc.ts`) e API do preload; o renderer não monta argumentos do kubectl e só a janela principal pode chamar.
-- E2E com kubectl fake: navegação, rejeição de entrada maliciosa vinda do renderer e nenhum kubectl órfão após fechar o app.
+- `args.ts`: builders and the final `assertReadOnly` gate (allowlist of verbs, resources and flags; `--context` required); DNS-1123 names; context checked against `get-contexts`.
+- `contexts.ts`: contexts only through `config get-contexts`, no credentials; production warning (`prod`/`prd`).
+- `kubectl.ts`: the only `spawn` (no shell), PATH with Homebrew for apps opened from Finder, actionable messages (kubectl missing, session expired, RBAC, cluster unreachable).
+- `pods.ts` and `service.ts`: context → namespace → pod → container navigation with effective status (CrashLoopBackOff, Init:…, Completed), restarts and fallback to the default namespace when RBAC doesn't allow listing (OKD).
+- `stream.ts`: live log in 100 ms batches, 1/2/5/10 s reconnect with `--since-time` and no duplicate lines, `--previous`, unrecoverable errors without retry, SIGTERM→SIGKILL on `stop`; `StreamRegistry` ends everything when the window or app closes.
+- Typed IPC (`src/shared/ipc.ts`) and the preload API; the renderer doesn't build kubectl arguments and only the main window can call.
+- E2E with fake kubectl: navigation, rejection of malicious input from the renderer and no orphan kubectl after closing the app.
 
-### Fase 6 — Interface
+### Phase 6 — Interface
 
-- Interface React: navegação contexto → namespace → pod → container, faixa vermelha de produção (G5), status Live/Reconectando/Pausado/Encerrado/Erro, opções `tail`/`desde`/`--previous`, pausa sem perder linhas, aviso de linhas descartadas.
-- F4: filtro por nível com contadores (clique alterna, ⌥+clique isola).
-- F5: busca texto/regex com ⌘F, ⌘G/⇧⌘G, diferenciar maiúsculas, exclusões e destaque só com texto (sem HTML); regex em Blob Worker com limite de 250 ms.
-- P3: presets de exclusão por contexto+namespace salvos em `userData` (“Ocultar health checks” ativo por padrão) e colapso de linhas repetidas (×121 no fixture).
-- F6: painel de erros e timeouts com contagem, primeira/última ocorrência, filtro por grupo e seleção (para o F7).
-- P5: Pod Shell com `node-pty` + `xterm.js`, resize repassado ao PTY, confirmação nativa em produção feita no processo main; shells encerrados ao fechar janela/app.
-- ANSI removido antes do parsing (F3.6); lista virtualizada com seguimento do fim.
-- Novas dependências: `node-pty`, `@xterm/xterm`, `@xterm/addon-fit`, `@tanstack/react-virtual` (ver `docs/dependencies.md`); postinstall corrige o bit de execução do `spawn-helper` do node-pty.
-- E2E da UI: fluxo principal (ERROR → FPM → “Timeout Apache → PHP-FPM”), P3, regex catastrófica, faixa de produção, `--previous` e shell com TTY.
-- Arquitetura: núcleo de logs na thread da UI (SPEC §2 atualizado); painel F6 usa o relógio do kubectl.
-- Correção: o E2E `app.spec` abria o app sem o kubectl fake e, com a UI nova, rodou `kubectl version --client` e `config get-contexts` reais (leitura local do kubeconfig, sem contato com cluster). Todos os E2E agora usam kubectl e kubeconfig fake, com rede de segurança no `playwright.config.ts`.
+- React UI: context → namespace → pod → container navigation, red production banner (G5), Live/Reconnecting/Paused/Ended/Error status, `tail`/`since`/`--previous` options, pause without losing lines, dropped-lines warning.
+- F4: level filter with counters (click toggles, ⌥+click isolates).
+- F5: text/regex search with ⌘F, ⌘G/⇧⌘G, case sensitivity, exclusions and text-only highlighting (no HTML); regex in a Blob Worker with a 250 ms limit.
+- P3: exclusion presets per context+namespace saved in `userData` ("Hide health checks" on by default) and collapsing of repeated lines (×121 in the fixture).
+- F6: errors and timeouts panel with count, first/last occurrence, filter by group and selection (for F7).
+- P5: Pod Shell with `node-pty` + `xterm.js`, resize forwarded to the PTY, native confirmation in production done in the main process; shells closed when the window/app closes.
+- ANSI stripped before parsing (F3.6); virtualized list that follows the end.
+- New dependencies: `node-pty`, `@xterm/xterm`, `@xterm/addon-fit`, `@tanstack/react-virtual` (see `docs/dependencies.md`); postinstall fixes the execute bit of node-pty's `spawn-helper`.
+- UI E2E: main flow (ERROR → FPM → "Apache → PHP-FPM timeout"), P3, catastrophic regex, production banner, `--previous` and shell with TTY.
+- Architecture: log core on the UI thread (SPEC §2 updated); the F6 panel uses the kubectl clock.
+- Fix: the `app.spec` E2E opened the app without the fake kubectl and, with the new UI, ran the real `kubectl version --client` and `config get-contexts` (local kubeconfig read, no cluster contact). All E2E now use a fake kubectl and kubeconfig, with a safety net in `playwright.config.ts`.
 
-### Fase 7 — IA ("Explicar esses erros")
+### Phase 7 — AI ("Explain these errors")
 
-- Três provedores no processo main (ADR 0002): **Claude Code CLI** (assinatura; `--tools ""`, `--no-session-persistence`, `--strict-mcp-config`, `--permission-mode dontAsk`, stdin, `cwd` temporário vazio), **API da Anthropic** (`@anthropic-ai/sdk`, `claude-opus-5-5`, `effort: medium`, `fallbacks: "default"`, tratamento de recusa) e **API compatível com OpenAI** (Ollama, LM Studio, DeepSeek, OpenRouter, Groq, personalizado; HTTPS fora de localhost).
-- Chaves no Keychain do macOS (`/usr/bin/security`), nunca no renderer; "Testar provedor" sem logs.
-- `redact.ts` (JWT, Bearer, senhas, segredos, AWS/GCP, chaves privadas, credenciais em URL, e-mails, IPs internos opcionais), refeito no main; payload de até 200 linhas / 32 KB com as linhas mais recentes de cada grupo.
-- Preview obrigatório com destino; envio único por id de preview (expira em 10 min); log delimitado em `<logs>` e declarado como dado no prompt de sistema.
-- Resposta exibida como texto: comandos de escrita sugeridos ficam riscados, com aviso e sem botão de copiar; diffs só podem ser salvos em arquivo local escolhido pelo usuário.
-- Guardrails: rede e SDK de IA só em `src/ai/providers/`; bloqueio de `bypassPermissions`/`acceptEdits`/`--dangerously-*`/`--tools default`; exceção justificada para a lista de verbos do detector.
-- Testes com `claude`, `security` e servidores HTTP fakes; testes manuais autorizados com o Claude Code real e a API da Anthropic (texto fictício do fixture) passaram.
-- Harness 100% verde: 512 unitários, 92 de integração, 12 E2E; cobertura de `redact.ts` 100%.
+- Three providers in the main process (ADR 0002): **Claude Code CLI** (subscription; `--tools ""`, `--no-session-persistence`, `--strict-mcp-config`, `--permission-mode dontAsk`, stdin, empty temporary `cwd`), **Anthropic API** (`@anthropic-ai/sdk`, `claude-opus-5-5`, `effort: medium`, `fallbacks: "default"`, refusal handling) and **OpenAI-compatible API** (Ollama, LM Studio, DeepSeek, OpenRouter, Groq, custom; HTTPS outside localhost).
+- Keys in the macOS Keychain (`/usr/bin/security`), never in the renderer; "Test provider" without logs.
+- `redact.ts` (JWT, Bearer, passwords, secrets, AWS/GCP, private keys, credentials in URLs, emails, optional internal IPs), redone in the main process; payload of up to 200 lines / 32 KB with the most recent lines of each group.
+- Mandatory preview with the destination; single send per preview id (expires in 10 min); log delimited in `<logs>` and declared as data in the system prompt.
+- Answer shown as text: suggested write commands are struck through, with a warning and no copy button; diffs can only be saved to a local file chosen by the user.
+- Guardrails: network and AI SDK only in `src/ai/providers/`; `bypassPermissions`/`acceptEdits`/`--dangerously-*`/`--tools default` blocked; justified exception for the detector's verb list.
+- Tests with fake `claude`, `security` and HTTP servers; authorized manual tests with the real Claude Code and the Anthropic API (fictional fixture text) passed.
+- Harness 100% green: 512 unit, 92 integration, 12 E2E; `redact.ts` coverage 100%.
 
-### Fase 6.5 — UI/UX (referência: vídeo do Logui)
+### Phase 6.5 — UI/UX (reference: Logui video)
 
-- Barra lateral em árvore (contextos → namespaces → pods → containers) com status, favoritos, linhas marcadas, shells e seletor de tema.
-- Seis temas: Escuro (padrão), Meia-noite, Claro, Sistema, Solarizado e Alto contraste.
-- Barra de cima enxuta (busca com contador e `Aa`/`.*`, Excluir, Presets, Tempo, Limpar filtros); pílulas de nível com "Todos"; ações por ícone; pílula Seguindo/Pausado com pausa automática.
-- Histograma de volume por nível com filtro por intervalo (arrastar); linhas de uma linha com painel Detalhes; exportar linhas filtradas.
-- Aba IA no painel direito: pergunta livre, perguntas de acompanhamento, contexto por linha/grupos/linhas visíveis, "Estimativa da IA"; diff com números de linha e "Copiar diff".
-- Barra de status com estado, localização, contagem e provedor de IA; atalhos (`?`, `Esc`).
-- Correção: o histograma e o filtro de tempo usam o relógio do kubectl (o Laravel em UTC−3 esticava o eixo).
-- E2E: 16 cenários, incluindo detalhes, histograma, temas, marcadas, favoritos e IA com acompanhamento.
+- Tree sidebar (contexts → namespaces → pods → containers) with status, favorites, bookmarked lines, shells and theme picker.
+- Six themes: Dark (default), Midnight, Light, System, Solarized and High contrast.
+- Lean top bar (search with counter and `Aa`/`.*`, Exclude, Presets, Time, Clear filters); level pills with "All"; icon actions; Following/Paused pill with auto-pause.
+- Volume histogram per level with range filter (drag); single-line rows with a Details panel; export filtered lines.
+- AI tab in the right panel: free question, follow-up questions, context by line/groups/visible lines, "AI estimate"; diff with line numbers and "Copy diff".
+- Status bar with state, location, count and AI provider; shortcuts (`?`, `Esc`).
+- Fix: the histogram and time filter use the kubectl clock (Laravel in UTC−3 stretched the axis).
+- E2E: 16 scenarios, including details, histogram, themes, bookmarks, favorites and AI with follow-up.
 
-### Fase 6.6 — Contextos e arquivo
+### Phase 6.6 — Contexts and files
 
-- Seletor de contexto único no topo da barra lateral (lembra o último); "Gerenciar contextos…" oculta contextos no LogDeck e copia o comando `kubectl config delete-context` para o usuário rodar; nomes `projeto/host:porta/usuário` aparecem encurtados.
-- Procurar pod ou namespace na árvore.
-- "Copiar para chamado" na aba Detalhes (pod, horários em UTC, nível e linha, com segredos mascarados); cópias passam pelo main (`clipboard:copy-text`), que funciona sem foco na janela.
-- Faixa de produção (G5) mais fina, só com "PRODUÇÃO".
-- Abrir log de arquivo (⌘O, botão ou arrastar para a janela), com limite de 200 MB e recusa de arquivo vazio ou binário.
-- Commits sem o trailer `Co-Authored-By` (histórico local reescrito antes do primeiro push).
+- Single context picker at the top of the sidebar (remembers the last one); "Manage contexts…" hides contexts in LogDeck and copies the `kubectl config delete-context` command for the user to run; `project/host:port/user` names are shortened.
+- Search for a pod or namespace in the tree.
+- "Copy for ticket" in the Details tab (pod, times in UTC, level and line, with secrets masked); copies go through the main process (`clipboard:copy-text`), which works without window focus.
+- Thinner production banner (G5), with only "PRODUCTION".
+- Open a log file (⌘O, button or drag onto the window), with a 200 MB limit and refusal of empty or binary files.
+- Commits without the `Co-Authored-By` trailer (local history rewritten before the first push).
 
-### Fase 6.7 — Preferências, temas e idiomas
+### Phase 6.7 — Preferences, themes and languages
 
-- Tela de Preferências (tema, idioma, Sobre) no rodapé da barra lateral; o seletor de tema saiu do rodapé.
-- Oito temas novos: Dracula, Nord, Monokai, Gruvbox, One Dark, Tokyo Night, Catppuccin Mocha e GitHub claro.
-- Interface em pt-BR, pt-PT, inglês e espanhol (dicionários com as mesmas chaves e placeholders, verificados por teste); menu nativo traduzido via `app:set-language`.
-- Créditos: "Feito por Matheus Corteletti — Wise" em Preferências → Sobre, no painel Sobre do macOS e no `package.json`.
-- "Seguindo" virou "Ao vivo"; botão "Terminal" com texto; ícone duplicado de "Ir para o fim" removido e exportar com ícone próprio; status "Conectado".
-- Renomear contextos só no LogDeck (apelido) e nomes curtos para EKS (`cluster (EKS · região)`, sem número da conta) e GKE.
-- Temas: saem Solarizado, Gruvbox, Monokai, One Dark e GitHub claro (parecido com o Claro); entra Matrix (estilo hacker). Quem usava um tema removido volta ao Escuro.
-- Correções: "Gerenciar contextos" abre por cima da janela inteira (portal) com nome, apelido e botões visíveis; a seção "Sobre" das Preferências mostra uma informação por linha.- Menu do macOS enxuto (LogDeck, Editar, Janela), sem Visualizar, Ditado e Emojis.
-- Sobre: botões GitHub e LinkedIn (endereços fixos no main), repositório clicável, nome do autor uma vez só, sem "Inspirado no Logui"; licença e documentos em nome de Matheus Corteletti.
-- Tema Matrix removido. Exportar com ícone de download; "Ir para o topo" virou pausar/retomar.- Ícone do app (proposta "Deck": cartões empilhados com linhas de log e a linha de erro em destaque), com mais duas propostas em `build/icon-src/` (Lente e Pulso); `make icon` gera `build/icon.png` e `build/icon.icns` só com ferramentas do macOS (Quick Look, sips, iconutil). No `make dev`, o Dock mostra o mesmo ícone.
-- README sem a linha "Inspirado no Logui".
-- Ícone: cantos transparentes (o Quick Look desenhava sobre branco; `scripts/icon-mask.mjs` recorta o quadrado arredondado da grade da Apple) e Deck redesenhado com cartão e linhas maiores.
+- Preferences screen (theme, language, About) in the sidebar footer; the theme picker left the footer.
+- Eight new themes: Dracula, Nord, Monokai, Gruvbox, One Dark, Tokyo Night, Catppuccin Mocha and GitHub light.
+- UI in pt-BR, pt-PT, English and Spanish (dictionaries with the same keys and placeholders, checked by tests); native menu translated via `app:set-language`.
+- Credits: "Made by Matheus Corteletti — Wise" in Preferences → About, in the macOS About panel and in `package.json`.
+- "Following" became "Live"; "Terminal" button with text; duplicate "Go to end" icon removed and export with its own icon; "Connected" status.
+- Rename contexts only in LogDeck (alias) and short names for EKS (`cluster (EKS · region)`, no account number) and GKE.
+- Themes: Solarized, Gruvbox, Monokai, One Dark and GitHub light (too close to Light) are removed; Matrix (hacker style) is added. Anyone using a removed theme goes back to Dark.
+- Fixes: "Manage contexts" opens over the whole window (portal) with name, alias and buttons visible; the Preferences "About" section shows one item per line.
+- Lean macOS menu (LogDeck, Edit, Window), without View, Dictation and Emoji.
+- About: GitHub and LinkedIn buttons (fixed URLs in the main process), clickable repository, author name only once, no "Inspired by Logui"; license and documents in Matheus Corteletti's name.
+- Matrix theme removed. Export with a download icon; "Go to top" became pause/resume.
+- App icon ("Deck" concept: stacked cards with log lines and the error line highlighted), with two more concepts in `build/icon-src/` (Lens and Pulse); `make icon` builds `build/icon.png` and `build/icon.icns` with macOS tools only (Quick Look, sips, iconutil). In `make dev`, the Dock shows the same icon.
+- README without the "Inspired by Logui" line.
+- Icon: transparent corners (Quick Look drew over white; `scripts/icon-mask.mjs` cuts the rounded square from Apple's grid) and Deck redesigned with a bigger card and lines.
 
-### Lançamento 1.0.0
+### 1.0.0 release
 
-- Versão 1.0.0; pacotes `.dmg` e `.zip` para Apple Silicon (`npm run release:mac`), sem assinatura da Apple.
-- README com instalação, uso, atalhos, IA, segurança e build a partir do código.
-- Correção (achada pelo primeiro CI no GitHub): os popovers Presets e Tempo fecham ao clicar fora ou com Esc; antes ficavam abertos e cobriam a barra de ações em janelas menores.
+- Version 1.0.0; `.dmg` and `.zip` packages for Apple Silicon (`npm run release:mac`), without Apple signing.
+- README with installation, usage, shortcuts, AI, security and build from source.
+- Fix (found by the first CI run on GitHub): the Presets and Time popovers close on outside click or Esc; before, they stayed open and covered the action bar in smaller windows.
