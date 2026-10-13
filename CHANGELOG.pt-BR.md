@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+## [1.6.1] — 13/10/2026
+
 - Correção: no Linux, o `.deb`/`.rpm` mostrava uma engrenagem genérica no lugar do ícone do LogDeck (GNOME e outros ambientes). O pacote agora leva o ícone nos tamanhos padrão (16 a 512 px, `build/icons/`, gerados pelo `make icon`), e a descrição do atalho está em inglês e não diz mais só "macOS".
 - O **Copiar com detalhes** segue o "Mascarar dados sensíveis": esconde também o nome do contexto (endereço do cluster e usuário) e os IPs internos. Correção: o "Copiado" agora volta depois de 2 s em vez de ficar preso.
 
