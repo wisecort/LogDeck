@@ -7,7 +7,7 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 ## [Unreleased]
 
 - **No kubectl? The welcome screen says how to install it:** a highlighted card with the install command for the OS (winget, brew, snap), a **Copy** button and **Check again**, which finds kubectl without restarting the app; meanwhile log files can already be opened. README lists how to install `oc` too.
-- An empty tab's "New tab" label no longer uses the monospace font of pod and file names.
+- Home is visible: the Home button is lit while the active tab shows the home screen (as it does at startup), and empty tabs are called "Home" instead of "New tab", in the interface font (not the monospace one of pod and file names).
 - Fix: a missing login plugin (`oc`, `aws`, `gke-gcloud-auth-plugin`, `kubelogin`…) showed "Resource not found (the pod may have been removed)". It now names the plugin and says to install it or check the PATH.
 
 - **CHANGELOG in English** (`CHANGELOG.md`), with the Portuguese version in `CHANGELOG.pt-BR.md`.

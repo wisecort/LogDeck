@@ -124,7 +124,7 @@ test('tabs: two pods stream side by side, switch, close and add a new one', asyn
 
   await win.getByRole('button', { name: 'Nova aba', exact: true }).click()
   await expect(tabs).toHaveCount(2)
-  await expect(tabList.getByRole('tab', { selected: true })).toContainText('Nova aba')
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('Início')
   await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
 })
 
@@ -202,12 +202,18 @@ test('OKD builds folder: Build history after the pods; log while the pod exists,
 })
 
 test('welcome screen on empty tabs and the Home button brings it back', async () => {
+  const home = win.getByRole('button', { name: 'Início', exact: true })
   await expect(win.getByTestId('welcome')).toBeVisible()
+  // The app opens on the home screen: the Home button is lit and the empty tab is called "Início".
+  await expect(home).toHaveAttribute('aria-pressed', 'true')
+  await expect(win.getByRole('tab', { selected: true })).toHaveText('Início')
   await expect(win.getByRole('tab', { name: 'Erros (0)' })).toHaveCount(0)
   await openWebPod(win)
   await expect(win.getByTestId('welcome')).toHaveCount(0)
-  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await expect(home).toHaveAttribute('aria-pressed', 'false')
+  await home.click()
   await expect(win.getByTestId('welcome')).toBeVisible()
+  await expect(home).toHaveAttribute('aria-pressed', 'true')
   await expect(win.getByTestId('stream-status')).toContainText('Sem log aberto')
   // the last pod card reopens it
   await win.getByTestId('welcome').getByRole('button', { name: /Último pod/ }).click()

@@ -285,7 +285,6 @@ export const es: Record<MessageKey, string> = {
   'tabs.label': 'Pestañas',
   'tabs.home': 'Inicio',
   'tabs.homeHint': 'Volver a la pantalla inicial en esta pestaña (detiene el log)',
-  'tabs.new': 'Nueva pestaña',
   'tabs.add': 'Nueva pestaña',
   'tabs.addHint': 'Nueva pestaña (⌘-clic en un pod también la abre en una pestaña nueva)',
   'tabs.close': 'Cerrar pestaña {name}',

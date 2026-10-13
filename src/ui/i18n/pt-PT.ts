@@ -123,7 +123,6 @@ export const ptPT: Record<MessageKey, string> = {
   'tabs.home': 'Início',
   'tabs.homeHint': 'Voltar ao ecrã inicial neste separador (para o log)',
   'tabs.label': 'Separadores',
-  'tabs.new': 'Novo separador',
   'tabs.add': 'Novo separador',
   'tabs.addHint': 'Novo separador (⌘-clique num pod também abre num novo separador)',
   'tabs.close': 'Fechar separador {name}',
