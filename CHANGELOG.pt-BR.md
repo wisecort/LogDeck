@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- O **Copiar com detalhes** segue o "Mascarar dados sensíveis": esconde também o nome do contexto (endereço do cluster e usuário) e os IPs internos. Correção: o "Copiado" agora volta depois de 2 s em vez de ficar preso.
+
 ## [1.6.0] — 13/10/2026
 
 - **Pacote da Microsoft Store (appx/MSIX):** `npm run release:store` gera o pacote (`build.appx` com a identidade do Partner Center, logos da Store em `build/appx/` feitos por `scripts/build-appx-assets.sh`, que o `make icon` também roda). O CI gera o pacote em todo PR e em cada release como artefato do workflow (nunca como arquivo da release: a Store assina na publicação). Passos de teste e envio em `docs/microsoft-store.md`.
