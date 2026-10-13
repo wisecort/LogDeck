@@ -258,11 +258,11 @@ test('pod search filters the tree and opens matching namespaces', async () => {
   await expect(navTree(win).getByRole('button', { name: /portal-worker/ })).toHaveCount(0)
 })
 
-test('copy for ticket: pod, UTC times, level and the line', async () => {
+test('copy with details: pod, UTC times, level and the line', async () => {
   await openWebPod(win)
   await win.getByLabel('Buscar').fill('AH01075')
   await win.getByTestId('log-row').first().click()
-  await win.getByRole('button', { name: 'Copiar para chamado' }).click()
+  await win.getByRole('button', { name: 'Copiar com detalhes' }).click()
   const text = await app.evaluate(({ clipboard }) => clipboard.readText())
   expect(text).toContain('Pod: portal-hml / portal-web-7d9f8c6b5-x2k4p / httpd')
   expect(text).toMatch(/Horário \(kubectl\): 2026-10-09 \d\d:\d\d:\d\d\.\d{3} UTC/)

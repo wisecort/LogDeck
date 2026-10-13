@@ -43,7 +43,7 @@ The home screen shows the current context, the kubectl version and shortcuts to 
 
 ### Details for any line
 
-Click a line to see the log and kubectl timestamps, recognized fields, pretty-printed JSON and the stack trace. **Copy for ticket** builds a ready-to-paste text with the pod, UTC timestamps, level and the line, with passwords and tokens masked.
+Click a line to see the log and kubectl timestamps, recognized fields, pretty-printed JSON and the stack trace. **Copy with details** builds a ready-to-paste text with the pod, UTC timestamps, level and the line, with passwords and tokens masked.
 
 ![Details of an error line](docs/images/en/details.png)
 
@@ -85,7 +85,7 @@ Nine themes (Dark, Midnight, Light, System, High contrast, Dracula, Nord, Tokyo 
 - **Colored levels** (TRACE to FATAL) for JSON, Laravel, Apache, Nginx, PHP-FPM, Java, OKD builds (buildah/docker/s2i) and plain text; stack traces stay with the line they belong to.
 - **Search** by text or regex (protected against runaway regexes), **exclusions** and per-namespace presets, such as hiding health checks.
 - **Volume histogram**: drag across the bars to see only that time range.
-- **Errors and timeouts panel** with counts and time ranges, and **line details** with **Copy for ticket**.
+- **Errors and timeouts panel** with counts and time ranges, and **line details** with **Copy with details**.
 - **Tabs**, **recent pods** (with × to remove them from the list) and **Compare with previous** (`--previous`).
 - **OKD builds**: history, the build container's log and details when the pod is already gone.
 - **Terminal in the container**, opened only when you click.
@@ -155,7 +155,7 @@ All files are on the [Releases](https://github.com/wisecort/LogDeck/releases) pa
 2. **Open a namespace** and click a pod (green dot: running; red: in trouble; ↻ = restarts). If the pod has more than one container, pick the container. ⌘-click opens it in a new tab.
 3. **Follow the log live.** Scrolling up or clicking a line pauses the view; **Live** jumps back to the end.
 4. **Filter:** levels (⌥+click shows only one), search (⌘F, `Aa`, `.*`), exclusions and presets, **Time** (tail, since when, `--previous`) and the histogram.
-5. **Investigate:** the **Errors** panel, line **Details**, **Copy for ticket**, **Compare with previous** and the container **Terminal**.
+5. **Investigate:** the **Errors** panel, line **Details**, **Copy with details**, **Compare with previous** and the container **Terminal**.
 6. **On OKD:** open the **Builds and deploys** folder and click a build to see its log.
 7. **Go back home** with the house icon to the left of the tabs.
 

@@ -1,4 +1,4 @@
-// Copying one log line from Details. "Copiar para chamado": plain text to paste into a ticket, with secrets
+// Copying one log line from Details. "Copiar com detalhes": plain text to paste into a ticket or chat, with secrets
 // masked (same rules as the AI redaction) and internal IPs kept. "Copiar": the line itself, optionally masked.
 import { redact } from '../ai/redact'
 import type { LogEntry } from '../logs/types'

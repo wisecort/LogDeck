@@ -6,6 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- "Copiar para chamado" agora se chama **Copiar com detalhes** (pod, horários em UTC, nível e a linha, com segredos mascarados).
 - **Copiar com máscara:** os Detalhes têm a opção "Mascarar dados sensíveis" para o **Copiar**: esconde senhas, tokens, chaves, e-mails e IPs internos (10.x, 172.16–31.x, 192.168.x) na linha e no stack trace copiados. Desligada por padrão e lembrada nesta máquina; o log na tela não muda.
 
 - **CHANGELOG em inglês** (`CHANGELOG.md`), com a versão em português em `CHANGELOG.pt-BR.md`.
