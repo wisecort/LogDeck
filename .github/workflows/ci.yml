@@ -52,3 +52,18 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
           # ad-hoc signing (no secrets): sign in pull requests too, so CI checks what the release ships
           CSC_FOR_PULL_REQUEST: 'true'
+
+      # The Microsoft Store package: built on every PR so CI checks what goes to the Store, and kept
+      # as a workflow artifact for manual testing (not attached to releases: the Store signs it on submission).
+      - name: Microsoft Store package (appx)
+        if: runner.os == 'Windows'
+        run: npm run release:store
+
+      - name: Keep the Store package
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogDeck-store-appx
+          path: release/*.appx
+          if-no-files-found: error
+          retention-days: 14

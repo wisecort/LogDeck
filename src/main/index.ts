@@ -3,6 +3,7 @@ import { app, BrowserWindow, session, shell } from 'electron'
 import { ExplainService } from '../ai/explain'
 import { createProvider } from '../ai/providers'
 import { createSecretStore } from '../platform/secret-store'
+import { isStoreBuild } from '../platform/distribution'
 import { K8sService } from '../k8s/service'
 import { ShellRegistry } from '../k8s/shell'
 import { StreamRegistry } from '../k8s/stream'
@@ -100,7 +101,7 @@ void app.whenReady().then(() => {
   let lastUpdate: { at: number; info: UpdateInfo | null } | null = null
   const checkUpdate = async (): Promise<UpdateInfo | null> => {
     if (lastUpdate && Date.now() - lastUpdate.at < UPDATE_INTERVAL_MS) return lastUpdate.info
-    const info = await checkLatestRelease({ current: app.getVersion(), feedFile: process.env['LOGDECK_UPDATE_FEED'] })
+    const info = await checkLatestRelease({ current: app.getVersion(), feedFile: process.env['LOGDECK_UPDATE_FEED'], storeBuild: isStoreBuild() })
     lastUpdate = { at: Date.now(), info }
     return info
   }

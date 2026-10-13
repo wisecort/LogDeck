@@ -28,7 +28,8 @@
     "package:linux": "electron-builder --linux --dir --publish never",
     "package:win": "electron-builder --win --dir --publish never",
     "release:linux": "electron-builder --linux --publish never",
-    "release:win": "electron-builder --win --publish never"
+    "release:win": "electron-builder --win --publish never",
+    "release:store": "electron-builder --win appx --publish never"
   },
   "build": {
     "appId": "io.github.wisecort.logdeck",
@@ -111,6 +112,21 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "LogDeck"
+    },
+    "appx": {
+      "identityName": "Wise-MatheusCorteletti.LogDeck",
+      "publisher": "CN=D4F46613-515E-4C0F-93FD-166EB4FD4CE5",
+      "publisherDisplayName": "Wise - Matheus Corteletti",
+      "applicationId": "LogDeck",
+      "displayName": "LogDeck",
+      "backgroundColor": "transparent",
+      "languages": [
+        "en-US",
+        "pt-BR",
+        "pt-PT",
+        "es-ES"
+      ],
+      "minVersion": "10.0.17763.0"
     }
   },
   "dependencies": {

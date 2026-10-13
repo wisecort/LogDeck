@@ -13,5 +13,11 @@ Itens fora do escopo do MVP 1 (G10). Anote aqui; não implemente no MVP 1.
 | Alertas (sino) por pico de erros | fase 6.5 | notificação do macOS |
 | Abrir `.gz` e arquivos acima de 200 MB (leitura em streaming) | fase 6.6 | hoje o arquivo é lido inteiro no renderer |
 | Linux arm64 e Windows arm64 | 1.1.0 | só x64 na 1.1.0 |
-| Assinatura de código no Windows | 1.1.0 | sem ela o SmartScreen avisa na instalação |
+| Assinatura de código no Windows | 1.1.0 | sem ela o SmartScreen avisa na instalação; a SignPath Foundation recusou o primeiro pedido (13/10/2026, projeto novo demais) |
+
+## Antecipados com aprovação do autor
+
+| Item | Quando | Observação |
+|---|---|---|
+| Microsoft Store (pacote MSIX/appx) | 13/10/2026 | a Store assina o pacote (sem certificado); evita o aviso do SmartScreen. Ver `docs/microsoft-store.md` |
 
