@@ -16,6 +16,8 @@ async function launch(extra: Record<string, string> = {}) {
 
 test('without kubectl the welcome screen says how to install it, copies the command and checks again', async () => {
   const app = await launch({ LOGDECK_KUBECTL_BIN: 'kubectl-not-installed-xyz' })
+  // Copy writes to the real clipboard: put the user's content back afterwards.
+  const saved = await app.evaluate(({ clipboard }) => clipboard.readText())
   try {
     const win = await app.firstWindow()
     const card = win.getByTestId('kubectl-missing')
@@ -31,6 +33,7 @@ test('without kubectl the welcome screen says how to install it, copies the comm
     // Log files still work without kubectl.
     await expect(card).toContainText('abrir arquivos de log')
   } finally {
+    await app.evaluate(({ clipboard }, text) => clipboard.writeText(text), saved)
     await app.close()
   }
 })
