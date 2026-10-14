@@ -5,6 +5,8 @@ import { formatTime } from '../format'
 import { useI18n } from '../i18n'
 import { buildVolume } from '../volume'
 import { IconX } from './icons'
+import type { Mark } from '../../logs/marks'
+import { markTitle } from './MarkLine'
 
 const BUCKETS = 60
 // Stack order: worst on top.
@@ -15,10 +17,12 @@ interface Props {
   range?: readonly [number, number]
   onRange(range: [number, number]): void
   onClose(): void
+  /** Restarts as ticks, stream drops as hatched stretches. */
+  marks?: readonly Mark[]
 }
 
 /** Log volume per level over time (block D); drag to filter a time range. */
-export function VolumeChart({ entries, range, onRange, onClose }: Props) {
+export function VolumeChart({ entries, range, onRange, onClose, marks = [] }: Props) {
   const { t, n } = useI18n()
   const v = useMemo(() => buildVolume(entries, BUCKETS), [entries])
   const barsRef = useRef<HTMLDivElement>(null)
@@ -88,6 +92,17 @@ export function VolumeChart({ entries, range, onRange, onClose }: Props) {
                   ))}
               </div>
             ))}
+            {marks.map((m, i) => {
+              const span = v.buckets.length * v.bucketMs
+              const pos = (ms: number) => ((ms - v.start) / span) * 100
+              if (m.kind === 'quiet' || m.time < v.start || m.time > v.start + span) return null
+              if (m.kind === 'reconnect') {
+                // Still reconnecting: the stretch runs to the end of the chart.
+                const width = m.backAt === undefined ? 100 - pos(m.time) : Math.max(0.6, pos(m.time + (m.backAt - m.lostAt)) - pos(m.time))
+                return <div key={i} className="volume-gap" data-testid="volume-mark" title={markTitle(t, m)} style={{ left: `${pos(m.time)}%`, width: `${Math.min(width, 100 - pos(m.time))}%` }} />
+              }
+              return <div key={i} className={`volume-tick tick-${m.kind}`} data-testid="volume-mark" title={markTitle(t, m)} style={{ left: `${pos(m.time)}%` }} />
+            })}
             {drag && (
               <div
                 className="volume-select"

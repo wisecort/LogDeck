@@ -53,6 +53,12 @@ export class LogEngine {
     return this.buffer.counts
   }
 
+  /** Timeline time of the newest entry, if it has one. */
+  get lastTime(): number | undefined {
+    const last = this.buffer.at(this.buffer.size - 1)
+    return last && timelineTime(last)
+  }
+
   ingest(lines: readonly string[]): void {
     for (const line of lines) {
       const event = this.assembler.push(line)

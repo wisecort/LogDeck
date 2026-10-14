@@ -156,4 +156,11 @@ export const ptPT: Record<MessageKey, string> = {
   'pod.ran': 'correu {d}',
   'pod.runsHint': 'O Kubernetes guarda só a execução anterior; as outras são as que o LogDeck viu enquanto estava aberto.',
   'st.uptimeHint': 'Tempo desde o último arranque do contentor {name} · {n} reinícios',
+  'mark.reconnect': 'Ligação perdida às {lost}, de volta às {back}',
+  'mark.reconnectHint': 'as linhas desse intervalo foram obtidas de novo, sem duplicar',
+  'mark.reconnecting': 'Ligação perdida às {lost}',
+  'mark.reconnectingHint': 'a religar; as linhas deste intervalo chegam quando voltar',
+  'mark.quietHint': 'ligado: o contentor não escreveu nada',
+  'mark.restart': 'Contentor {name} reiniciado',
+  'mark.droppedHint': 'limite de {cap} linhas por separador',
 }

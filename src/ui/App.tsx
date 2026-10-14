@@ -31,6 +31,8 @@ import { BuildDetails } from './components/BuildDetails'
 import { MAX_TABS } from './tabs'
 import { nsKey, runsKey, useNavigation } from './useNavigation'
 import { containerDetail, uptime } from './pod-status'
+import { placeMarks, quietMarks, restartMarks } from '../logs/marks'
+import { DEFAULT_CAPACITY } from '../logs/buffer'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
@@ -342,6 +344,15 @@ export function App() {
   const runs = (livePod && selection.context && selection.container && nav.runs[runsKey(selection.context, livePod.namespace, livePod.name, selection.container)]) || NO_RUNS
   const upMs = uptime(liveContainer, now)
 
+  // Marks between lines (stream drops, silence, restarts); hidden while searching or showing one error group.
+  const marksShown = search.text === '' && !groupKey
+  const allMarks = useMemo(() => {
+    if (!marksShown) return []
+    const restarts = liveContainer ? restartMarks(liveContainer.name, runs.length > 0 ? runs : liveContainer.last ? [liveContainer.last] : []) : []
+    return [...session.marks, ...quietMarks(engine.entries()), ...restarts]
+  }, [marksShown, liveContainer, runs, session.marks, engine, viewVersion]) // eslint-disable-line react-hooks/exhaustive-deps
+  const placedMarks = useMemo(() => placeMarks(rows, allMarks, timeRange), [rows, allMarks, timeRange])
+
   const filtersActive = levels.size !== LEVELS.length || search.text !== '' || search.exclude !== '' || !!timeRange || !!groupKey
   const clearFilters = () => {
     setLevels(new Set(LEVELS))
@@ -571,7 +582,7 @@ export function App() {
               if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
             }}
           />
-          {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
+          {showVolume && <VolumeChart entries={histogramEntries} marks={allMarks} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
           {(() => {
             const main = (
               <LogList
@@ -587,6 +598,10 @@ export function App() {
                 onBookmark={toggleBookmark}
                 onUserScrollUp={pause}
                 onResume={resume}
+                marks={placedMarks}
+                dropped={{ n: engine.dropped, capacity: DEFAULT_CAPACITY }}
+                live={!session.file}
+                {...(canCompare && !session.activeTab.compare && { onPrevious: toggleCompare })}
               />
             )
             if (!companion) return main
