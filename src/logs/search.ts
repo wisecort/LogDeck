@@ -139,6 +139,14 @@ export function entryText(entry: Pick<LogEntry, 'raw' | 'continuation'>): string
   return entry.continuation.length === 0 ? entry.raw : `${entry.raw}\n${entry.continuation.join('\n')}`
 }
 
+/** How many entries contain any of the exclusion terms (same rule as the exclusion filter). */
+export function countExcluded(entries: readonly LogEntry[], terms: readonly string[]): number {
+  const excluded = compileExclusions(terms)
+  let n = 0
+  for (const e of entries) if (excluded(entryText(e))) n++
+  return n
+}
+
 export function filterEntries(
   entries: readonly LogEntry[],
   opts: { search?: CompiledSearch; levels?: ReadonlySet<Level> },

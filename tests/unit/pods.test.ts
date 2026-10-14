@@ -53,7 +53,9 @@ describe('parsePods (F2.2, F2.3)', () => {
   const byName = (prefix: string) => pods.find((p) => p.name.startsWith(prefix))!
 
   it('summarises a healthy multi-container pod', () => {
-    expect(byName('portal-web')).toEqual({
+    const { details, ...summary } = byName('portal-web')!
+    expect(details?.map((d) => d.name)).toEqual(['fix-permissions', 'httpd', 'php-fpm'])
+    expect(summary).toEqual({
       name: 'portal-web-7d9f8c6b5-x2k4p',
       namespace: 'portal-hml',
       phase: 'Running',
@@ -65,6 +67,9 @@ describe('parsePods (F2.2, F2.3)', () => {
       initContainers: ['fix-permissions'],
       canPrevious: true,
       kind: 'app',
+      node: 'node-a.example.internal',
+      qosClass: 'Burstable',
+      labels: { app: 'portal-web', 'pod-template-hash': '7d9f8c6b5' },
     })
   })
 
@@ -135,5 +140,99 @@ describe('formatAge', () => {
     [-1, '0s'],
   ])('%i ms → %s', (ms, expected) => {
     expect(formatAge(ms)).toBe(expected)
+  })
+})
+
+describe('container details (Pod tab, uptime, restart marks)', () => {
+  const detailed = pod(
+    'portal-worker-5c8d9',
+    {
+      phase: 'Running',
+      qosClass: 'Burstable',
+      containerStatuses: [
+        {
+          name: 'worker',
+          ready: true,
+          restartCount: 4,
+          image: 'registry.example.internal/portal-worker:2.14.1',
+          state: { running: { startedAt: '2026-10-09T14:04:57Z' } },
+          lastState: { terminated: { reason: 'OOMKilled', exitCode: 137, startedAt: '2026-10-09T13:58:27Z', finishedAt: '2026-10-09T14:04:32Z' } },
+        },
+      ],
+      initContainerStatuses: [{ name: 'fix-permissions', restartCount: 0, state: { terminated: { reason: 'Completed', exitCode: 0, finishedAt: '2026-10-04T09:12:10Z' } } }],
+    },
+    {
+      nodeName: 'ip-10-0-0-21',
+      initContainers: [{ name: 'fix-permissions', image: 'busybox:1.36' }],
+      containers: [
+        {
+          name: 'worker',
+          image: 'registry.example.internal/portal-worker:2.14.1',
+          resources: { requests: { cpu: '100m', memory: '128Mi' }, limits: { cpu: '500m', memory: '256Mi' } },
+          readinessProbe: { httpGet: { path: '/health', port: 8080 }, periodSeconds: 10 },
+          livenessProbe: { tcpSocket: { port: 8080 } },
+          startupProbe: { exec: { command: ['sh', '-c', 'cat /tmp/secret-token'] }, periodSeconds: 5 },
+        },
+      ],
+    },
+  )
+  const [p] = parsePods(list(detailed))
+  const worker = p!.details!.find((c) => c.name === 'worker')!
+
+  it('reads node and QoS class', () => {
+    expect(p!.node).toBe('ip-10-0-0-21')
+    expect(p!.qosClass).toBe('Burstable')
+  })
+
+  it('reads the running state with its start time (uptime)', () => {
+    expect(worker).toMatchObject({ init: false, state: 'running', restarts: 4, startedAt: Date.parse('2026-10-09T14:04:57Z') })
+  })
+
+  it('reads the previous run: reason, exit code and when it started and ended', () => {
+    expect(worker.last).toEqual({
+      reason: 'OOMKilled',
+      exitCode: 137,
+      startedAt: Date.parse('2026-10-09T13:58:27Z'),
+      finishedAt: Date.parse('2026-10-09T14:04:32Z'),
+    })
+  })
+
+  it('reads image, requests and limits', () => {
+    expect(worker.image).toBe('registry.example.internal/portal-worker:2.14.1')
+    expect(worker.requests).toEqual({ cpu: '100m', memory: '128Mi' })
+    expect(worker.limits).toEqual({ cpu: '500m', memory: '256Mi' })
+  })
+
+  it('summarizes probes without exposing exec commands', () => {
+    expect(worker.probes).toEqual({
+      readiness: { kind: 'http', target: 'GET :8080/health', periodSeconds: 10 },
+      liveness: { kind: 'tcp', target: ':8080' },
+      startup: { kind: 'command', periodSeconds: 5 },
+    })
+    expect(JSON.stringify(p)).not.toContain('secret-token')
+  })
+
+  it('lists init containers too, flagged as init', () => {
+    expect(p!.details!.find((c) => c.name === 'fix-permissions')).toMatchObject({ init: true, state: 'terminated', reason: 'Completed', image: 'busybox:1.36' })
+  })
+
+  it('reports waiting containers with their reason', () => {
+    const [w] = parsePods(list(pod('w', { phase: 'Running', containerStatuses: [{ name: 'app', restartCount: 7, state: { waiting: { reason: 'CrashLoopBackOff' } } }] })))
+    expect(w!.details![0]).toMatchObject({ state: 'waiting', reason: 'CrashLoopBackOff', restarts: 7 })
+  })
+
+  it('skips containers with invalid names and ignores bad timestamps', () => {
+    const [w] = parsePods(
+      list(pod('w', { phase: 'Running', containerStatuses: [{ name: 'Bad_Name' }, { name: 'app', state: { running: { startedAt: 'yesterday' } } }] }, { containers: [{ name: 'Bad_Name' }, { name: 'app' }] })),
+    )
+    expect(w!.details!.map((c) => c.name)).toEqual(['app'])
+    expect(w!.details![0]!.startedAt).toBeUndefined()
+  })
+})
+
+describe('pod labels (matched against service selectors)', () => {
+  it('keeps the labels as strings', () => {
+    const [p] = parsePods(list(pod('w', { phase: 'Running' }, { containers: [{ name: 'app' }] }, { labels: { app: 'portal-web', bad: 3 } })))
+    expect(p!.labels).toEqual({ app: 'portal-web' })
   })
 })

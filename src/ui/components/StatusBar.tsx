@@ -1,5 +1,6 @@
 import type { StreamStatus } from '../../shared/ipc'
 import { useI18n, type Translate } from '../i18n'
+import { formatDuration } from '../pod-status'
 import type { Selection } from './Sidebar'
 
 interface Props {
@@ -18,6 +19,8 @@ interface Props {
   /** Newer LogDeck version available (only after the user opted in to the check). */
   update?: string
   onUpdate?(): void
+  /** Time since the tab's container last started. */
+  uptime?: { ms: number; container: string; restarts: number }
 }
 
 function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
@@ -67,6 +70,12 @@ export function StatusBar(p: Props) {
         </span>
       )}
       <span className="spacer" />
+      {p.uptime && (
+        <span data-testid="uptime" title={t('st.uptimeHint', { name: p.uptime.container, n: p.uptime.restarts })}>
+          ▶ {t('st.uptime', { d: formatDuration(p.uptime.ms) })}
+          {p.uptime.restarts > 0 && <span className="muted"> · ↻{p.uptime.restarts}</span>}
+        </span>
+      )}
       {p.dropped > 0 && (
         <span className="pill warn" title={t('st.droppedHint')}>
           {t('st.dropped', { n: n(p.dropped) })}

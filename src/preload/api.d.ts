@@ -1,10 +1,12 @@
 import type {
   BuildInfo,
   ContextInfo,
+  Exposure,
   LogLinesEvent,
   LogStatusEvent,
   NamespaceList,
   OpenShellRequest,
+  PodEvent,
   PodInfo,
   ShellDataEvent,
   ShellExitEvent,
@@ -24,6 +26,10 @@ export interface LogDeckApi {
   listPods(context: string, namespace: string): Promise<PodInfo[]>
   /** OKD/OpenShift builds; [] when the cluster has no Build API or no permission. */
   listBuilds(context: string, namespace: string): Promise<BuildInfo[]>
+  /** Kubernetes events about one pod; [] without permission. */
+  listPodEvents(context: string, namespace: string, pod: string): Promise<PodEvent[]>
+  /** Services, OKD Routes and Ingresses of a namespace (how pods are reached); empty lists without permission. */
+  listExposure(context: string, namespace: string): Promise<Exposure>
   /** Returns the stream id used by the log events. */
   startLogs(request: StartLogsRequest): Promise<string>
   stopLogs(streamId: string): Promise<void>

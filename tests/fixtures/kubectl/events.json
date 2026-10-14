@@ -1,0 +1,51 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "metadata": { "name": "portal-web-7d9f8c6b5-x2k4p.17f1a", "uid": "e1", "creationTimestamp": "2026-10-09T03:27:20Z" },
+      "involvedObject": { "kind": "Pod", "name": "portal-web-7d9f8c6b5-x2k4p", "fieldPath": "spec.containers{php-fpm}" },
+      "type": "Warning",
+      "reason": "Unhealthy",
+      "message": "Readiness probe failed: HTTP probe failed with statuscode: 503",
+      "count": 3,
+      "firstTimestamp": "2026-10-09T03:26:40Z",
+      "lastTimestamp": "2026-10-09T03:27:20Z"
+    },
+    {
+      "metadata": { "name": "portal-web-7d9f8c6b5-x2k4p.17f1b", "uid": "e2", "creationTimestamp": "2026-10-09T03:27:31Z" },
+      "involvedObject": { "kind": "Pod", "name": "portal-web-7d9f8c6b5-x2k4p", "fieldPath": "spec.containers{php-fpm}" },
+      "type": "Normal",
+      "reason": "Killing",
+      "message": "Container php-fpm failed liveness probe, will be restarted",
+      "count": 1,
+      "firstTimestamp": "2026-10-09T03:27:31Z",
+      "lastTimestamp": "2026-10-09T03:27:31Z"
+    },
+    {
+      "metadata": { "name": "portal-web-7d9f8c6b5-x2k4p.17f1c", "uid": "e3" },
+      "involvedObject": { "kind": "Pod", "name": "portal-web-7d9f8c6b5-x2k4p", "fieldPath": "spec.containers{php-fpm}" },
+      "type": "Normal",
+      "reason": "Pulled",
+      "message": "Container image \"registry.example.internal/portal-php-fpm:8.3.12\" already present on machine",
+      "eventTime": "2026-10-09T03:27:34.120000Z"
+    },
+    {
+      "metadata": { "name": "portal-worker-5c7d9b8f4-q8w2e.17f2a", "uid": "e4" },
+      "involvedObject": { "kind": "Pod", "name": "portal-worker-5c7d9b8f4-q8w2e" },
+      "type": "Warning",
+      "reason": "BackOff",
+      "message": "Back-off restarting failed container worker in pod portal-worker-5c7d9b8f4-q8w2e",
+      "count": 14,
+      "lastTimestamp": "2026-10-09T03:28:00Z"
+    },
+    {
+      "metadata": { "name": "portal-web-7d9f8c6b5.17f3a", "uid": "e5" },
+      "involvedObject": { "kind": "ReplicaSet", "name": "portal-web-7d9f8c6b5-x2k4p" },
+      "type": "Warning",
+      "reason": "FailedCreate",
+      "message": "not about the pod",
+      "lastTimestamp": "2026-10-09T03:28:00Z"
+    }
+  ]
+}

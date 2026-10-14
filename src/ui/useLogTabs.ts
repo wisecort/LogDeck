@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { checkLogFile, LogFileError, splitLogText } from '../logs/file'
+import { trackReconnect, type Mark } from '../logs/marks'
 import type { Level } from '../logs/types'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
 import type { LogOptions, Selection } from './view-types'
@@ -18,6 +19,8 @@ interface Slot {
   /** Bumped on every start/stop so a late startLogs answer for an old stream is ignored. */
   generation: number
   status?: StreamStatus
+  /** Stream drops seen on this tab (reconnect marks). */
+  marks: Mark[]
 }
 
 /**
@@ -46,7 +49,7 @@ export function useLogTabs() {
   const slot = useCallback((tabId: string): Slot => {
     let s = slots.get(tabId)
     if (!s) {
-      s = { engine: new LogEngine(), generation: 0 }
+      s = { engine: new LogEngine(), generation: 0, marks: [] }
       slots.set(tabId, s)
     }
     return s
@@ -78,7 +81,9 @@ export function useLogTabs() {
         earlyStatus.current.set(streamId, status)
         return
       }
-      slot(tabId).status = status
+      const s = slot(tabId)
+      s.status = status
+      s.marks = trackReconnect(s.marks, status, Date.now(), s.engine.lastTime)
       if (isVisible(tabId)) setStatusTick((n) => n + 1)
     })
     return () => {
@@ -106,6 +111,7 @@ export function useLogTabs() {
       const s = slot(tabId)
       const generation = s.generation
       s.engine.clear(opts.defaultLevel)
+      s.marks = []
       s.status = { state: 'connecting' }
       commit(updateTab(stateRef.current, tabId, { file: undefined }))
       setVersion((v) => v + 1)
@@ -143,6 +149,7 @@ export function useLogTabs() {
       if (problem) throw new LogFileError(problem, f.name)
       const s = slot(tabId)
       s.engine.clear()
+      s.marks = []
       s.status = undefined
       commit(updateTab(stateRef.current, tabId, { file: f.name, selection: {} }))
       const lines = splitLogText(text)
@@ -183,7 +190,10 @@ export function useLogTabs() {
       await stop(companionKey(tabId))
       slots.get(tabId)?.engine.clear()
       const s = slots.get(tabId)
-      if (s) s.status = undefined
+      if (s) {
+        s.status = undefined
+        s.marks = []
+      }
       commit(updateTab(stateRef.current, tabId, { selection: {}, file: undefined, compare: false }))
       setVersion((v) => v + 1)
     },
@@ -251,6 +261,7 @@ export function useLogTabs() {
     startCompare,
     stopCompare,
     status: activeSlot.status,
+    marks: activeSlot.marks,
     file: activeTab.file,
     start,
     stop,

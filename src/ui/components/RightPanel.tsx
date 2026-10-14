@@ -4,14 +4,17 @@ import type { SignatureGroup } from '../../logs/signatures'
 import type { LogEntry } from '../../logs/types'
 import type { ExplainGroupInput, ExplainResult, PreviewResult } from '../../shared/ai'
 import type { AiStatus } from '../../shared/ai-settings'
+import type { PodInfo, TerminatedRun } from '../../shared/ipc'
 import { formatDateTime } from '../format'
 import { useI18n, type Translate } from '../i18n'
 import { groupTitle } from '../group-title'
 import { lineText, ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
+import { PodTab } from './PodTab'
+import type { PodAccess } from '../pod-access'
 import { IconBookmark, IconCheckCircle, IconCopy, IconGear, IconRows, IconSparkle } from './icons'
 
-export type PanelTab = 'erros' | 'detalhes' | 'ia'
+export type PanelTab = 'erros' | 'detalhes' | 'pod' | 'ia'
 export type AiContextMode = 'linha' | 'grupos' | 'visiveis'
 
 interface Props {
@@ -32,6 +35,12 @@ interface Props {
   buildContext(mode: AiContextMode): ExplainGroupInput[]
   onAiPreferences(): void
   ticketSource: TicketSource
+  /** Pod of the tab with fresh status (refreshed every few seconds); absent for files. */
+  pod?: PodInfo
+  container?: string
+  runs: readonly TerminatedRun[]
+  now: number
+  access?: PodAccess
 }
 
 export function aiLabel(t: Translate, s?: AiStatus): string {
@@ -480,6 +489,7 @@ export function RightPanel(p: Props) {
   const tabs: Array<[PanelTab, string]> = [
     ['erros', t('rp.errors', { n: p.groups.length })],
     ['detalhes', t('rp.details')],
+    ...(p.pod ? [['pod', t('rp.pod')] as [PanelTab, string]] : []),
     ['ia', t('rp.ai')],
   ]
   return (
@@ -497,6 +507,11 @@ export function RightPanel(p: Props) {
       <div className="panel-body" role="tabpanel" hidden={p.tab !== 'detalhes'}>
         <DetailsTab {...p} />
       </div>
+      {p.pod && (
+        <div className="panel-body" role="tabpanel" hidden={p.tab !== 'pod'}>
+          <PodTab pod={p.pod} {...(p.container && { container: p.container })} runs={p.runs} now={p.now} {...(p.access && { access: p.access })} />
+        </div>
+      )}
       <div className="panel-body" role="tabpanel" hidden={p.tab !== 'ia'}>
         <AiTab {...p} />
       </div>

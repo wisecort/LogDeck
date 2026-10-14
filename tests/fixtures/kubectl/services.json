@@ -1,0 +1,26 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "metadata": { "name": "portal-web" },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": { "app": "portal-web" },
+        "ports": [{ "name": "http", "port": 80, "targetPort": 8080, "protocol": "TCP" }]
+      }
+    },
+    {
+      "metadata": { "name": "portal-web-metrics" },
+      "spec": { "type": "ClusterIP", "selector": { "app": "portal-web", "tier": "metrics" }, "ports": [{ "port": 9113 }] }
+    },
+    {
+      "metadata": { "name": "portal-worker" },
+      "spec": { "type": "ClusterIP", "selector": { "app": "portal-worker" }, "ports": [{ "port": 9000, "targetPort": "metrics" }] }
+    },
+    {
+      "metadata": { "name": "external-db" },
+      "spec": { "type": "ExternalName", "externalName": "db.example.internal" }
+    }
+  ]
+}

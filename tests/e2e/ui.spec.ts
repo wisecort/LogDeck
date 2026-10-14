@@ -157,6 +157,81 @@ test('compare with --previous: current and previous container side by side', asy
   await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
 })
 
+test('Pod tab: container state, uptime, previous run, limits and probes', async () => {
+  await openWebPod(win, 'httpd')
+  await expect(win.getByTestId('uptime')).toContainText('No ar há')
+  await win.getByRole('tab', { name: 'Pod' }).click()
+  const pod = win.getByTestId('pod-tab')
+  await expect(win.getByTestId('pod-state')).toContainText('Rodando há')
+  await expect(pod).toContainText('registry.example.internal/portal-httpd:2.4.62')
+  await expect(pod).toContainText('req 64Mi · lim 128Mi')
+  await expect(pod).toContainText('GET :8080/health a cada 10s')
+  await expect(pod).toContainText('node-a.example.internal')
+
+  // Access: Service selecting the pod (labels) → OKD Route and Ingress URLs, copied (never opened by the app)
+  const access = win.getByTestId('pod-access')
+  await expect(access).toContainText('https://portal-hml.apps.example.internal/')
+  await expect(access).toContainText('https://portal.example.internal/')
+  await expect(access).toContainText('ClusterIP · 80→8080 (http)')
+  await expect(access).not.toContainText('portal-worker')
+  await access.getByRole('button', { name: 'Copiar https://portal-hml.apps.example.internal/' }).click()
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe('https://portal-hml.apps.example.internal/')
+
+  // php-fpm was OOMKilled once: the previous run shows why and for how long it ran
+  await navTree(win).getByRole('group', { name: 'Containers' }).getByRole('button', { name: 'php-fpm', exact: true }).click()
+  await expect(pod).toContainText('Container php-fpm')
+  await expect(pod).toContainText('OOMKilled · exit 137 · rodou 6m 03s')
+  await expect(win.getByTestId('uptime')).toContainText('↻1')
+  await win.screenshot({ path: 'test-results/ui-pod.png' })
+})
+
+test('marks: a container restart and the pod events show between the lines and on the histogram', async () => {
+  await openWebPod(win, 'php-fpm')
+  // few rows, so the stretch around the restart is on screen (marks stay with level filters)
+  await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^ERROR/ }).click({ modifiers: ['Alt'] })
+  const restart = win.getByTestId('log-mark').filter({ hasText: 'Container php-fpm reiniciado' })
+  await expect(restart).toContainText('OOMKilled · exit 137 · rodou 6m 03s')
+  // Kubernetes events of the pod (kubectl get events): the failing probe before it, the kill after
+  await expect(win.getByTestId('log-mark').filter({ hasText: 'Evento: Unhealthy' })).toContainText('3× de')
+  await expect(win.getByTestId('log-mark').filter({ hasText: 'Evento: Killing' })).toContainText('failed liveness probe')
+  await expect(win.getByTestId('log-mark').filter({ hasText: 'Pulled' })).toHaveCount(0)
+  await expect(win.getByTestId('volume-mark')).toHaveCount(3)
+  await win.screenshot({ path: 'test-results/ui-marks.png' })
+  // searching hides the marks: they describe the whole log, not the matches
+  await win.getByLabel('Buscar').fill('FPM')
+  await expect(win.getByTestId('log-mark')).toHaveCount(0)
+  await win.getByLabel('Buscar').fill('')
+  await restart.getByRole('button', { name: 'Ver logs anteriores' }).click()
+  await expect(win.getByTestId('previous-pane')).toBeVisible()
+})
+
+test('marks: a dropped kubectl stream says when it was lost and when it came back', async () => {
+  await app.close()
+  const fake = fakeKubectlEnv({ FAKE_KUBECTL_DELAY_MS: '0', FAKE_KUBECTL_MODE: 'drop-after:200' })
+  app = await electron.launch({
+    args: ['.', '--lang=pt-BR'],
+    env: { ...(fake.env as Record<string, string>), LOGDECK_USER_DATA: mkdtempSync(join(tmpdir(), 'logdeck-e2e-')) },
+  })
+  win = await app.firstWindow()
+  await openPod(win, { pod: /portal-web/, container: 'httpd' })
+  await expect(win.getByTestId('match-count')).toContainText('/ 465', { timeout: 15_000 })
+  await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^ERROR/ }).click({ modifiers: ['Alt'] })
+  const drops = win.getByTestId('log-mark').filter({ hasText: 'Conexão perdida às' })
+  await expect(drops.first()).toContainText('de volta às')
+  await expect(drops.first()).toContainText('sem duplicar')
+})
+
+test('empty view explains lines hidden by filters and presets, with a way out', async () => {
+  await openWebPod(win)
+  // only FATAL, which this log has none of: every loaded line is filtered out
+  await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^FATAL/ }).click({ modifiers: ['Alt'] })
+  const hidden = win.getByTestId('log-hidden')
+  await expect(hidden).toContainText('465 linhas carregadas, mas nenhuma passa pelos filtros.')
+  await expect(hidden).toContainText('174 delas são escondidas pelos presets')
+  await hidden.getByRole('button', { name: 'Limpar filtros' }).click()
+  await expect(rows().first()).toBeVisible()
+})
+
 test('OKD builds folder: Build history after the pods; log while the pod exists, details after', async () => {
   const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()

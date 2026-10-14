@@ -1,4 +1,5 @@
 import { UnsafeArgsError, validateContainerName, validatePodName } from './args'
+import type { ContainerDetail, ProbeSummary, Resources, TerminatedRun } from '../shared/ipc'
 
 export interface PodSummary {
   name: string
@@ -15,6 +16,10 @@ export interface PodSummary {
   canPrevious: boolean
   /** OKD/OpenShift build and deployer pods are hidden by default in the sidebar. */
   kind: PodKind
+  node?: string
+  qosClass?: string
+  details?: ContainerDetail[]
+  labels?: Record<string, string>
 }
 
 export type PodKind = 'app' | 'build' | 'deploy'
@@ -30,17 +35,43 @@ export function podKind(metadata: { labels?: Record<string, string>; annotations
   return 'app'
 }
 
+interface TerminatedJson {
+  reason?: string
+  exitCode?: number
+  startedAt?: string
+  finishedAt?: string
+}
+
 interface ContainerState {
   waiting?: { reason?: string }
-  terminated?: { reason?: string }
-  running?: unknown
+  terminated?: TerminatedJson
+  running?: { startedAt?: string }
 }
 
 interface ContainerStatus {
   name?: string
   ready?: boolean
   restartCount?: number
+  image?: string
   state?: ContainerState
+  lastState?: ContainerState
+}
+
+interface ProbeJson {
+  httpGet?: { path?: string; port?: number | string; scheme?: string }
+  tcpSocket?: { port?: number | string }
+  grpc?: { port?: number }
+  exec?: unknown
+  periodSeconds?: number
+}
+
+interface ContainerSpec {
+  name?: string
+  image?: string
+  resources?: { requests?: Record<string, unknown>; limits?: Record<string, unknown> }
+  readinessProbe?: ProbeJson
+  livenessProbe?: ProbeJson
+  startupProbe?: ProbeJson
 }
 
 interface PodJson {
@@ -52,8 +83,8 @@ interface PodJson {
     labels?: Record<string, string>
     annotations?: Record<string, string>
   }
-  spec?: { containers?: Array<{ name?: string }>; initContainers?: Array<{ name?: string }> }
-  status?: { phase?: string; containerStatuses?: ContainerStatus[]; initContainerStatuses?: ContainerStatus[] }
+  spec?: { nodeName?: string; containers?: ContainerSpec[]; initContainers?: ContainerSpec[] }
+  status?: { phase?: string; qosClass?: string; containerStatuses?: ContainerStatus[]; initContainerStatuses?: ContainerStatus[] }
 }
 
 function items<T>(json: string): T[] {
@@ -78,6 +109,112 @@ function validNames(list: Array<{ name?: string }> | undefined): string[] {
     }
   }
   return out
+}
+
+const MAX_TEXT = 300
+
+/** Cluster text is data: plain strings only, capped. */
+function text(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length > 0 ? v.slice(0, MAX_TEXT) : undefined
+}
+
+function time(v: unknown): number | undefined {
+  if (typeof v !== 'string') return undefined
+  const ms = Date.parse(v)
+  return Number.isNaN(ms) ? undefined : ms
+}
+
+function resources(r: Record<string, unknown> | undefined): Resources | undefined {
+  const out: Resources = {}
+  const cpu = text(r?.cpu)
+  const memory = text(r?.memory)
+  if (cpu) out.cpu = cpu
+  if (memory) out.memory = memory
+  return cpu || memory ? out : undefined
+}
+
+function probe(p: ProbeJson | undefined): ProbeSummary | undefined {
+  if (!p || typeof p !== 'object') return undefined
+  const period = typeof p.periodSeconds === 'number' ? { periodSeconds: p.periodSeconds } : {}
+  if (p.httpGet) {
+    const port = p.httpGet.port ?? ''
+    return { kind: 'http', target: `GET :${port}${text(p.httpGet.path) ?? '/'}`.slice(0, MAX_TEXT), ...period }
+  }
+  if (p.tcpSocket) return { kind: 'tcp', target: `:${p.tcpSocket.port ?? ''}`.slice(0, MAX_TEXT), ...period }
+  if (p.grpc) return { kind: 'grpc', target: `:${p.grpc.port ?? ''}`, ...period }
+  // The command may carry credentials: only the kind is kept.
+  if (p.exec) return { kind: 'command', ...period }
+  return undefined
+}
+
+function terminated(t: TerminatedJson | undefined): TerminatedRun | undefined {
+  if (!t) return undefined
+  const run: TerminatedRun = {}
+  const reason = text(t.reason)
+  if (reason) run.reason = reason
+  if (typeof t.exitCode === 'number') run.exitCode = t.exitCode
+  const started = time(t.startedAt)
+  const finished = time(t.finishedAt)
+  if (started !== undefined) run.startedAt = started
+  if (finished !== undefined) run.finishedAt = finished
+  return run
+}
+
+function containerDetails(specs: ContainerSpec[] | undefined, statuses: ContainerStatus[] | undefined, init: boolean): ContainerDetail[] {
+  const out: ContainerDetail[] = []
+  for (const spec of specs ?? []) {
+    let name: string
+    try {
+      name = validateContainerName(spec.name ?? '')
+    } catch (err) {
+      if (!(err instanceof UnsafeArgsError)) throw err
+      continue
+    }
+    const st = statuses?.find((c) => c.name === name)
+    const d: ContainerDetail = { name, init, state: 'unknown', restarts: st?.restartCount ?? 0 }
+    const image = text(st?.image) ?? text(spec.image)
+    if (image) d.image = image
+    if (st?.state?.running) {
+      d.state = 'running'
+      const started = time(st.state.running.startedAt)
+      if (started !== undefined) d.startedAt = started
+    } else if (st?.state?.waiting) {
+      d.state = 'waiting'
+      const reason = text(st.state.waiting.reason)
+      if (reason) d.reason = reason
+    } else if (st?.state?.terminated) {
+      d.state = 'terminated'
+      const run = terminated(st.state.terminated)!
+      if (run.reason) d.reason = run.reason
+      if (run.startedAt !== undefined) d.startedAt = run.startedAt
+    }
+    const last = terminated(st?.lastState?.terminated)
+    if (last) d.last = last
+    const requests = resources(spec.resources?.requests)
+    const limits = resources(spec.resources?.limits)
+    if (requests) d.requests = requests
+    if (limits) d.limits = limits
+    const probes: NonNullable<ContainerDetail['probes']> = {}
+    const readiness = probe(spec.readinessProbe)
+    const liveness = probe(spec.livenessProbe)
+    const startup = probe(spec.startupProbe)
+    if (readiness) probes.readiness = readiness
+    if (liveness) probes.liveness = liveness
+    if (startup) probes.startup = startup
+    if (readiness || liveness || startup) d.probes = probes
+    out.push(d)
+  }
+  return out
+}
+
+const MAX_LABELS = 64
+
+/** Labels/selectors: string values only, capped. */
+export function stringMap(v: unknown): Record<string, string> | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const out: Record<string, string> = {}
+  for (const [k, val] of Object.entries(v).slice(0, MAX_LABELS)) if (typeof val === 'string') out[k.slice(0, 253)] = val.slice(0, 63)
+  return Object.keys(out).length > 0 ? out : undefined
 }
 
 /** Mirrors the STATUS column of `kubectl get pods`. */
@@ -127,6 +264,16 @@ export function parsePods(json: string, onInvalid?: (name: string) => void): Pod
       canPrevious: restarts > 0 || status.endsWith('CrashLoopBackOff'),
       kind: podKind(pod.metadata),
     }
+    const node = text(pod.spec?.nodeName)
+    const qos = text(pod.status?.qosClass)
+    const labels = stringMap(pod.metadata?.labels)
+    if (labels) summary.labels = labels
+    if (node) summary.node = node
+    if (qos) summary.qosClass = qos
+    summary.details = [
+      ...containerDetails(pod.spec?.initContainers, pod.status?.initContainerStatuses, true),
+      ...containerDetails(pod.spec?.containers, statuses, false),
+    ]
     const created = pod.metadata?.creationTimestamp ? Date.parse(pod.metadata.creationTimestamp) : NaN
     if (!Number.isNaN(created)) summary.createdAt = created
     out.push(summary)

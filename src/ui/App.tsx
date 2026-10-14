@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from '../logs/search'
+import { compileSearch, countExcluded, entryText, searchWithTimeout, type CompiledSearch } from '../logs/search'
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { BuildInfo, PodInfo, VersionInfo } from '../shared/ipc'
+import type { BuildInfo, Exposure, PodEvent, PodInfo, TerminatedRun, VersionInfo } from '../shared/ipc'
+import { podAccess } from './pod-access'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
@@ -29,7 +30,10 @@ import { TabBar } from './components/TabBar'
 import { Welcome } from './components/Welcome'
 import { BuildDetails } from './components/BuildDetails'
 import { MAX_TABS } from './tabs'
-import { useNavigation } from './useNavigation'
+import { nsKey, runsKey, useNavigation } from './useNavigation'
+import { containerDetail, uptime } from './pod-status'
+import { eventMarks, placeMarks, quietMarks, restartMarks } from '../logs/marks'
+import { DEFAULT_CAPACITY } from '../logs/buffer'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
@@ -37,6 +41,11 @@ import { useUpdateCheck } from './useUpdateCheck'
 import { UpdateModal } from './components/UpdateModal'
 
 const POD_REFRESH_MS = 5000
+// Events change slowly; each read is one more kubectl process (costly on OKD logins).
+const EVENTS_REFRESH_MS = 15_000
+// Extra reads (events, services, routes, ingresses) wait for the log's first lines, at most this long.
+const EXTRAS_DELAY_MS = 3000
+const NO_RUNS: readonly TerminatedRun[] = []
 const REGEX_DEBOUNCE_MS = 250
 const AROUND_RADIUS = 10
 const MAX_AI_LINES = 200
@@ -128,6 +137,55 @@ export function App() {
     void window.logdeck.kubectlVersion().then(applyKubectl)
     void window.logdeck.aiStatus().then(setAiStatus)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The log stream has delivered its first lines (or finished): extra kubectl reads may start.
+  const logsSettled = engine.size > 0 || status?.state === 'ended' || status?.state === 'error'
+
+  // Services, Routes and Ingresses of the tab's namespace (Pod tab → Access), read when a pod is opened.
+  const [exposure, setExposure] = useState<{ key: string; value: Exposure }>()
+  useEffect(() => {
+    const { context, namespace, pod } = selection
+    if (!context || !namespace || !pod || session.file) return
+    const key = nsKey(context, namespace)
+    if (exposure?.key === key && !logsSettled) return
+    let alive = true
+    const first = setTimeout(
+      () =>
+        void window.logdeck.listExposure(context, namespace).then(
+          (value) => alive && setExposure({ key, value }),
+          () => undefined,
+        ),
+      logsSettled ? 0 : EXTRAS_DELAY_MS,
+    )
+    return () => {
+      alive = false
+      clearTimeout(first)
+    }
+  }, [selection.context, selection.namespace, selection.pod?.name, session.file, logsSettled]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Kubernetes events of the tab's pod, refreshed with the pod list.
+  const [podEvents, setPodEvents] = useState<{ key: string; events: PodEvent[] }>()
+  useEffect(() => {
+    const { context, namespace, pod } = selection
+    if (!context || !namespace || !pod || session.file) return
+    const key = `${context}::${namespace}::${pod.name}`
+    let alive = true
+    const load = () =>
+      window.logdeck.listPodEvents(context, namespace, pod.name).then(
+        (events) => alive && setPodEvents({ key, events }),
+        () => undefined,
+      )
+    // The log's own kubectl goes first; events follow its first lines.
+    const first = setTimeout(() => void load(), logsSettled ? 0 : EXTRAS_DELAY_MS)
+    const timer = setInterval(() => {
+      if (!document.hidden) void load()
+    }, EVENTS_REFRESH_MS)
+    return () => {
+      alive = false
+      clearTimeout(first)
+      clearInterval(timer)
+    }
+  }, [selection.context, selection.namespace, selection.pod?.name, session.file, logsSettled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const { context, namespace } = selection
@@ -329,6 +387,37 @@ export function App() {
     const e = entriesBySeq.get(s)
     return e ? [e] : []
   })
+
+  // The tab's pod as of the last sidebar refresh (every few seconds), for the Pod tab, uptime and restart marks.
+  const livePod = useMemo(() => {
+    const { context, namespace, pod } = selection
+    if (session.file || !context || !namespace || !pod) return undefined
+    return nav.pods[nsKey(context, namespace)]?.find((p) => p.name === pod.name) ?? pod
+  }, [nav.pods, selection, session.file])
+  const liveContainer = containerDetail(livePod, selection.container)
+  const runs = (livePod && selection.context && selection.container && nav.runs[runsKey(selection.context, livePod.namespace, livePod.name, selection.container)]) || NO_RUNS
+  const upMs = uptime(liveContainer, now)
+  const access = useMemo(
+    () => (livePod && selection.context && exposure?.key === nsKey(selection.context, livePod.namespace) ? podAccess(livePod.labels, exposure.value) : undefined),
+    [livePod, exposure, selection.context],
+  )
+
+  // Empty view with lines loaded: tell how many the presets hide (often health checks filling the tail).
+  const hidden = useMemo(() => {
+    if (rows.length > 0 || engine.size === 0) return undefined
+    const terms = presets ? activeTerms(presets) : []
+    return { loaded: engine.size, byPresets: terms.length > 0 ? countExcluded(engine.entries(), terms) : 0 }
+  }, [rows.length, engine, presets, viewVersion]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Marks between lines (stream drops, silence, restarts); hidden while searching or showing one error group.
+  const marksShown = search.text === '' && !groupKey
+  const allMarks = useMemo(() => {
+    if (!marksShown) return []
+    const restarts = liveContainer ? restartMarks(liveContainer.name, runs.length > 0 ? runs : liveContainer.last ? [liveContainer.last] : []) : []
+    const events = livePod && podEvents?.key === `${selection.context}::${livePod.namespace}::${livePod.name}` ? eventMarks(podEvents.events, selection.container) : []
+    return [...session.marks, ...quietMarks(engine.entries()), ...restarts, ...events]
+  }, [marksShown, liveContainer, runs, session.marks, engine, viewVersion, livePod, podEvents, selection.context, selection.container]) // eslint-disable-line react-hooks/exhaustive-deps
+  const placedMarks = useMemo(() => placeMarks(rows, allMarks, timeRange), [rows, allMarks, timeRange])
 
   const filtersActive = levels.size !== LEVELS.length || search.text !== '' || search.exclude !== '' || !!timeRange || !!groupKey
   const clearFilters = () => {
@@ -559,7 +648,7 @@ export function App() {
               if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
             }}
           />
-          {showVolume && <VolumeChart entries={histogramEntries} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
+          {showVolume && <VolumeChart entries={histogramEntries} marks={allMarks} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
           {(() => {
             const main = (
               <LogList
@@ -575,6 +664,13 @@ export function App() {
                 onBookmark={toggleBookmark}
                 onUserScrollUp={pause}
                 onResume={resume}
+                marks={placedMarks}
+                dropped={{ n: engine.dropped, capacity: DEFAULT_CAPACITY }}
+                live={!session.file}
+                {...(canCompare && !session.activeTab.compare && { onPrevious: toggleCompare })}
+                {...(hidden && { hidden })}
+                onPresetsOff={() => presets && void savePresets({ ...presets, active: [] })}
+                onClearFilters={clearFilters}
               />
             )
             if (!companion) return main
@@ -613,7 +709,7 @@ export function App() {
         </main>
         {!isEmptyTab && !showingBuild && (
         <RightPanel
-          tab={tab}
+          tab={tab === 'pod' && !livePod ? 'erros' : tab}
           onTab={setTab}
           groups={groups}
           {...(groupKey && { activeGroup: groupKey })}
@@ -634,6 +730,11 @@ export function App() {
           onAiMode={setAiMode}
           buildContext={buildContext}
           onAiPreferences={() => setAiPrefs(true)}
+          {...(livePod && { pod: livePod })}
+          {...(selection.container && { container: selection.container })}
+          runs={runs}
+          now={now}
+          {...(access && { access })}
           ticketSource={
             session.file
               ? { file: session.file }
@@ -647,7 +748,7 @@ export function App() {
         />
         )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} {...(upMs !== undefined && liveContainer && { uptime: { ms: upMs, container: liveContainer.name, restarts: liveContainer.restarts } })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {

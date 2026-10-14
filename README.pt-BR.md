@@ -196,7 +196,7 @@ No Windows e no Linux, use Ctrl no lugar de ⌘, Shift no lugar de ⇧ e Alt no 
 
 ## Segurança
 
-- **Só leitura:** o kubectl só roda com `config get-contexts`, `get` (namespaces, pods e builds do OKD), `logs`, `auth can-i` e `version --client`. Qualquer outro verbo é bloqueado no código. O terminal no container só abre quando você clica.
+- **Só leitura:** o kubectl só roda com `config get-contexts`, `get` (namespaces, pods, eventos, services, ingresses, routes e builds do OKD), `logs`, `auth can-i` e `version --client`. Qualquer outro verbo é bloqueado no código. O terminal no container só abre quando você clica.
 - **Seu kubeconfig fica intacto:** cada chamada usa `--context`; o app nunca faz `config use-context` nem lê `config view --raw`, tokens ou certificados.
 - **Sem shell:** o kubectl é chamado com uma lista de argumentos, e nomes de namespace, pod e container são validados.
 - **IA só com clique**, preview e mascaramento. Os logs são tratados como dados, nunca como instruções.

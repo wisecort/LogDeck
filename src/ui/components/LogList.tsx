@@ -6,6 +6,8 @@ import { highlight, type CompiledSearch } from '../../logs/search'
 import { formatDateTime, formatTime } from '../format'
 import { useI18n } from '../i18n'
 import { IconBookmark } from './icons'
+import type { PlacedMarks } from '../../logs/marks'
+import { DroppedLine, MarkLine } from './MarkLine'
 
 export type ScrollCommand = { kind: 'top' | 'bottom' } | { kind: 'seq'; seq: number }
 
@@ -107,6 +109,17 @@ interface Props {
   /** false for the read-only --previous pane: no bookmark button. */
   markable?: boolean
   label?: string
+  /** Stream drops, silences and restarts placed between rows. */
+  marks?: PlacedMarks
+  /** Lines dropped by the full buffer (banner above the oldest row) and the per-tab limit. */
+  dropped?: { n: number; capacity: number }
+  /** Live pod stream, not a file. */
+  live?: boolean
+  onPrevious?(): void
+  /** Lines were loaded but the filters hide them all: say so, and how many the presets hide. */
+  hidden?: { loaded: number; byPresets: number }
+  onPresetsOff?(): void
+  onClearFilters?(): void
 }
 
 export function LogList(p: Props) {
@@ -153,6 +166,8 @@ export function LogList(p: Props) {
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
           {virtualizer.getVirtualItems().map((item) => {
             const row = p.rows[item.index]!
+            const above = p.marks?.before.get(item.index)
+            const last = item.index === p.rows.length - 1
             return (
               <div
                 key={item.key}
@@ -160,6 +175,8 @@ export function LogList(p: Props) {
                 ref={virtualizer.measureElement}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${item.start}px)` }}
               >
+                {item.index === 0 && p.dropped && p.dropped.n > 0 && <DroppedLine n={p.dropped.n} capacity={p.dropped.capacity} />}
+                {above?.map((m, i) => <MarkLine key={i} mark={m} live={p.live ?? false} {...(p.onPrevious && { onPrevious: p.onPrevious })} />)}
                 <LogRow
                   row={row}
                   search={p.search}
@@ -171,11 +188,24 @@ export function LogList(p: Props) {
                   onBookmark={p.onBookmark}
                   markable={p.markable ?? true}
                 />
+                {last && p.marks?.trailing.map((m, i) => <MarkLine key={i} mark={m} live={p.live ?? false} {...(p.onPrevious && { onPrevious: p.onPrevious })} />)}
               </div>
             )
           })}
         </div>
-        {p.rows.length === 0 && <div className="empty muted">{t('log.empty')}</div>}
+        {p.rows.length === 0 &&
+          (p.hidden ? (
+            <div className="empty empty-hidden" data-testid="log-hidden">
+              <div>{t('log.hiddenAll', { n: p.hidden.loaded })}</div>
+              {p.hidden.byPresets > 0 && <div className="muted">{t('log.hiddenByPresets', { n: p.hidden.byPresets })}</div>}
+              <div className="empty-actions">
+                {p.hidden.byPresets > 0 && p.onPresetsOff && <button onClick={p.onPresetsOff}>{t('log.presetsOff')}</button>}
+                {p.onClearFilters && <button onClick={p.onClearFilters}>{t('top.clearFilters')}</button>}
+              </div>
+            </div>
+          ) : (
+            <div className="empty muted">{t('log.empty')}</div>
+          ))}
       </div>
       {p.paused && p.rows.length > 0 && (
         <button className="to-bottom" onClick={p.onResume}>

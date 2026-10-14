@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
-import type { BuildInfo, ContextInfo, NamespaceList, PodInfo } from '../shared/ipc'
+import type { BuildInfo, ContextInfo, NamespaceList, PodInfo, TerminatedRun } from '../shared/ipc'
+import { recordRuns } from './pod-status'
 import { loadActiveContext, loadAliases, loadHiddenContexts, saveAliases, pickActiveContext, saveActiveContext, saveHiddenContexts, visibleContexts } from './context-view'
 
 export interface FavoriteNs {
@@ -19,6 +20,7 @@ function loadFavorites(): FavoriteNs[] {
 }
 
 export const nsKey = (context: string, namespace: string) => `${context}::${namespace}`
+export const runsKey = (context: string, namespace: string, pod: string, container: string) => `${context}::${namespace}::${pod}::${container}`
 
 /** Lazily loaded context → namespace → pod tree (block F). */
 export function useNavigation(onError: (message: string) => void) {
@@ -27,6 +29,8 @@ export function useNavigation(onError: (message: string) => void) {
   const [namespaces, setNamespaces] = useState<Record<string, NamespaceList>>({})
   const [pods, setPods] = useState<Record<string, PodInfo[]>>({})
   const [builds, setBuilds] = useState<Record<string, BuildInfo[]>>({})
+  // Previous runs per container seen on each refresh (Kubernetes keeps only the last one).
+  const [runs, setRuns] = useState<Record<string, TerminatedRun[]>>({})
   const [loading, setLoading] = useState<ReadonlySet<string>>(new Set())
   const [favorites, setFavorites] = useState<FavoriteNs[]>(loadFavorites)
   const [savedContext, setSavedContext] = useState<string | undefined>(loadActiveContext)
@@ -98,6 +102,18 @@ export function useNavigation(onError: (message: string) => void) {
       try {
         const list = await window.logdeck.listPods(context, namespace)
         setPods((prev) => ({ ...prev, [key]: list }))
+        setRuns((prev) => {
+          let next = prev
+          for (const pod of list)
+            for (const c of pod.details ?? []) {
+              if (!c.last) continue
+              const k = runsKey(context, namespace, pod.name, c.name)
+              const cur = prev[k] ?? []
+              const merged = recordRuns(cur, c)
+              if (merged.length !== cur.length) next = { ...next, [k]: merged }
+            }
+          return next
+        })
         return list
       } catch (err) {
         onError((err as Error).message)
@@ -173,6 +189,7 @@ export function useNavigation(onError: (message: string) => void) {
     expand,
     namespaces,
     pods,
+    runs,
     builds,
     loading,
     favorites,

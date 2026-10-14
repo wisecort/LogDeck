@@ -7,6 +7,8 @@
 //   FAKE_KUBECTL_LOG_FILE   log fixture streamed by `logs` (default pod-php-apache.log)
 //   FAKE_KUBECTL_DELAY_MS   delay between streamed lines (default 2; 0 = bulk)
 //   FAKE_KUBECTL_CAN_I      yes (default) | no
+//   FAKE_KUBECTL_EVENTS     ok (default) | forbidden
+//   FAKE_KUBECTL_ROUTES     ok (default) | missing (plain Kubernetes, no Route API)
 //
 // Any verb outside the read-only allowlist exits with code 99 so tests catch it.
 
@@ -73,6 +75,20 @@ if (verb === 'get') {
   }
   if (resource === 'pods' || resource === 'pod') {
     process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/pods.json')))
+    process.exit(0)
+  }
+  if (resource === 'services' || resource === 'ingresses') {
+    process.stdout.write(readFileSync(join(FIXTURES, `kubectl/${resource}.json`)))
+    process.exit(0)
+  }
+  if (resource === 'routes.route.openshift.io') {
+    if (env.FAKE_KUBECTL_ROUTES === 'missing') fail('error: the server doesn\'t have a resource type "routes"')
+    process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/routes.json')))
+    process.exit(0)
+  }
+  if (resource === 'events') {
+    if (env.FAKE_KUBECTL_EVENTS === 'forbidden') fail('Error from server (Forbidden): events is forbidden: User "dev" cannot list resource "events"')
+    process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/events.json')))
     process.exit(0)
   }
   if (resource === 'builds.build.openshift.io' && flag('-n') === 'portal-hml') {

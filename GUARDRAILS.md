@@ -71,7 +71,7 @@ Exceções pontuais (ex.: fixture de teste "suja" do próprio `guardrails.test`)
 | `version` | `--client`, `-o json` (obrigatório `--client`; não fala com o cluster, dispensa `--context`) |
 | `config get-contexts` | `--no-headers` |
 | `config view` | `--minify`, `-o jsonpath=…` (nunca `--raw`, nunca `--flatten`) |
-| `get` | recursos `namespaces`, `pods`, `pod` e `builds.build.openshift.io` (histórico de builds do OKD); `-n`, `-o json` |
+| `get` | recursos `namespaces`, `pods`, `pod`, `events` (eventos do namespace; o app guarda só os do pod aberto, sem `--watch` nem `--field-selector`), `services`, `ingresses`, `routes.route.openshift.io` (como o pod é acessado; nunca `secrets`, `configmaps` nem `endpoints`) e `builds.build.openshift.io` (histórico de builds do OKD); `-n`, `-o json` |
 | `logs` | `-f`, `--timestamps`, `--tail`, `--since`, `--since-time`, `--previous`, `-c`, `-n` |
 | `auth can-i` | `list`/`get`/`watch` + recurso, `-n` |
 | `exec` (só `shell.ts`) | `-i`, `-t`, `-c`, `-n`, `--` + comando fixo de shell |
