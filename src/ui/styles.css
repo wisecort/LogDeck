@@ -3322,3 +3322,27 @@ button.primary:disabled {
 .tick-restart {
   background: var(--bad);
 }
+.mark-event {
+  --event: #8b5cf6;
+  color: var(--event);
+  border: 1px solid color-mix(in srgb, var(--event) 45%, transparent);
+  background: color-mix(in srgb, var(--event) 7%, transparent);
+}
+.mark-event .mark-detail {
+  overflow-wrap: anywhere;
+}
+.mark-event.warning .mark-title {
+  font-weight: 600;
+}
+.tick-event {
+  width: 0;
+  background: none;
+}
+.tick-event::after {
+  content: '◆';
+  position: absolute;
+  top: -9px;
+  left: -4px;
+  font-size: 9px;
+  color: #8b5cf6;
+}

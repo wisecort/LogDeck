@@ -1,6 +1,6 @@
 // Marks between log lines: what happened while the list shows nothing (stream drops, silence, restarts).
 // Pure TypeScript (no DOM); placed by time, so they work for any filter or collapse.
-import type { StreamStatus, TerminatedRun } from '../shared/ipc'
+import type { PodEvent, StreamStatus, TerminatedRun } from '../shared/ipc'
 import { timelineTime } from './classify'
 import type { Row } from './collapse'
 import type { LogEntry } from './types'
@@ -12,6 +12,8 @@ export type Mark =
   | { kind: 'quiet'; time: number; from: number; to: number }
   /** A previous run of the container ended (`time` = finishedAt). */
   | { kind: 'restart'; time: number; container: string; reason?: string; exitCode?: number; ranMs?: number }
+  /** A Kubernetes event about the pod (`time` = last time it happened). */
+  | { kind: 'event'; time: number; type: PodEvent['type']; reason: string; message: string; count: number; firstTime?: number }
 
 export const QUIET_MIN_MS = 60_000
 /** A stretch is silent only if it is this many times longer than the usual gap between lines. */
@@ -60,6 +62,22 @@ export function restartMarks(container: string, runs: readonly TerminatedRun[]):
     if (r.reason) m.reason = r.reason
     if (r.exitCode !== undefined) m.exitCode = r.exitCode
     if (r.startedAt !== undefined) m.ranMs = r.finishedAt - r.startedAt
+    out.push(m)
+  }
+  return out
+}
+
+/** Normal events worth showing; the rest of Normal (Scheduled, Pulled, Created, Started) is routine. */
+const NOTABLE_NORMAL = new Set(['Killing'])
+
+/** Warnings and notable events about the pod or the tab's container. */
+export function eventMarks(events: readonly PodEvent[], container: string | undefined): Mark[] {
+  const out: Mark[] = []
+  for (const e of events) {
+    if (e.type !== 'Warning' && !NOTABLE_NORMAL.has(e.reason)) continue
+    if (e.container && container && e.container !== container) continue
+    const m: Mark = { kind: 'event', time: e.lastTime, type: e.type, reason: e.reason, message: e.message, count: e.count }
+    if (e.firstTime !== undefined && e.count > 1) m.firstTime = e.firstTime
     out.push(m)
   }
   return out

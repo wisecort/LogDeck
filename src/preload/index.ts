@@ -23,6 +23,7 @@ const api: LogDeckApi = {
   listNamespaces: (context) => invoke(IPC.namespaces, context),
   listPods: (context, namespace) => invoke(IPC.pods, context, namespace),
   listBuilds: (context, namespace) => invoke(IPC.builds, context, namespace),
+  listPodEvents: (context, namespace, pod) => invoke(IPC.events, context, namespace, pod),
   startLogs: (request) => invoke(IPC.startLogs, request),
   stopLogs: (streamId) => invoke(IPC.stopLogs, streamId),
   onLogLines: (listener) => subscribe<LogLinesEvent>(IPC.logLines, listener),

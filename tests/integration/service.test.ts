@@ -104,3 +104,20 @@ describe('K8sService builds (OKD)', () => {
     await expect(svc.builds('portal-hml/api-hml-example-internal:6443/dev', 'monitoring')).resolves.toEqual([])
   })
 })
+
+describe('K8sService events', () => {
+  it("reads the namespace's events with a read-only get and keeps the pod's", async () => {
+    const fake = fakeKubectlEnv()
+    const svc = new K8sService({ env: fake.env })
+    const events = await svc.events('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml', 'portal-web-7d9f8c6b5-x2k4p')
+    expect(events.map((e) => e.reason)).toEqual(['Unhealthy', 'Killing', 'Pulled'])
+    expect(fake.calls().at(-1)!.slice(0, 4)).toEqual(['get', 'events', '-n', 'portal-hml'])
+  })
+
+  it('returns [] when RBAC forbids reading events, and rejects bad pod names', async () => {
+    const fake = fakeKubectlEnv({ FAKE_KUBECTL_EVENTS: 'forbidden' })
+    const svc = new K8sService({ env: fake.env })
+    await expect(svc.events('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml', 'portal-web-7d9f8c6b5-x2k4p')).resolves.toEqual([])
+    await expect(svc.events('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml', '$(id)')).rejects.toThrow()
+  })
+})

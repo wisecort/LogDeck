@@ -3,15 +3,18 @@ import {
   buildGetNamespacesArgs,
   buildGetPodsArgs,
   buildGetBuildsArgs,
+  buildGetEventsArgs,
   buildVersionArgs,
   validateContextName,
   validateNamespace,
+  validatePodName,
   type Target,
 } from './args'
 import { listContexts, type KubeContext } from './contexts'
 import { friendlyError, KubectlError, runKubectl, type KubectlOptions, type KubectlResult } from './kubectl'
 import { kubectlInstallHint } from '../platform/paths'
-import type { NamespaceList, VersionInfo } from '../shared/ipc'
+import type { NamespaceList, PodEvent, VersionInfo } from '../shared/ipc'
+import { parseEvents } from './events'
 import { parseNamespaces, parsePods, type PodSummary } from './pods'
 import { parseBuilds, type BuildSummary } from './builds'
 
@@ -89,6 +92,20 @@ export class K8sService {
     if (r.code !== 0) return []
     try {
       return parseBuilds(r.stdout)
+    } catch {
+      return []
+    }
+  }
+
+  /** Events about one pod; [] without RBAC on events or on any failure (never an error). */
+  async events(context: string, namespace: string, pod: string): Promise<PodEvent[]> {
+    const target = await this.target(context)
+    validateNamespace(namespace)
+    validatePodName(pod)
+    const r = await this.run(buildGetEventsArgs({ ...target, namespace }))
+    if (r.code !== 0) return []
+    try {
+      return parseEvents(r.stdout, pod)
     } catch {
       return []
     }

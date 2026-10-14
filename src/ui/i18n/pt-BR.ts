@@ -116,6 +116,8 @@ export const ptBR = {
   'mark.restart': 'Container {name} reiniciado',
   'mark.restartAt': 'às {time}',
   'mark.previous': 'Ver logs anteriores',
+  'mark.event': 'Evento: {reason}',
+  'mark.eventCount': '{n}× de {from} a {to}',
   'mark.dropped': '{n} linhas antigas descartadas',
   'mark.droppedHint': 'limite de {cap} linhas por aba',
 

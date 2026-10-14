@@ -117,6 +117,8 @@ export const es: Record<MessageKey, string> = {
   'mark.restart': 'Contenedor {name} reiniciado',
   'mark.restartAt': 'a las {time}',
   'mark.previous': 'Ver logs anteriores',
+  'mark.event': 'Evento: {reason}',
+  'mark.eventCount': '{n}× de {from} a {to}',
   'mark.dropped': '{n} líneas antiguas descartadas',
   'mark.droppedHint': 'límite de {cap} líneas por pestaña',
 

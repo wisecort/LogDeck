@@ -117,6 +117,8 @@ export const en: Record<MessageKey, string> = {
   'mark.restart': 'Container {name} restarted',
   'mark.restartAt': 'at {time}',
   'mark.previous': 'See previous logs',
+  'mark.event': 'Event: {reason}',
+  'mark.eventCount': '{n}× from {from} to {to}',
   'mark.dropped': '{n} old lines dropped',
   'mark.droppedHint': 'limit of {cap} lines per tab',
 

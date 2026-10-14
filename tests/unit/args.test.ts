@@ -4,6 +4,7 @@ import {
   assertShellArgs,
   buildCanIArgs,
   buildGetContextsArgs,
+  buildGetEventsArgs,
   buildGetNamespacesArgs,
   buildGetPodsArgs,
   buildLogsArgs,
@@ -78,6 +79,11 @@ describe('builders', () => {
   it('always passes --context explicitly (G4)', () => {
     expect(buildGetNamespacesArgs(T)).toEqual(['get', 'namespaces', '-o', 'json', `--context=${HML}`])
     expect(buildGetPodsArgs({ ...T, namespace: 'portal-hml' })).toEqual(['get', 'pods', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`])
+  })
+
+  it('reads the events of a namespace (read-only get; filtered by pod in the app)', () => {
+    expect(buildGetEventsArgs({ ...T, namespace: 'portal-hml' })).toEqual(['get', 'events', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`])
+    expect(() => buildGetEventsArgs({ ...T, namespace: '$(id)' })).toThrow(UnsafeArgsError)
   })
 
   it('builds auth can-i', () => {
@@ -167,6 +173,7 @@ describe('assertReadOnly — final gate before spawn (G1)', () => {
       buildGetContextsArgs(),
       buildGetNamespacesArgs(T),
       buildGetPodsArgs({ ...T, namespace: 'portal-hml' }),
+      buildGetEventsArgs({ ...T, namespace: 'portal-hml' }),
       buildCanIArgs({ ...T, verb: 'list', resource: 'pods' }),
       buildLogsArgs(POD, { follow: true, tail: 10, since: '1h' }),
       buildLogsArgs(POD, { previous: true }),
@@ -229,6 +236,8 @@ describe('assertReadOnly — allowlisted shapes not produced by builders', () =>
     [['get', 'pods', '-n', 'portal-hml', '--context=-x']],
     [['get', 'pods', '-n', 'portal-hml', `--context=${HML}`, '--request-timeout=forever']],
     [['get', 'pods', '-n', 'portal-hml', '-o', 'yaml', `--context=${HML}`]],
+    [['get', 'events', '-n', 'portal-hml', '-o', 'json', '--watch', `--context=${HML}`]],
+    [['get', 'events', '-n', 'portal-hml', '--field-selector=involvedObject.name=x', `--context=${HML}`]],
   ])('rejects %j', (argv) => {
     expect(() => assertReadOnly(argv)).toThrow(UnsafeArgsError)
   })

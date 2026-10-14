@@ -15,6 +15,8 @@ export function markTitle(t: Translate, m: Mark): string {
       return t('mark.quiet', { d: formatDuration(m.to - m.from) })
     case 'restart':
       return t('mark.restart', { name: m.container })
+    case 'event':
+      return t('mark.event', { reason: m.reason })
   }
 }
 
@@ -26,10 +28,14 @@ function detail(t: Translate, m: Mark, live: boolean): string {
       return `${clock(m.from)} → ${clock(m.to)}${live ? ` · ${t('mark.quietHint')}` : ''}`
     case 'restart':
       return `${t('mark.restartAt', { time: clock(m.time) })} · ${runText(t, { ...(m.reason && { reason: m.reason }), ...(m.exitCode !== undefined && { exitCode: m.exitCode }), ...(m.ranMs !== undefined && { startedAt: m.time - m.ranMs, finishedAt: m.time }) })}`
+    case 'event': {
+      const when = m.count > 1 && m.firstTime !== undefined ? t('mark.eventCount', { n: m.count, from: clock(m.firstTime), to: clock(m.time) }) : t('mark.restartAt', { time: clock(m.time) })
+      return m.message ? `${m.message} · ${when}` : when
+    }
   }
 }
 
-const ICON: Record<Mark['kind'], string> = { reconnect: '⇢', quiet: '…', restart: '↻' }
+const ICON: Record<Mark['kind'], string> = { reconnect: '⇢', quiet: '…', restart: '↻', event: '◆' }
 
 interface Props {
   mark: Mark
@@ -42,7 +48,7 @@ interface Props {
 export function MarkLine({ mark, live, onPrevious }: Props) {
   const { t } = useI18n()
   return (
-    <div className={`mark-line mark-${mark.kind}`} data-testid="log-mark" data-kind={mark.kind} role="note">
+    <div className={`mark-line mark-${mark.kind} ${mark.kind === 'event' && mark.type === 'Warning' ? 'warning' : ''}`} data-testid="log-mark" data-kind={mark.kind} role="note">
       <span className="mark-icon" aria-hidden="true">
         {ICON[mark.kind]}
       </span>

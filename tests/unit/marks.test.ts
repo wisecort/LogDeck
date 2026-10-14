@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Row } from '../../src/logs/collapse'
-import { placeMarks, quietMarks, restartMarks, trackReconnect, type Mark } from '../../src/logs/marks'
+import type { PodEvent } from '../../src/shared/ipc'
+import { eventMarks, placeMarks, quietMarks, restartMarks, trackReconnect, type Mark } from '../../src/logs/marks'
 import { entry } from '../helpers/entries'
 
 const T0 = Date.parse('2026-10-09T14:00:00Z')
@@ -92,5 +93,20 @@ describe('placeMarks: marks go before the first line after them', () => {
     const rows: Row[] = [{ entry: at(0), count: 1 }, { entry: entry(), count: 1 }, { entry: at(20), count: 1 }]
     expect([...placeMarks(rows, [quiet(10)]).before.keys()]).toEqual([2])
     expect(placeMarks([], [quiet(10)])).toEqual({ before: new Map(), trailing: [] })
+  })
+})
+
+describe('eventMarks: Kubernetes events about the pod', () => {
+  const ev = (over: Partial<PodEvent>): PodEvent => ({ id: 'x', type: 'Warning', reason: 'Unhealthy', message: 'Readiness probe failed', count: 1, lastTime: T0, ...over })
+
+  it('keeps warnings and the Killing event, at their last time', () => {
+    const marks = eventMarks([ev({ id: 'a', count: 3, firstTime: T0 - 40_000 }), ev({ id: 'b', type: 'Normal', reason: 'Killing', message: 'Container php-fpm failed liveness probe' }), ev({ id: 'c', type: 'Normal', reason: 'Pulled' })], 'php-fpm')
+    expect(marks.map((m) => m.kind === 'event' && m.reason)).toEqual(['Unhealthy', 'Killing'])
+    expect(marks[0]).toEqual({ kind: 'event', time: T0, type: 'Warning', reason: 'Unhealthy', message: 'Readiness probe failed', count: 3, firstTime: T0 - 40_000 })
+  })
+
+  it("skips events about another container of the pod, keeps pod-wide ones", () => {
+    const marks = eventMarks([ev({ id: 'a', container: 'httpd' }), ev({ id: 'b', container: 'php-fpm' }), ev({ id: 'c' })], 'php-fpm')
+    expect(marks).toHaveLength(2)
   })
 })

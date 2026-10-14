@@ -7,6 +7,7 @@ export const IPC = {
   namespaces: 'k8s:namespaces',
   pods: 'k8s:pods',
   builds: 'k8s:builds',
+  events: 'k8s:events',
   startLogs: 'logs:start',
   stopLogs: 'logs:stop',
   logLines: 'logs:lines',
@@ -128,6 +129,19 @@ export interface BuildInfo {
   startedAt?: number
   durationMs?: number
   podName: string
+}
+
+/** A Kubernetes event about a pod (probe failure, OOM kill, back-off...). */
+export interface PodEvent {
+  id: string
+  type: 'Normal' | 'Warning'
+  reason: string
+  message: string
+  count: number
+  firstTime?: number
+  lastTime: number
+  /** From involvedObject.fieldPath `spec.containers{name}`. */
+  container?: string
 }
 
 export interface StreamStatus {

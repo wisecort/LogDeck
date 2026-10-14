@@ -176,13 +176,17 @@ test('Pod tab: container state, uptime, previous run, limits and probes', async 
   await win.screenshot({ path: 'test-results/ui-pod.png' })
 })
 
-test('marks: a container restart shows between the lines, on the histogram, and opens the previous logs', async () => {
+test('marks: a container restart and the pod events show between the lines and on the histogram', async () => {
   await openWebPod(win, 'php-fpm')
   // few rows, so the stretch around the restart is on screen (marks stay with level filters)
   await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^ERROR/ }).click({ modifiers: ['Alt'] })
   const restart = win.getByTestId('log-mark').filter({ hasText: 'Container php-fpm reiniciado' })
   await expect(restart).toContainText('OOMKilled · exit 137 · rodou 6m 03s')
-  await expect(win.getByTestId('volume-mark')).toHaveCount(1)
+  // Kubernetes events of the pod (kubectl get events): the failing probe before it, the kill after
+  await expect(win.getByTestId('log-mark').filter({ hasText: 'Evento: Unhealthy' })).toContainText('3× de')
+  await expect(win.getByTestId('log-mark').filter({ hasText: 'Evento: Killing' })).toContainText('failed liveness probe')
+  await expect(win.getByTestId('log-mark').filter({ hasText: 'Pulled' })).toHaveCount(0)
+  await expect(win.getByTestId('volume-mark')).toHaveCount(3)
   await win.screenshot({ path: 'test-results/ui-marks.png' })
   // searching hides the marks: they describe the whole log, not the matches
   await win.getByLabel('Buscar').fill('FPM')

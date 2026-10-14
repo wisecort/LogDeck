@@ -3,7 +3,7 @@ import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { BuildInfo, PodInfo, TerminatedRun, VersionInfo } from '../shared/ipc'
+import type { BuildInfo, PodEvent, PodInfo, TerminatedRun, VersionInfo } from '../shared/ipc'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
@@ -31,7 +31,7 @@ import { BuildDetails } from './components/BuildDetails'
 import { MAX_TABS } from './tabs'
 import { nsKey, runsKey, useNavigation } from './useNavigation'
 import { containerDetail, uptime } from './pod-status'
-import { placeMarks, quietMarks, restartMarks } from '../logs/marks'
+import { eventMarks, placeMarks, quietMarks, restartMarks } from '../logs/marks'
 import { DEFAULT_CAPACITY } from '../logs/buffer'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
@@ -132,6 +132,28 @@ export function App() {
     void window.logdeck.kubectlVersion().then(applyKubectl)
     void window.logdeck.aiStatus().then(setAiStatus)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Kubernetes events of the tab's pod, refreshed with the pod list.
+  const [podEvents, setPodEvents] = useState<{ key: string; events: PodEvent[] }>()
+  useEffect(() => {
+    const { context, namespace, pod } = selection
+    if (!context || !namespace || !pod || session.file) return
+    const key = `${context}::${namespace}::${pod.name}`
+    let alive = true
+    const load = () =>
+      window.logdeck.listPodEvents(context, namespace, pod.name).then(
+        (events) => alive && setPodEvents({ key, events }),
+        () => undefined,
+      )
+    void load()
+    const timer = setInterval(() => {
+      if (!document.hidden) void load()
+    }, POD_REFRESH_MS)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [selection.context, selection.namespace, selection.pod?.name, session.file]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const { context, namespace } = selection
@@ -349,8 +371,9 @@ export function App() {
   const allMarks = useMemo(() => {
     if (!marksShown) return []
     const restarts = liveContainer ? restartMarks(liveContainer.name, runs.length > 0 ? runs : liveContainer.last ? [liveContainer.last] : []) : []
-    return [...session.marks, ...quietMarks(engine.entries()), ...restarts]
-  }, [marksShown, liveContainer, runs, session.marks, engine, viewVersion]) // eslint-disable-line react-hooks/exhaustive-deps
+    const events = livePod && podEvents?.key === `${selection.context}::${livePod.namespace}::${livePod.name}` ? eventMarks(podEvents.events, selection.container) : []
+    return [...session.marks, ...quietMarks(engine.entries()), ...restarts, ...events]
+  }, [marksShown, liveContainer, runs, session.marks, engine, viewVersion, livePod, podEvents, selection.context, selection.container]) // eslint-disable-line react-hooks/exhaustive-deps
   const placedMarks = useMemo(() => placeMarks(rows, allMarks, timeRange), [rows, allMarks, timeRange])
 
   const filtersActive = levels.size !== LEVELS.length || search.text !== '' || search.exclude !== '' || !!timeRange || !!groupKey
