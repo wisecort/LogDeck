@@ -1,0 +1,46 @@
+name: pages
+
+# Publishes the site (site/, built by scripts/build-site.mjs) to GitHub Pages: after each release, so the
+# download links point at installers that already exist, and when the site itself changes on main.
+on:
+  workflow_run:
+    workflows: [release]
+    types: [completed]
+  push:
+    branches: [main]
+    paths: ['site/**', 'scripts/build-site.mjs', 'docs/images/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - name: Build the site for the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release view --repo "${{ github.repository }}" --json tagName --jq .tagName)
+          node scripts/build-site.mjs "$TAG" "${{ github.repository }}" _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
