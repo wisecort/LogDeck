@@ -21,6 +21,8 @@
 <p align="center">
   <code>brew install --cask wisecort/tap/logdeck</code>
   &nbsp;·&nbsp;
+  <a href="https://wisecort.github.io/LogDeck/pt-BR/">site</a>
+  &nbsp;·&nbsp;
   <a href="https://github.com/wisecort/LogDeck/releases/latest">baixar para macOS, Linux ou Windows</a>
 </p>
 

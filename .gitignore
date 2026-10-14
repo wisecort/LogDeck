@@ -19,3 +19,4 @@ test-results/
 
 # Windows test fakes built by scripts/build-test-bins.mjs
 tests/bin/*.exe
+_site/

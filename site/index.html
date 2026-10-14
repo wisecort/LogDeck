@@ -1,0 +1,142 @@
+<!doctype html>
+<!-- Template of the GitHub Pages site. scripts/build-site.mjs fills the double-brace placeholders per language. -->
+<html lang="{{lang}}" data-copy="{{t.copy}}" data-copied="{{t.copied}}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{t.title}}</title>
+    <meta name="description" content="{{t.description}}" />
+    <meta name="theme-color" content="#0b0d12" />
+    <link rel="icon" href="{{root}}icon.png" />
+    <link rel="alternate" hreflang="en" href="{{root}}" />
+    <link rel="alternate" hreflang="pt-BR" href="{{root}}pt-BR/" />
+    <meta property="og:title" content="{{t.title}}" />
+    <meta property="og:description" content="{{t.description}}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://wisecort.github.io/LogDeck/img/en/main.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="{{root}}styles.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="{{root}}{{t.homePath}}"><img src="{{root}}icon.png" alt="" width="28" height="28" />LogDeck</a>
+      <nav>
+        <a href="#features">{{t.navFeatures}}</a>
+        <a href="#download">{{t.navDownload}}</a>
+        <a href="https://github.com/{{repo}}">GitHub</a>
+        <a class="lang" href="{{root}}{{t.otherPath}}" hreflang="{{t.otherLang}}">{{t.langOther}}</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-text">
+          <h1>{{t.heroTitle}}</h1>
+          <p class="lead">{{t.heroText}}</p>
+          <div class="actions">
+            <a class="btn primary" id="primary-download" href="#download" data-label="{{t.heroDownloadFor}}">{{t.heroDownload}}</a>
+            <a class="btn" href="https://github.com/{{repo}}">★ {{t.heroStar}}</a>
+          </div>
+          <p class="meta">{{t.heroMeta}}</p>
+        </div>
+        <div class="hero-media">
+          <video src="{{root}}media/demo.mp4" poster="{{root}}media/demo-poster.jpg" autoplay muted loop playsinline aria-label="{{t.videoLabel}}"></video>
+        </div>
+      </section>
+
+      <section id="features" class="features">
+        <h2>{{t.featuresTitle}}</h2>
+        <div class="grid">
+          <figure class="feature"><img src="{{img}}/main.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f1Title}}</h3><p>{{t.f1Text}}</p></figcaption></figure>
+          <figure class="feature"><img src="{{img}}/errors.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f2Title}}</h3><p>{{t.f2Text}}</p></figcaption></figure>
+          <figure class="feature"><img src="{{img}}/compare.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f3Title}}</h3><p>{{t.f3Text}}</p></figcaption></figure>
+          <figure class="feature"><img src="{{img}}/details.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f4Title}}</h3><p>{{t.f4Text}}</p></figcaption></figure>
+          <figure class="feature"><img src="{{img}}/welcome.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f5Title}}</h3><p>{{t.f5Text}}</p></figcaption></figure>
+          <figure class="feature"><img src="{{img}}/theme-light.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f6Title}}</h3><p>{{t.f6Text}}</p></figcaption></figure>
+        </div>
+      </section>
+
+      <section class="safe">
+        <h2>{{t.safeTitle}}</h2>
+        <div class="cards">
+          <div class="card"><h3>{{t.safe1Title}}</h3><p>{{t.safe1Text}}</p></div>
+          <div class="card"><h3>{{t.safe2Title}}</h3><p>{{t.safe2Text}}</p></div>
+          <div class="card"><h3>{{t.safe3Title}}</h3><p>{{t.safe3Text}}</p></div>
+          <div class="card"><h3>{{t.safe4Title}}</h3><p>{{t.safe4Text}}</p></div>
+        </div>
+        <p class="center"><a href="https://github.com/{{repo}}/blob/main/{{t.readmeFile}}#{{t.securityAnchor}}">{{t.safeMore}} →</a></p>
+      </section>
+
+      <section id="download" class="download">
+        <h2>{{t.dlTitle}}</h2>
+        <p class="center muted">{{t.dlText}}</p>
+        <div class="os-grid">
+          <article class="os" data-os="mac">
+            <span class="badge">{{t.dlYours}}</span>
+            <h3>macOS</h3>
+            <p class="muted">{{t.dlMacText}}</p>
+            <div class="cmd"><code>brew install --cask wisecort/tap/logdeck</code><button type="button" class="copy">{{t.copy}}</button></div>
+            <div class="links">
+              <a class="btn" href="{{dl.macArm}}">{{t.dlMacArm}}</a>
+              <a class="btn" href="{{dl.macIntel}}">{{t.dlMacIntel}}</a>
+            </div>
+            <p class="note">{{t.dlMacNote}}</p>
+            <div class="cmd"><code>xattr -dr com.apple.quarantine /Applications/LogDeck.app</code><button type="button" class="copy">{{t.copy}}</button></div>
+          </article>
+
+          <article class="os" data-os="win">
+            <span class="badge">{{t.dlYours}}</span>
+            <h3>Windows</h3>
+            <p class="muted">{{t.dlWinText}}</p>
+            <a class="store" href="https://apps.microsoft.com/detail/9P5LTZ7FBWC4"><img src="{{root}}media/store-badge-{{lang}}.svg" alt="Microsoft Store" width="200" /></a>
+            <p class="note">{{t.dlWinStore}}</p>
+            <div class="links"><a class="btn" href="{{dl.win}}">{{t.dlWinExe}}</a></div>
+            <p class="note">{{t.dlWinNote}}</p>
+          </article>
+
+          <article class="os" data-os="linux">
+            <span class="badge">{{t.dlYours}}</span>
+            <h3>Linux</h3>
+            <p class="muted">{{t.dlLinuxText}}</p>
+            <div class="links">
+              <a class="btn" href="{{dl.deb}}">.deb</a>
+              <a class="btn" href="{{dl.rpm}}">.rpm</a>
+              <a class="btn" href="{{dl.appImage}}">AppImage</a>
+            </div>
+            <div class="cmd"><code>sudo apt install ./LogDeck-{{version}}-amd64.deb</code><button type="button" class="copy">{{t.copy}}</button></div>
+            <div class="cmd"><code>sudo dnf install ./LogDeck-{{version}}-x86_64.rpm</code><button type="button" class="copy">{{t.copy}}</button></div>
+            <p class="note">{{t.dlLinuxNote}}</p>
+          </article>
+        </div>
+
+        <div class="req">
+          <h3>{{t.reqTitle}}</h3>
+          <p class="muted">{{t.reqText}}</p>
+          <div class="req-grid">
+            <div><strong>macOS</strong><div class="cmd"><code>brew install kubectl</code><button type="button" class="copy">{{t.copy}}</button></div></div>
+            <div><strong>Windows</strong><div class="cmd"><code>winget install -e --id Kubernetes.kubectl</code><button type="button" class="copy">{{t.copy}}</button></div></div>
+            <div><strong>Linux</strong><div class="cmd"><code>sudo snap install kubectl --classic</code><button type="button" class="copy">{{t.copy}}</button></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta">
+        <h2>{{t.ctaTitle}}</h2>
+        <p class="muted">{{t.ctaText}}</p>
+        <div class="actions center">
+          <a class="btn primary" href="https://github.com/{{repo}}">★ {{t.heroStar}}</a>
+          <a class="btn" href="https://github.com/{{repo}}/issues/new/choose">{{t.ctaIssue}}</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <a href="https://github.com/{{repo}}">GitHub</a>
+      <a href="https://github.com/{{repo}}/blob/main/{{t.privacyFile}}">{{t.footerPrivacy}}</a>
+      <a href="https://github.com/{{repo}}/blob/main/{{t.changelogFile}}">{{t.footerChangelog}}</a>
+      <a href="https://github.com/{{repo}}/blob/main/CONTRIBUTING.md">{{t.footerContributing}}</a>
+      <span>{{t.footerLicense}}</span>
+    </footer>
+    <script src="{{root}}app.js"></script>
+  </body>
+</html>
