@@ -6,6 +6,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+- Community files for contributors: `CONTRIBUTING.md` (how to run, rules, AI assistance), `SECURITY.md` (private vulnerability reports), `CODE_OF_CONDUCT.md`, issue templates (bug, feature) and a pull request template.
+
 - LogDeck is on the [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4) (published with 1.6.0): signed by Microsoft, no SmartScreen warning, updated by the Store. Both READMEs show the Store badge and recommend it for Windows.
 
 ## [1.6.1] — 2026-10-13

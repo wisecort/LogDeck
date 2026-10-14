@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- Arquivos de comunidade para quem quer contribuir: `CONTRIBUTING.md` (como rodar, regras, assistência de IA), `SECURITY.md` (relato privado de vulnerabilidades), `CODE_OF_CONDUCT.md`, modelos de issue (bug, sugestão) e de pull request.
+
 - O LogDeck está na [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4) (publicado com a 1.6.0): assinado pela Microsoft, sem aviso do SmartScreen, atualizado pela Store. Os dois READMEs mostram o selo da Store e a recomendam no Windows.
 
 ## [1.6.1] — 13/10/2026

@@ -232,7 +232,7 @@ npm run release:linux   # Linux: AppImage, .deb and .rpm
 npm run release:win     # Windows: .exe installer
 ```
 
-Tests never touch a real cluster: they use a fake `kubectl` and fictional logs (so do the screenshots in this README). Contribution rules, including for AI assistants, are in [`AGENTS.md`](AGENTS.md) (in Portuguese).
+Tests never touch a real cluster: they use a fake `kubectl` and fictional logs (so do the screenshots in this README). How to contribute is in [`CONTRIBUTING.md`](CONTRIBUTING.md); the full rules, including for AI assistants, are in [`AGENTS.md`](AGENTS.md) (in Portuguese). Security problems: see [`SECURITY.md`](SECURITY.md).
 
 ## Code signing policy
 
