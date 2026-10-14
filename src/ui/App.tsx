@@ -3,7 +3,7 @@ import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { BuildInfo, PodInfo, VersionInfo } from '../shared/ipc'
+import type { BuildInfo, PodInfo, TerminatedRun, VersionInfo } from '../shared/ipc'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
@@ -29,7 +29,8 @@ import { TabBar } from './components/TabBar'
 import { Welcome } from './components/Welcome'
 import { BuildDetails } from './components/BuildDetails'
 import { MAX_TABS } from './tabs'
-import { useNavigation } from './useNavigation'
+import { nsKey, runsKey, useNavigation } from './useNavigation'
+import { containerDetail, uptime } from './pod-status'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
 import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
@@ -37,6 +38,7 @@ import { useUpdateCheck } from './useUpdateCheck'
 import { UpdateModal } from './components/UpdateModal'
 
 const POD_REFRESH_MS = 5000
+const NO_RUNS: readonly TerminatedRun[] = []
 const REGEX_DEBOUNCE_MS = 250
 const AROUND_RADIUS = 10
 const MAX_AI_LINES = 200
@@ -330,6 +332,16 @@ export function App() {
     return e ? [e] : []
   })
 
+  // The tab's pod as of the last sidebar refresh (every few seconds), for the Pod tab, uptime and restart marks.
+  const livePod = useMemo(() => {
+    const { context, namespace, pod } = selection
+    if (session.file || !context || !namespace || !pod) return undefined
+    return nav.pods[nsKey(context, namespace)]?.find((p) => p.name === pod.name) ?? pod
+  }, [nav.pods, selection, session.file])
+  const liveContainer = containerDetail(livePod, selection.container)
+  const runs = (livePod && selection.context && selection.container && nav.runs[runsKey(selection.context, livePod.namespace, livePod.name, selection.container)]) || NO_RUNS
+  const upMs = uptime(liveContainer, now)
+
   const filtersActive = levels.size !== LEVELS.length || search.text !== '' || search.exclude !== '' || !!timeRange || !!groupKey
   const clearFilters = () => {
     setLevels(new Set(LEVELS))
@@ -613,7 +625,7 @@ export function App() {
         </main>
         {!isEmptyTab && !showingBuild && (
         <RightPanel
-          tab={tab}
+          tab={tab === 'pod' && !livePod ? 'erros' : tab}
           onTab={setTab}
           groups={groups}
           {...(groupKey && { activeGroup: groupKey })}
@@ -634,6 +646,10 @@ export function App() {
           onAiMode={setAiMode}
           buildContext={buildContext}
           onAiPreferences={() => setAiPrefs(true)}
+          {...(livePod && { pod: livePod })}
+          {...(selection.container && { container: selection.container })}
+          runs={runs}
+          now={now}
           ticketSource={
             session.file
               ? { file: session.file }
@@ -647,7 +663,7 @@ export function App() {
         />
         )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} {...(upMs !== undefined && liveContainer && { uptime: { ms: upMs, container: liveContainer.name, restarts: liveContainer.restarts } })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {

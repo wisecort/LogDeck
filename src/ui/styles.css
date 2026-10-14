@@ -1559,10 +1559,11 @@ mark {
   background: transparent;
   border: none;
   border-radius: var(--r-sm);
-  padding: 0 10px;
+  padding: 0 6px;
   color: var(--muted);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -3219,4 +3220,32 @@ button.primary:disabled {
   color: var(--muted);
   white-space: nowrap;
   cursor: pointer;
+}
+
+/* Pod tab: previous runs seen while the app is open */
+/* Values are short phrases (OOMKilled · exit 137): wrap between words, not inside them */
+.pod-kv dd {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.pod-runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pod-runs li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 12px;
+}
+.pod-runs li.bad {
+  border-left: 3px solid var(--bad);
 }

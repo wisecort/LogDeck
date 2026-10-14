@@ -75,6 +75,47 @@ export interface PodInfo {
   canPrevious: boolean
   /** app, or OKD build/deployer pod (hidden by default in the sidebar). */
   kind: 'app' | 'build' | 'deploy'
+  node?: string
+  qosClass?: string
+  /** Runtime details per container (Pod tab, uptime, restart marks); init containers first. */
+  details?: ContainerDetail[]
+}
+
+/** How a probe checks the container; exec commands are left out (they may carry secrets). */
+export interface ProbeSummary {
+  kind: 'http' | 'tcp' | 'command' | 'grpc'
+  /** `GET :8080/health` or `:5432`. */
+  target?: string
+  periodSeconds?: number
+}
+
+export interface ContainerDetail {
+  name: string
+  init: boolean
+  image?: string
+  state: 'running' | 'waiting' | 'terminated' | 'unknown'
+  /** Waiting/terminated reason (CrashLoopBackOff, OOMKilled, Completed...). */
+  reason?: string
+  /** Start of the current run (epoch ms): the container's uptime. */
+  startedAt?: number
+  restarts: number
+  /** The previous run, the only one Kubernetes keeps. */
+  last?: TerminatedRun
+  requests?: Resources
+  limits?: Resources
+  probes?: { readiness?: ProbeSummary; liveness?: ProbeSummary; startup?: ProbeSummary }
+}
+
+export interface TerminatedRun {
+  reason?: string
+  exitCode?: number
+  startedAt?: number
+  finishedAt?: number
+}
+
+export interface Resources {
+  cpu?: string
+  memory?: string
 }
 
 /** OKD/OpenShift Build object (history); its log lives in podName, which may be gone. */

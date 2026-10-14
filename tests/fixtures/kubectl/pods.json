@@ -16,12 +16,47 @@
         ],
         "containers": [
           {
-            "name": "httpd"
+            "name": "httpd",
+            "image": "registry.example.internal/portal-httpd:2.4.62",
+            "resources": {
+              "requests": {
+                "cpu": "50m",
+                "memory": "64Mi"
+              },
+              "limits": {
+                "cpu": "250m",
+                "memory": "128Mi"
+              }
+            },
+            "readinessProbe": {
+              "httpGet": {
+                "path": "/health",
+                "port": 8080
+              },
+              "periodSeconds": 10
+            },
+            "livenessProbe": {
+              "tcpSocket": {
+                "port": 8080
+              },
+              "periodSeconds": 20
+            }
           },
           {
-            "name": "php-fpm"
+            "name": "php-fpm",
+            "image": "registry.example.internal/portal-php-fpm:8.3.12",
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              },
+              "limits": {
+                "memory": "256Mi"
+              }
+            }
           }
-        ]
+        ],
+        "nodeName": "node-a.example.internal"
       },
       "status": {
         "phase": "Running",
@@ -57,9 +92,18 @@
               "running": {
                 "startedAt": "2026-10-09T03:24:00Z"
               }
+            },
+            "lastState": {
+              "terminated": {
+                "reason": "OOMKilled",
+                "exitCode": 137,
+                "startedAt": "2026-10-09T03:17:55Z",
+                "finishedAt": "2026-10-09T03:23:58Z"
+              }
             }
           }
-        ]
+        ],
+        "qosClass": "Burstable"
       }
     },
     {
@@ -71,7 +115,16 @@
       "spec": {
         "containers": [
           {
-            "name": "worker"
+            "name": "worker",
+            "image": "registry.example.internal/portal-worker:2.14.1",
+            "resources": {
+              "requests": {
+                "memory": "128Mi"
+              },
+              "limits": {
+                "memory": "256Mi"
+              }
+            }
           }
         ]
       },
@@ -91,7 +144,9 @@
             "lastState": {
               "terminated": {
                 "reason": "Error",
-                "exitCode": 78
+                "exitCode": 78,
+                "startedAt": "2026-10-09T03:27:40Z",
+                "finishedAt": "2026-10-09T03:27:52Z"
               }
             }
           }

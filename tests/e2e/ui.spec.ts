@@ -157,6 +157,25 @@ test('compare with --previous: current and previous container side by side', asy
   await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
 })
 
+test('Pod tab: container state, uptime, previous run, limits and probes', async () => {
+  await openWebPod(win, 'httpd')
+  await expect(win.getByTestId('uptime')).toContainText('No ar há')
+  await win.getByRole('tab', { name: 'Pod' }).click()
+  const pod = win.getByTestId('pod-tab')
+  await expect(win.getByTestId('pod-state')).toContainText('Rodando há')
+  await expect(pod).toContainText('registry.example.internal/portal-httpd:2.4.62')
+  await expect(pod).toContainText('req 64Mi · lim 128Mi')
+  await expect(pod).toContainText('GET :8080/health a cada 10s')
+  await expect(pod).toContainText('node-a.example.internal')
+
+  // php-fpm was OOMKilled once: the previous run shows why and for how long it ran
+  await navTree(win).getByRole('group', { name: 'Containers' }).getByRole('button', { name: 'php-fpm', exact: true }).click()
+  await expect(pod).toContainText('Container php-fpm')
+  await expect(pod).toContainText('OOMKilled · exit 137 · rodou 6m 03s')
+  await expect(win.getByTestId('uptime')).toContainText('↻1')
+  await win.screenshot({ path: 'test-results/ui-pod.png' })
+})
+
 test('OKD builds folder: Build history after the pods; log while the pod exists, details after', async () => {
   const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()

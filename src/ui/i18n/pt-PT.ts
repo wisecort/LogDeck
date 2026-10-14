@@ -147,4 +147,13 @@ export const ptPT: Record<MessageKey, string> = {
   'upd.download': 'Instalou de outra forma (.dmg, .exe, AppImage, .deb, .rpm)? Transfira a versão nova na página da release.',
   'upd.skip': 'Ignorar esta versão',
   'pref.updatesNote': 'Uma consulta anónima a api.github.com, no máximo uma vez por dia. O LogDeck nunca transfere nem instala nada sozinho.',
+
+  'pod.empty': 'Abra o log de um pod para ver o estado do contentor.',
+  'pod.container': 'Contentor {name}',
+  'pod.running': 'A correr há {d}',
+  'pod.runningNoTime': 'A correr',
+  'pod.waiting': 'A aguardar: {reason}',
+  'pod.ran': 'correu {d}',
+  'pod.runsHint': 'O Kubernetes guarda só a execução anterior; as outras são as que o LogDeck viu enquanto estava aberto.',
+  'st.uptimeHint': 'Tempo desde o último arranque do contentor {name} · {n} reinícios',
 }
