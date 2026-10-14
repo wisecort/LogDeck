@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Builds the GitHub Pages site (site/) into an output folder: one page per language, the README screenshots
-// and the demo video. Download links point at the installers of the given release.
+// Builds the GitHub Pages site (site/) into an output folder: one page per language plus site/media
+// (screenshots from `make site-shots`, demo video, Store badges). Download links point at the installers of the given release.
 // Usage: node scripts/build-site.mjs <version|vX.Y.Z> <owner/repo> <out-dir>
-import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { strings } from '../site/i18n.mjs'
@@ -12,8 +12,6 @@ const VERSION = /^\d{1,4}\.\d{1,4}\.\d{1,4}$/
 /** Languages and where their page lives (en at the root). */
 export const LANGS = ['en', 'pt-BR']
 const DIR = { en: '', 'pt-BR': 'pt-BR/' }
-/** README screenshots per language. */
-const IMAGES = { en: 'docs/images/en', 'pt-BR': 'docs/images' }
 
 export function downloads(version, repo) {
   const v = version.replace(/^v/, '')
@@ -31,7 +29,7 @@ export function downloads(version, repo) {
 
 /**
  * Fills `{{t.key}}` (translated string), `{{dl.key}}` (download URL) and `{{version}}`, `{{lang}}`,
- * `{{root}}` (path back to the site root) and `{{img}}` (this language's screenshots). Throws on an unknown key.
+ * `{{root}}` (path back to the site root). Throws on an unknown key.
  */
 export function renderPage(template, lang, version, repo) {
   const t = strings[lang]
@@ -41,7 +39,6 @@ export function renderPage(template, lang, version, repo) {
     version: version.replace(/^v/, ''),
     lang,
     root,
-    img: `${root}img/${lang}`,
     repo,
   }
   const dl = downloads(version, repo)
@@ -59,10 +56,6 @@ function build(version, repo, out) {
   for (const lang of LANGS) {
     mkdirSync(join(out, DIR[lang]), { recursive: true })
     writeFileSync(join(out, DIR[lang], 'index.html'), renderPage(template, lang, version, repo))
-    mkdirSync(join(out, 'img', lang), { recursive: true })
-    for (const f of readdirSync(IMAGES[lang]).filter((n) => n.endsWith('.png'))) {
-      cpSync(join(IMAGES[lang], f), join(out, 'img', lang, f))
-    }
   }
   for (const f of ['styles.css', 'app.js', 'media']) cpSync(join('site', f), join(out, f), { recursive: true })
   cpSync('build/icon.png', join(out, 'icon.png'))

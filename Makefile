@@ -1,4 +1,4 @@
-.PHONY: harness test dev harness-integration icon tap winget screenshots site
+.PHONY: harness test dev harness-integration icon tap winget screenshots site site-shots
 
 harness: ## pipeline completo, igual ao CI
 	bash scripts/harness.sh
@@ -25,6 +25,11 @@ winget: ## abre o PR do winget para uma release publicada (VERSION=1.5.0)
 screenshots: ## refaz as capturas do README (docs/images e docs/images/en) com o kubectl falso; só no macOS
 	npm run build
 	npx playwright test -c playwright.screenshots.config.ts
+
+site-shots: ## refaz as capturas do site (site/media/shots) em Retina com o kubectl falso; só no macOS
+	npm run build
+	mkdir -p site/media/shots/en site/media/shots/pt-BR
+	LOGDECK_SITE_SHOTS=1 npx playwright test -c playwright.screenshots.config.ts
 
 site: ## gera o site do GitHub Pages em _site/ com os links da versão do package.json (abra _site/index.html)
 	node scripts/build-site.mjs "$$(node -p "require('./package.json').version")" wisecort/LogDeck _site

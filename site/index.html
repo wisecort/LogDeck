@@ -6,136 +6,316 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{t.title}}</title>
     <meta name="description" content="{{t.description}}" />
-    <meta name="theme-color" content="#0b0d12" />
+    <meta name="theme-color" content="#07090d" />
     <link rel="icon" href="{{root}}icon.png" />
-    <link rel="alternate" hreflang="en" href="{{root}}" />
-    <link rel="alternate" hreflang="pt-BR" href="{{root}}pt-BR/" />
+    <link rel="alternate" hreflang="en" href="https://wisecort.github.io/LogDeck/" />
+    <link rel="alternate" hreflang="pt-BR" href="https://wisecort.github.io/LogDeck/pt-BR/" />
     <meta property="og:title" content="{{t.title}}" />
     <meta property="og:description" content="{{t.description}}" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://wisecort.github.io/LogDeck/img/en/main.png" />
+    <meta property="og:image" content="https://wisecort.github.io/LogDeck/media/shots/{{lang}}/main.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="{{root}}styles.css" />
+    <script>document.documentElement.classList.add('js')</script>
   </head>
   <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z" /><path d="m9 12 2 2 4-4" /></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5" /><path d="m10.7 12.3 9.3-9.3M17 6l3 3M15 8l2 2" /></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c5 0 9 4.5 10 7a12 12 0 0 1-3 4.2M6.6 6.6C4.5 8 3 10 2 12c1 2.5 5 7 10 7 1.6 0 3-.4 4.3-1" /></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" /></symbol>
+      <symbol id="i-tabs" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M3 11h18M7 7V4h6v3" /></symbol>
+      <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m7 9 3 3-3 3M13 15h4" /></symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5z" /><path d="m3 13 9 5 9-5" /></symbol>
+      <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-1.5-1-1.6-1-3 0-1 .8-1.5 2-1.5H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z" /><circle cx="7.5" cy="11" r="1" /><circle cx="10" cy="7" r="1" /><circle cx="15" cy="7.5" r="1" /></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" /></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z" /></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M6 10l6 6 6-6M5 20h14" /></symbol>
+      <symbol id="i-gh" viewBox="0 0 24 24"><path d="M9 19c-4.5 1.4-4.5-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" /></symbol>
+      <symbol id="i-apple" viewBox="0 0 24 24"><path d="M16.5 3c.2 1.4-.4 2.7-1.2 3.6-.9 1-2.1 1.6-3.3 1.5-.2-1.3.4-2.7 1.2-3.5.9-1 2.2-1.6 3.3-1.6zM20 17c-.6 1.3-.9 1.9-1.6 3-1 1.5-2.5 3.4-4.3 3.4-1.6 0-2-1-4.2-1-2.2 0-2.6 1-4.2 1-1.8 0-3.2-1.7-4.2-3.3C-1.3 15.9.4 9.6 3.6 9.5c1.6 0 2.7 1.1 4.1 1.1 1.3 0 2.2-1.1 4.2-1.1 1.4 0 2.9.8 3.9 2.1-3.4 1.9-2.9 6.8.2 8.4" transform="translate(2.5 -1.2) scale(.85)" /></symbol>
+      <symbol id="i-win" viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.5v7H3zM12 4.3 21 3v8.5h-9zM3 12.5h7.5v7L3 18.5zM12 12.5h9V21l-9-1.3z" /></symbol>
+      <symbol id="i-linux" viewBox="0 0 24 24"><path d="M12 3c-2.2 0-3.5 1.9-3.5 4.3 0 1.4.4 2.2-.4 3.6-1 1.8-2.6 3.9-2.6 6.3 0 .8.2 1.3.6 1.8M12 3c2.2 0 3.5 1.9 3.5 4.3 0 1.4-.4 2.2.4 3.6 1 1.8 2.6 3.9 2.6 6.3 0 .8-.2 1.3-.6 1.8M8 21c1.2-.6 2.4-.9 4-.9s2.8.3 4 .9M10.5 7.5h.01M13.5 7.5h.01M11 10h2" /></symbol>
+    </svg>
+
     <header class="nav">
-      <a class="brand" href="{{root}}{{t.homePath}}"><img src="{{root}}icon.png" alt="" width="28" height="28" />LogDeck</a>
-      <nav>
-        <a href="#features">{{t.navFeatures}}</a>
-        <a href="#download">{{t.navDownload}}</a>
-        <a href="https://github.com/{{repo}}">GitHub</a>
-        <a class="lang" href="{{root}}{{t.otherPath}}" hreflang="{{t.otherLang}}">{{t.langOther}}</a>
-      </nav>
+      <div class="nav-in">
+        <a class="brand" href="{{root}}{{t.homePath}}"><img src="{{root}}icon.png" alt="" width="30" height="30" />LogDeck</a>
+        <nav>
+          <a href="#features">{{t.navFeatures}}</a>
+          <a href="#security">{{t.navSecurity}}</a>
+          <a href="#faq">{{t.navFaq}}</a>
+          <a class="lang" href="{{root}}{{t.otherPath}}" hreflang="{{t.otherLang}}" title="{{t.langOtherName}}">{{t.langOther}}</a>
+          <a class="gh" href="https://github.com/{{repo}}" aria-label="GitHub"><svg class="ic"><use href="#i-gh" /></svg><img src="https://img.shields.io/github/stars/{{repo}}?style=flat&amp;label=&amp;color=1b2130&amp;labelColor=1b2130" alt="" height="20" /></a>
+          <a class="btn sm primary" href="#download">{{t.navDownload}}</a>
+        </nav>
+      </div>
     </header>
 
     <main>
       <section class="hero">
-        <div class="hero-text">
+        <div class="hero-text reveal">
+          <span class="eyebrow"><span class="dot"></span>{{t.heroEyebrow}}</span>
           <h1>{{t.heroTitle}}</h1>
           <p class="lead">{{t.heroText}}</p>
           <div class="actions">
-            <a class="btn primary" id="primary-download" href="#download" data-label="{{t.heroDownloadFor}}">{{t.heroDownload}}</a>
-            <a class="btn" href="https://github.com/{{repo}}">★ {{t.heroStar}}</a>
+            <a class="btn primary lg" id="primary-download" href="#download" data-label="{{t.heroDownloadFor}}"><svg class="ic"><use href="#i-down" /></svg><span>{{t.heroDownload}}</span></a>
+            <a class="btn lg ghost" href="https://github.com/{{repo}}"><svg class="ic"><use href="#i-star" /></svg>{{t.heroStar}}</a>
           </div>
-          <p class="meta">{{t.heroMeta}}</p>
+          <p class="meta"><svg class="ic sm"><use href="#i-apple" /></svg><svg class="ic sm"><use href="#i-win" /></svg><svg class="ic sm"><use href="#i-linux" /></svg>{{t.heroMeta}}</p>
         </div>
-        <div class="hero-media">
-          <video src="{{root}}media/demo.mp4" poster="{{root}}media/demo-poster.jpg" autoplay muted loop playsinline aria-label="{{t.videoLabel}}"></video>
+        <div class="hero-visual reveal">
+          <div class="glow"></div>
+          <div class="window tilt">
+            <div class="bar"><i></i><i></i><i></i><span>LogDeck</span></div>
+            <img src="{{root}}media/shots/{{lang}}/main.jpg" alt="" width="2880" height="1658" />
+          </div>
+          <div class="chip chip-a"><span class="pill err">ERROR</span>{{t.heroChipErrors}}</div>
+          <div class="chip chip-b"><svg class="ic sm ok"><use href="#i-shield" /></svg>{{t.heroChipSafe}}</div>
+        </div>
+      </section>
+
+      <section class="works reveal">
+        <p>{{t.worksWith}}</p>
+        <ul>
+          <li>Amazon EKS</li><li>Google GKE</li><li>Azure AKS</li><li>kind</li><li>minikube</li><li>k3s</li><li>on-prem</li>
+        </ul>
+      </section>
+
+      <section class="before">
+        <div class="head reveal">
+          <h2>{{t.beforeTitle}}</h2>
+          <p class="sub">{{t.beforeText}}</p>
+        </div>
+        <div class="ba reveal">
+          <div class="ba-side">
+            <span class="ba-label">{{t.beforeLabel}}</span>
+            <div class="term">
+              <div class="term-bar">$ kubectl logs -f portal-web-7d9f | grep -i error</div>
+              <div class="term-body" aria-hidden="true">
+                <div class="term-scroll">
+                  <p>10.0.0.22 - - "GET /api/v1/orders HTTP/1.1" 200 1037</p>
+                  <p class="r">[proxy_fcgi:error] (70007)The timeout specified has expired</p>
+                  <p>10.0.0.16 - - "POST /api/v1/orders HTTP/1.1" 302 805</p>
+                  <p>10.0.0.21 - - "GET /login HTTP/1.1" 200 11147</p>
+                  <p class="y">WARNING: [pool www] server reached pm.max_children</p>
+                  <p>10.0.0.15 - - "GET /assets/app.js HTTP/1.1" 304 -</p>
+                  <p class="r">SQLSTATE[HY000] [2002] Connection timed out</p>
+                  <p>10.0.0.22 - - "GET / HTTP/1.1" 302 19765</p>
+                  <p>10.0.0.16 - - "GET /assets/app.css HTTP/1.1" 200 5800</p>
+                  <p class="r">[proxy_fcgi:error] (70007)The timeout specified has expired</p>
+                  <p>10.0.0.21 - - "POST /api/v1/orders/42 HTTP/1.1" 302 991</p>
+                  <p>10.0.0.15 - - "GET /login HTTP/1.1" 200 6380</p>
+                  <p>10.0.0.22 - - "GET /api/v1/orders HTTP/1.1" 200 1037</p>
+                  <p class="r">[proxy_fcgi:error] (70007)The timeout specified has expired</p>
+                  <p>10.0.0.16 - - "POST /api/v1/orders HTTP/1.1" 302 805</p>
+                  <p>10.0.0.21 - - "GET /login HTTP/1.1" 200 11147</p>
+                  <p class="y">WARNING: [pool www] server reached pm.max_children</p>
+                  <p>10.0.0.15 - - "GET /assets/app.js HTTP/1.1" 304 -</p>
+                  <p class="r">SQLSTATE[HY000] [2002] Connection timed out</p>
+                  <p>10.0.0.22 - - "GET / HTTP/1.1" 302 19765</p>
+                  <p>10.0.0.16 - - "GET /assets/app.css HTTP/1.1" 200 5800</p>
+                  <p class="r">[proxy_fcgi:error] (70007)The timeout specified has expired</p>
+                  <p>10.0.0.21 - - "POST /api/v1/orders/42 HTTP/1.1" 302 991</p>
+                  <p>10.0.0.15 - - "GET /login HTTP/1.1" 200 6380</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ba-arrow" aria-hidden="true">→</div>
+          <div class="ba-side">
+            <span class="ba-label good">{{t.afterLabel}}</span>
+            <div class="zoom window" style="background-image: url('{{root}}media/shots/{{lang}}/errors.jpg'); aspect-ratio: 660/540; background-size: 436.4% auto; background-position: 99.1% 21%"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="video">
+        <h2 class="reveal">{{t.videoTitle}}</h2>
+        <div class="video-frame reveal">
+          <video src="{{root}}media/demo.mp4" poster="{{root}}media/demo-poster.jpg" muted loop playsinline preload="none" aria-label="{{t.videoLabel}}"></video>
         </div>
       </section>
 
       <section id="features" class="features">
-        <h2>{{t.featuresTitle}}</h2>
-        <div class="grid">
-          <figure class="feature"><img src="{{img}}/main.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f1Title}}</h3><p>{{t.f1Text}}</p></figcaption></figure>
-          <figure class="feature"><img src="{{img}}/errors.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f2Title}}</h3><p>{{t.f2Text}}</p></figcaption></figure>
-          <figure class="feature"><img src="{{img}}/compare.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f3Title}}</h3><p>{{t.f3Text}}</p></figcaption></figure>
-          <figure class="feature"><img src="{{img}}/details.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f4Title}}</h3><p>{{t.f4Text}}</p></figcaption></figure>
-          <figure class="feature"><img src="{{img}}/welcome.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f5Title}}</h3><p>{{t.f5Text}}</p></figcaption></figure>
-          <figure class="feature"><img src="{{img}}/theme-light.png" alt="" loading="lazy" width="1600" height="921" /><figcaption><h3>{{t.f6Title}}</h3><p>{{t.f6Text}}</p></figcaption></figure>
+        <article class="row reveal">
+          <div class="row-text">
+            <span class="kicker">{{t.f1Kicker}}</span>
+            <h2>{{t.f1Title}}</h2>
+            <p>{{t.f1Text}}</p>
+            <ul class="checks"><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f1a}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f1b}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f1c}}</li></ul>
+          </div>
+          <div class="row-visual">
+            <div class="window"><div class="bar"><i></i><i></i><i></i></div><img src="{{root}}media/shots/{{lang}}/main.jpg" alt="" loading="lazy" width="2880" height="1658" /></div>
+            <div class="zoom callout wide" style="background-image: url('{{root}}media/shots/{{lang}}/main.jpg'); aspect-ratio: 1700/300; background-size: 169.4% auto; background-position: 41.5% 11.8%"></div>
+          </div>
+        </article>
+
+        <article class="row flip reveal">
+          <div class="row-text">
+            <span class="kicker">{{t.f2Kicker}}</span>
+            <h2>{{t.f2Title}}</h2>
+            <p>{{t.f2Text}}</p>
+            <ul class="checks"><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f2a}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f2b}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f2c}}</li></ul>
+          </div>
+          <div class="row-visual">
+            <div class="window"><div class="bar"><i></i><i></i><i></i></div><img src="{{root}}media/shots/{{lang}}/errors.jpg" alt="" loading="lazy" width="2880" height="1658" /></div>
+            <div class="zoom callout tall" style="background-image: url('{{root}}media/shots/{{lang}}/errors.jpg'); aspect-ratio: 660/540; background-size: 436.4% auto; background-position: 99.1% 21%"></div>
+          </div>
+        </article>
+
+        <article class="row reveal">
+          <div class="row-text">
+            <span class="kicker">{{t.f3Kicker}}</span>
+            <h2>{{t.f3Title}}</h2>
+            <p>{{t.f3Text}}</p>
+            <ul class="checks"><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f3a}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f3b}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f3c}}</li></ul>
+          </div>
+          <div class="row-visual">
+            <div class="window"><div class="bar"><i></i><i></i><i></i></div><img src="{{root}}media/shots/{{lang}}/compare.jpg" alt="" loading="lazy" width="2880" height="1658" /></div>
+            <div class="zoom callout wide" style="background-image: url('{{root}}media/shots/{{lang}}/compare.jpg'); aspect-ratio: 845/225; background-size: 340.8% auto; background-position: 65.4% 31.8%"></div>
+          </div>
+        </article>
+
+        <article class="row flip reveal">
+          <div class="row-text">
+            <span class="kicker">{{t.f4Kicker}}</span>
+            <h2>{{t.f4Title}}</h2>
+            <p>{{t.f4Text}}</p>
+            <ul class="checks"><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f4a}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f4b}}</li><li><svg class="ic sm"><use href="#i-check" /></svg>{{t.f4c}}</li></ul>
+          </div>
+          <div class="row-visual">
+            <div class="window"><div class="bar"><i></i><i></i><i></i></div><img src="{{root}}media/shots/{{lang}}/details.jpg" alt="" loading="lazy" width="2880" height="1658" /></div>
+            <div class="zoom callout tall" style="background-image: url('{{root}}media/shots/{{lang}}/details.jpg'); aspect-ratio: 660/760; background-size: 436.4% auto; background-position: 99.1% 11.1%"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="more">
+        <h2 class="reveal">{{t.moreTitle}}</h2>
+        <div class="more-grid reveal">
+          <div class="mini"><svg class="ic"><use href="#i-tabs" /></svg><h3>{{t.m1Title}}</h3><p>{{t.m1Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-term" /></svg><h3>{{t.m2Title}}</h3><p>{{t.m2Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-flag" /></svg><h3>{{t.m3Title}}</h3><p>{{t.m3Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-layers" /></svg><h3>{{t.m4Title}}</h3><p>{{t.m4Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-palette" /></svg><h3>{{t.m5Title}}</h3><p>{{t.m5Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-keyboard" /></svg><h3>{{t.m6Title}}</h3><p>{{t.m6Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-globe" /></svg><h3>{{t.m7Title}}</h3><p>{{t.m7Text}}</p></div>
+          <div class="mini"><svg class="ic"><use href="#i-file" /></svg><h3>{{t.m8Title}}</h3><p>{{t.m8Text}}</p></div>
         </div>
       </section>
 
-      <section class="safe">
-        <h2>{{t.safeTitle}}</h2>
-        <div class="cards">
-          <div class="card"><h3>{{t.safe1Title}}</h3><p>{{t.safe1Text}}</p></div>
-          <div class="card"><h3>{{t.safe2Title}}</h3><p>{{t.safe2Text}}</p></div>
-          <div class="card"><h3>{{t.safe3Title}}</h3><p>{{t.safe3Text}}</p></div>
-          <div class="card"><h3>{{t.safe4Title}}</h3><p>{{t.safe4Text}}</p></div>
+      <section id="security" class="safe">
+        <div class="head reveal">
+          <span class="kicker warn">{{t.safeKicker}}</span>
+          <h2>{{t.safeTitle}}</h2>
         </div>
-        <p class="center"><a href="https://github.com/{{repo}}/blob/main/{{t.readmeFile}}#{{t.securityAnchor}}">{{t.safeMore}} →</a></p>
+        <div class="cards reveal">
+          <div class="card"><svg class="ic"><use href="#i-key" /></svg><h3>{{t.safe1Title}}</h3><p>{{t.safe1Text}}</p></div>
+          <div class="card"><svg class="ic"><use href="#i-shield" /></svg><h3>{{t.safe2Title}}</h3><p>{{t.safe2Text}}</p></div>
+          <div class="card"><svg class="ic"><use href="#i-eye-off" /></svg><h3>{{t.safe3Title}}</h3><p>{{t.safe3Text}}</p></div>
+          <div class="card"><svg class="ic"><use href="#i-spark" /></svg><h3>{{t.safe4Title}}</h3><p>{{t.safe4Text}}</p></div>
+        </div>
+        <p class="center reveal"><a class="more-link" href="https://github.com/{{repo}}/blob/main/{{t.readmeFile}}#{{t.securityAnchor}}">{{t.safeMore}} →</a></p>
       </section>
 
       <section id="download" class="download">
-        <h2>{{t.dlTitle}}</h2>
-        <p class="center muted">{{t.dlText}}</p>
-        <div class="os-grid">
+        <div class="head reveal">
+          <span class="kicker">{{t.dlKicker}}</span>
+          <h2>{{t.dlTitle}}</h2>
+          <p class="sub">{{t.dlText}}</p>
+        </div>
+        <div class="os-grid reveal">
           <article class="os" data-os="mac">
             <span class="badge">{{t.dlYours}}</span>
-            <h3>macOS</h3>
+            <h3><svg class="ic"><use href="#i-apple" /></svg>macOS</h3>
             <p class="muted">{{t.dlMacText}}</p>
-            <div class="cmd"><code>brew install --cask wisecort/tap/logdeck</code><button type="button" class="copy">{{t.copy}}</button></div>
+            <div class="cmd"><code>brew install --cask wisecort/tap/logdeck</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div>
             <div class="links">
-              <a class="btn" href="{{dl.macArm}}">{{t.dlMacArm}}</a>
-              <a class="btn" href="{{dl.macIntel}}">{{t.dlMacIntel}}</a>
+              <a class="btn" href="{{dl.macArm}}"><svg class="ic sm"><use href="#i-down" /></svg>{{t.dlMacArm}}</a>
+              <a class="btn" href="{{dl.macIntel}}"><svg class="ic sm"><use href="#i-down" /></svg>{{t.dlMacIntel}}</a>
             </div>
             <p class="note">{{t.dlMacNote}}</p>
-            <div class="cmd"><code>xattr -dr com.apple.quarantine /Applications/LogDeck.app</code><button type="button" class="copy">{{t.copy}}</button></div>
+            <div class="cmd"><code>xattr -dr com.apple.quarantine /Applications/LogDeck.app</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div>
           </article>
 
           <article class="os" data-os="win">
             <span class="badge">{{t.dlYours}}</span>
-            <h3>Windows</h3>
+            <h3><svg class="ic"><use href="#i-win" /></svg>Windows</h3>
             <p class="muted">{{t.dlWinText}}</p>
-            <a class="store" href="https://apps.microsoft.com/detail/9P5LTZ7FBWC4"><img src="{{root}}media/store-badge-{{lang}}.svg" alt="Microsoft Store" width="200" /></a>
+            <a class="store" href="https://apps.microsoft.com/detail/9P5LTZ7FBWC4"><img src="{{root}}media/store-badge-{{lang}}.svg" alt="Microsoft Store" width="200" height="55" /></a>
             <p class="note">{{t.dlWinStore}}</p>
-            <div class="links"><a class="btn" href="{{dl.win}}">{{t.dlWinExe}}</a></div>
+            <div class="links"><a class="btn" href="{{dl.win}}"><svg class="ic sm"><use href="#i-down" /></svg>{{t.dlWinExe}}</a></div>
             <p class="note">{{t.dlWinNote}}</p>
           </article>
 
           <article class="os" data-os="linux">
             <span class="badge">{{t.dlYours}}</span>
-            <h3>Linux</h3>
+            <h3><svg class="ic"><use href="#i-linux" /></svg>Linux</h3>
             <p class="muted">{{t.dlLinuxText}}</p>
             <div class="links">
-              <a class="btn" href="{{dl.deb}}">.deb</a>
-              <a class="btn" href="{{dl.rpm}}">.rpm</a>
-              <a class="btn" href="{{dl.appImage}}">AppImage</a>
+              <a class="btn" href="{{dl.deb}}"><svg class="ic sm"><use href="#i-down" /></svg>.deb</a>
+              <a class="btn" href="{{dl.rpm}}"><svg class="ic sm"><use href="#i-down" /></svg>.rpm</a>
+              <a class="btn" href="{{dl.appImage}}"><svg class="ic sm"><use href="#i-down" /></svg>AppImage</a>
             </div>
-            <div class="cmd"><code>sudo apt install ./LogDeck-{{version}}-amd64.deb</code><button type="button" class="copy">{{t.copy}}</button></div>
-            <div class="cmd"><code>sudo dnf install ./LogDeck-{{version}}-x86_64.rpm</code><button type="button" class="copy">{{t.copy}}</button></div>
+            <div class="cmd"><code>sudo apt install ./LogDeck-{{version}}-amd64.deb</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div>
+            <div class="cmd"><code>sudo dnf install ./LogDeck-{{version}}-x86_64.rpm</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div>
             <p class="note">{{t.dlLinuxNote}}</p>
           </article>
         </div>
 
-        <div class="req">
-          <h3>{{t.reqTitle}}</h3>
-          <p class="muted">{{t.reqText}}</p>
+        <div class="req reveal">
+          <div>
+            <h3>{{t.reqTitle}}</h3>
+            <p class="muted">{{t.reqText}}</p>
+          </div>
           <div class="req-grid">
-            <div><strong>macOS</strong><div class="cmd"><code>brew install kubectl</code><button type="button" class="copy">{{t.copy}}</button></div></div>
-            <div><strong>Windows</strong><div class="cmd"><code>winget install -e --id Kubernetes.kubectl</code><button type="button" class="copy">{{t.copy}}</button></div></div>
-            <div><strong>Linux</strong><div class="cmd"><code>sudo snap install kubectl --classic</code><button type="button" class="copy">{{t.copy}}</button></div></div>
+            <div><span class="os-name"><svg class="ic sm"><use href="#i-apple" /></svg>macOS</span><div class="cmd"><code>brew install kubectl</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div></div>
+            <div><span class="os-name"><svg class="ic sm"><use href="#i-win" /></svg>Windows</span><div class="cmd"><code>winget install -e --id Kubernetes.kubectl</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div></div>
+            <div><span class="os-name"><svg class="ic sm"><use href="#i-linux" /></svg>Linux</span><div class="cmd"><code>sudo snap install kubectl --classic</code><button type="button" class="copy" aria-label="{{t.copy}}"><svg class="ic sm"><use href="#i-copy" /></svg><span>{{t.copy}}</span></button></div></div>
           </div>
         </div>
       </section>
 
-      <section class="cta">
+      <section id="faq" class="faq">
+        <h2 class="reveal">{{t.faqTitle}}</h2>
+        <div class="faq-list reveal">
+          <details open><summary>{{t.q1}}</summary><p>{{t.a1}}</p></details>
+          <details><summary>{{t.q2}}</summary><p>{{t.a2}}</p></details>
+          <details><summary>{{t.q3}}</summary><p>{{t.a3}}</p></details>
+          <details><summary>{{t.q4}}</summary><p>{{t.a4}}</p></details>
+          <details><summary>{{t.q5}}</summary><p>{{t.a5}}</p></details>
+        </div>
+      </section>
+
+      <section class="cta reveal">
+        <img src="{{root}}icon.png" alt="" width="88" height="88" />
         <h2>{{t.ctaTitle}}</h2>
-        <p class="muted">{{t.ctaText}}</p>
+        <p class="sub">{{t.ctaText}}</p>
         <div class="actions center">
-          <a class="btn primary" href="https://github.com/{{repo}}">★ {{t.heroStar}}</a>
-          <a class="btn" href="https://github.com/{{repo}}/issues/new/choose">{{t.ctaIssue}}</a>
+          <a class="btn primary lg" href="https://github.com/{{repo}}"><svg class="ic"><use href="#i-star" /></svg>{{t.heroStar}}</a>
+          <a class="btn lg ghost" href="https://github.com/{{repo}}/issues/new/choose">{{t.ctaIssue}}</a>
         </div>
       </section>
     </main>
 
     <footer>
-      <a href="https://github.com/{{repo}}">GitHub</a>
-      <a href="https://github.com/{{repo}}/blob/main/{{t.privacyFile}}">{{t.footerPrivacy}}</a>
-      <a href="https://github.com/{{repo}}/blob/main/{{t.changelogFile}}">{{t.footerChangelog}}</a>
-      <a href="https://github.com/{{repo}}/blob/main/CONTRIBUTING.md">{{t.footerContributing}}</a>
-      <span>{{t.footerLicense}}</span>
+      <div class="foot-in">
+        <a class="brand" href="{{root}}{{t.homePath}}"><img src="{{root}}icon.png" alt="" width="24" height="24" />LogDeck</a>
+        <nav>
+          <a href="https://github.com/{{repo}}">GitHub</a>
+          <a href="https://github.com/{{repo}}/blob/main/{{t.privacyFile}}">{{t.footerPrivacy}}</a>
+          <a href="https://github.com/{{repo}}/blob/main/SECURITY.md">{{t.footerSecurity}}</a>
+          <a href="https://github.com/{{repo}}/blob/main/{{t.changelogFile}}">{{t.footerChangelog}}</a>
+          <a href="https://github.com/{{repo}}/blob/main/CONTRIBUTING.md">{{t.footerContributing}}</a>
+          <a href="{{root}}{{t.otherPath}}" hreflang="{{t.otherLang}}">{{t.langOtherName}}</a>
+        </nav>
+        <span class="muted">{{t.footerLicense}}</span>
+      </div>
     </footer>
     <script src="{{root}}app.js"></script>
   </body>

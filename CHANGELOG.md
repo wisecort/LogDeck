@@ -7,7 +7,7 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 ## [Unreleased]
 
 - Community files for contributors: `CONTRIBUTING.md` (how to run, rules, AI assistance), `SECURITY.md` (private vulnerability reports), `CODE_OF_CONDUCT.md`, issue templates (bug, feature) and a pull request template.
-- Website on GitHub Pages (https://wisecort.github.io/LogDeck/), in English and Portuguese: demo video, screenshots, the read-only promises and downloads per OS (the visitor's OS comes first), with kubectl install commands. Built from `site/` by `scripts/build-site.mjs` and published by `.github/workflows/pages.yml` after each release.
+- Website on GitHub Pages (https://wisecort.github.io/LogDeck/), in English and Portuguese: demo video, screenshots, the read-only promises and downloads per OS (the visitor's OS comes first), with kubectl install commands, a before/after, zoomed details, "and more" features and a FAQ; Retina screenshots from `make site-shots`. Built from `site/` by `scripts/build-site.mjs` and published by `.github/workflows/pages.yml` after each release.
 - LogDeck is on the [Microsoft Store](https://apps.microsoft.com/detail/9P5LTZ7FBWC4) (published with 1.6.0): signed by Microsoft, no SmartScreen warning, updated by the Store. Both READMEs show the Store badge and recommend it for Windows.
 
 ## [1.6.1] — 2026-10-13
