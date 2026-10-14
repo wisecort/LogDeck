@@ -1,0 +1,25 @@
+name: Feature request
+description: An idea to make LogDeck better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, for example "when a pod has several containers, I have to...".
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: How do you handle it today?
+      description: Other tools or workarounds (kubectl, k9s, stern...).
+  - type: markdown
+    attributes:
+      value: LogDeck stays **read-only** on the cluster, so ideas that change cluster state are out of scope.

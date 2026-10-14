@@ -231,7 +231,7 @@ npm run release:linux   # Linux: AppImage, .deb e .rpm
 npm run release:win     # Windows: instalador .exe
 ```
 
-Os testes nunca acessam um cluster de verdade: usam um `kubectl` falso e logs fictícios (as capturas deste README também). Regras para contribuir, inclusive com assistentes de IA, estão em [`AGENTS.md`](AGENTS.md).
+Os testes nunca acessam um cluster de verdade: usam um `kubectl` falso e logs fictícios (as capturas deste README também). Como contribuir está em [`CONTRIBUTING.md`](CONTRIBUTING.md) (em inglês); as regras completas, inclusive para assistentes de IA, estão em [`AGENTS.md`](AGENTS.md). Problemas de segurança: veja [`SECURITY.md`](SECURITY.md).
 
 ## Política de assinatura de código
 
