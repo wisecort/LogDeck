@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from '../logs/search'
+import { compileSearch, countExcluded, entryText, searchWithTimeout, type CompiledSearch } from '../logs/search'
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
@@ -41,6 +41,10 @@ import { useUpdateCheck } from './useUpdateCheck'
 import { UpdateModal } from './components/UpdateModal'
 
 const POD_REFRESH_MS = 5000
+// Events change slowly; each read is one more kubectl process (costly on OKD logins).
+const EVENTS_REFRESH_MS = 15_000
+// Extra reads (events, services, routes, ingresses) wait for the log's first lines, at most this long.
+const EXTRAS_DELAY_MS = 3000
 const NO_RUNS: readonly TerminatedRun[] = []
 const REGEX_DEBOUNCE_MS = 250
 const AROUND_RADIUS = 10
@@ -134,21 +138,30 @@ export function App() {
     void window.logdeck.aiStatus().then(setAiStatus)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The log stream has delivered its first lines (or finished): extra kubectl reads may start.
+  const logsSettled = engine.size > 0 || status?.state === 'ended' || status?.state === 'error'
+
   // Services, Routes and Ingresses of the tab's namespace (Pod tab → Access), read when a pod is opened.
   const [exposure, setExposure] = useState<{ key: string; value: Exposure }>()
   useEffect(() => {
     const { context, namespace, pod } = selection
     if (!context || !namespace || !pod || session.file) return
     const key = nsKey(context, namespace)
+    if (exposure?.key === key && !logsSettled) return
     let alive = true
-    void window.logdeck.listExposure(context, namespace).then(
-      (value) => alive && setExposure({ key, value }),
-      () => undefined,
+    const first = setTimeout(
+      () =>
+        void window.logdeck.listExposure(context, namespace).then(
+          (value) => alive && setExposure({ key, value }),
+          () => undefined,
+        ),
+      logsSettled ? 0 : EXTRAS_DELAY_MS,
     )
     return () => {
       alive = false
+      clearTimeout(first)
     }
-  }, [selection.context, selection.namespace, selection.pod?.name, session.file]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selection.context, selection.namespace, selection.pod?.name, session.file, logsSettled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Kubernetes events of the tab's pod, refreshed with the pod list.
   const [podEvents, setPodEvents] = useState<{ key: string; events: PodEvent[] }>()
@@ -162,15 +175,17 @@ export function App() {
         (events) => alive && setPodEvents({ key, events }),
         () => undefined,
       )
-    void load()
+    // The log's own kubectl goes first; events follow its first lines.
+    const first = setTimeout(() => void load(), logsSettled ? 0 : EXTRAS_DELAY_MS)
     const timer = setInterval(() => {
       if (!document.hidden) void load()
-    }, POD_REFRESH_MS)
+    }, EVENTS_REFRESH_MS)
     return () => {
       alive = false
+      clearTimeout(first)
       clearInterval(timer)
     }
-  }, [selection.context, selection.namespace, selection.pod?.name, session.file]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selection.context, selection.namespace, selection.pod?.name, session.file, logsSettled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const { context, namespace } = selection
@@ -386,6 +401,13 @@ export function App() {
     () => (livePod && selection.context && exposure?.key === nsKey(selection.context, livePod.namespace) ? podAccess(livePod.labels, exposure.value) : undefined),
     [livePod, exposure, selection.context],
   )
+
+  // Empty view with lines loaded: tell how many the presets hide (often health checks filling the tail).
+  const hidden = useMemo(() => {
+    if (rows.length > 0 || engine.size === 0) return undefined
+    const terms = presets ? activeTerms(presets) : []
+    return { loaded: engine.size, byPresets: terms.length > 0 ? countExcluded(engine.entries(), terms) : 0 }
+  }, [rows.length, engine, presets, viewVersion]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Marks between lines (stream drops, silence, restarts); hidden while searching or showing one error group.
   const marksShown = search.text === '' && !groupKey
@@ -646,6 +668,9 @@ export function App() {
                 dropped={{ n: engine.dropped, capacity: DEFAULT_CAPACITY }}
                 live={!session.file}
                 {...(canCompare && !session.activeTab.compare && { onPrevious: toggleCompare })}
+                {...(hidden && { hidden })}
+                onPresetsOff={() => presets && void savePresets({ ...presets, active: [] })}
+                onClearFilters={clearFilters}
               />
             )
             if (!companion) return main

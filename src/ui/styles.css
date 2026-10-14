@@ -3372,3 +3372,17 @@ button.primary:disabled {
   overflow-wrap: anywhere;
   color: var(--accent);
 }
+
+/* Empty view when the filters hide every loaded line */
+.empty-hidden {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 60ch;
+}
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}

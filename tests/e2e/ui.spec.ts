@@ -221,6 +221,17 @@ test('marks: a dropped kubectl stream says when it was lost and when it came bac
   await expect(drops.first()).toContainText('sem duplicar')
 })
 
+test('empty view explains lines hidden by filters and presets, with a way out', async () => {
+  await openWebPod(win)
+  // only FATAL, which this log has none of: every loaded line is filtered out
+  await win.getByRole('group', { name: 'Níveis' }).getByRole('button', { name: /^FATAL/ }).click({ modifiers: ['Alt'] })
+  const hidden = win.getByTestId('log-hidden')
+  await expect(hidden).toContainText('465 linhas carregadas, mas nenhuma passa pelos filtros.')
+  await expect(hidden).toContainText('174 delas são escondidas pelos presets')
+  await hidden.getByRole('button', { name: 'Limpar filtros' }).click()
+  await expect(rows().first()).toBeVisible()
+})
+
 test('OKD builds folder: Build history after the pods; log while the pod exists, details after', async () => {
   const tree = navTree(win).getByRole('list', { name: 'Namespaces' })
   await tree.getByRole('button', { name: 'portal-hml', exact: true }).click()

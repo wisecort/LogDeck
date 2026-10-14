@@ -116,6 +116,10 @@ interface Props {
   /** Live pod stream, not a file. */
   live?: boolean
   onPrevious?(): void
+  /** Lines were loaded but the filters hide them all: say so, and how many the presets hide. */
+  hidden?: { loaded: number; byPresets: number }
+  onPresetsOff?(): void
+  onClearFilters?(): void
 }
 
 export function LogList(p: Props) {
@@ -189,7 +193,19 @@ export function LogList(p: Props) {
             )
           })}
         </div>
-        {p.rows.length === 0 && <div className="empty muted">{t('log.empty')}</div>}
+        {p.rows.length === 0 &&
+          (p.hidden ? (
+            <div className="empty empty-hidden" data-testid="log-hidden">
+              <div>{t('log.hiddenAll', { n: p.hidden.loaded })}</div>
+              {p.hidden.byPresets > 0 && <div className="muted">{t('log.hiddenByPresets', { n: p.hidden.byPresets })}</div>}
+              <div className="empty-actions">
+                {p.hidden.byPresets > 0 && p.onPresetsOff && <button onClick={p.onPresetsOff}>{t('log.presetsOff')}</button>}
+                {p.onClearFilters && <button onClick={p.onClearFilters}>{t('top.clearFilters')}</button>}
+              </div>
+            </div>
+          ) : (
+            <div className="empty muted">{t('log.empty')}</div>
+          ))}
       </div>
       {p.paused && p.rows.length > 0 && (
         <button className="to-bottom" onClick={p.onResume}>

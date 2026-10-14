@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   compileSearch,
+  countExcluded,
   entryText,
   filterEntries,
   highlight,
@@ -207,5 +208,18 @@ describe('searchWithTimeout (ReDoS protection, F5.4)', () => {
     const r = await searchWithTimeout(['a'.repeat(42) + '!'], { text: '(a|aa)+$', mode: 'regex' }, { timeoutMs: 250 })
     expect(r).toEqual({ status: 'timeout' })
     expect(performance.now() - t0).toBeLessThan(1500)
+  })
+})
+
+describe('countExcluded (empty view: how many lines the presets hide)', () => {
+  it('counts entries containing any term, case-insensitive, stack traces included', () => {
+    const entries = [
+      entry({ raw: '10.0.0.1 - - "GET /up HTTP/1.1" 200 2 "-" "kube-probe/1.29"' }),
+      entry({ raw: '10.0.0.1 - - "GET /up HTTP/1.1" 200 2 "-" "Kube-Probe/1.29"' }),
+      entry({ raw: 'job done' }),
+      entry({ raw: 'trace', continuation: ['caused by GET /healthz'] }),
+    ]
+    expect(countExcluded(entries, ['kube-probe/', 'GET /healthz'])).toBe(3)
+    expect(countExcluded(entries, [])).toBe(0)
   })
 })

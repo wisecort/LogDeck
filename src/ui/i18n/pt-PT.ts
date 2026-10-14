@@ -163,4 +163,6 @@ export const ptPT: Record<MessageKey, string> = {
   'mark.quietHint': 'ligado: o contentor não escreveu nada',
   'mark.restart': 'Contentor {name} reiniciado',
   'mark.droppedHint': 'limite de {cap} linhas por separador',
+  'log.hiddenByPresets': '{n} delas são ocultadas pelos presets (health checks e afins). Podem ocupar todo o --tail.',
+  'log.presetsOff': 'Desligar presets neste namespace',
 }
