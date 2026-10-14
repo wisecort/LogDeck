@@ -5,6 +5,9 @@ import {
   buildCanIArgs,
   buildGetContextsArgs,
   buildGetEventsArgs,
+  buildGetIngressesArgs,
+  buildGetRoutesArgs,
+  buildGetServicesArgs,
   buildGetNamespacesArgs,
   buildGetPodsArgs,
   buildLogsArgs,
@@ -84,6 +87,13 @@ describe('builders', () => {
   it('reads the events of a namespace (read-only get; filtered by pod in the app)', () => {
     expect(buildGetEventsArgs({ ...T, namespace: 'portal-hml' })).toEqual(['get', 'events', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`])
     expect(() => buildGetEventsArgs({ ...T, namespace: '$(id)' })).toThrow(UnsafeArgsError)
+  })
+
+  it('reads services, OKD routes and ingresses of a namespace (pod access)', () => {
+    const ns = { ...T, namespace: 'portal-hml' }
+    expect(buildGetServicesArgs(ns)).toEqual(['get', 'services', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`])
+    expect(buildGetRoutesArgs(ns)).toEqual(['get', 'routes.route.openshift.io', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`])
+    expect(buildGetIngressesArgs(ns)).toEqual(['get', 'ingresses', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`])
   })
 
   it('builds auth can-i', () => {
@@ -174,6 +184,9 @@ describe('assertReadOnly — final gate before spawn (G1)', () => {
       buildGetNamespacesArgs(T),
       buildGetPodsArgs({ ...T, namespace: 'portal-hml' }),
       buildGetEventsArgs({ ...T, namespace: 'portal-hml' }),
+      buildGetServicesArgs({ ...T, namespace: 'portal-hml' }),
+      buildGetRoutesArgs({ ...T, namespace: 'portal-hml' }),
+      buildGetIngressesArgs({ ...T, namespace: 'portal-hml' }),
       buildCanIArgs({ ...T, verb: 'list', resource: 'pods' }),
       buildLogsArgs(POD, { follow: true, tail: 10, since: '1h' }),
       buildLogsArgs(POD, { previous: true }),
@@ -196,6 +209,8 @@ describe('assertReadOnly — final gate before spawn (G1)', () => {
     [['config', 'view', '--minify', '--raw']],
     [['config', 'view', '--flatten']],
     [['get', 'secrets', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`]],
+    [['get', 'configmaps', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`]],
+    [['get', 'endpoints', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`]],
     [['get', 'pods', '-n', 'portal-hml', '-o', 'json']],
     [['get', 'pods', '-n', 'portal-hml', '-o', 'json', `--context=${HML}`, '--kubeconfig=/tmp/x']],
     [['logs', 'p', '-n', 'ns', `--context=${HML}`, '--token=abc']],

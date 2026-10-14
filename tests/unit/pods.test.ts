@@ -69,6 +69,7 @@ describe('parsePods (F2.2, F2.3)', () => {
       kind: 'app',
       node: 'node-a.example.internal',
       qosClass: 'Burstable',
+      labels: { app: 'portal-web', 'pod-template-hash': '7d9f8c6b5' },
     })
   })
 
@@ -226,5 +227,12 @@ describe('container details (Pod tab, uptime, restart marks)', () => {
     )
     expect(w!.details!.map((c) => c.name)).toEqual(['app'])
     expect(w!.details![0]!.startedAt).toBeUndefined()
+  })
+})
+
+describe('pod labels (matched against service selectors)', () => {
+  it('keeps the labels as strings', () => {
+    const [p] = parsePods(list(pod('w', { phase: 'Running' }, { containers: [{ name: 'app' }] }, { labels: { app: 'portal-web', bad: 3 } })))
+    expect(p!.labels).toEqual({ app: 'portal-web' })
   })
 })

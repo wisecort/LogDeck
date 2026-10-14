@@ -121,3 +121,22 @@ describe('K8sService events', () => {
     await expect(svc.events('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml', '$(id)')).rejects.toThrow()
   })
 })
+
+describe('K8sService exposure (services, routes, ingresses)', () => {
+  it('reads the three lists with read-only gets', async () => {
+    const fake = fakeKubectlEnv()
+    const svc = new K8sService({ env: fake.env })
+    const exposure = await svc.exposure('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml')
+    expect(exposure.services.map((s) => s.name)).toContain('portal-web')
+    expect(exposure.routes.map((r) => r.url)).toContain('https://portal-hml.apps.example.internal/')
+    expect(fake.calls().map((c) => c[1]).sort()).toEqual(expect.arrayContaining(['ingresses', 'routes.route.openshift.io', 'services']))
+  })
+
+  it('a cluster without the Route API (or without permission) still returns the rest', async () => {
+    const fake = fakeKubectlEnv({ FAKE_KUBECTL_ROUTES: 'missing' })
+    const svc = new K8sService({ env: fake.env })
+    const exposure = await svc.exposure('portal-hml/api-hml-example-internal:6443/dev', 'portal-hml')
+    expect(exposure.routes.every((r) => r.kind === 'ingress')).toBe(true)
+    expect(exposure.services.length).toBeGreaterThan(0)
+  })
+})

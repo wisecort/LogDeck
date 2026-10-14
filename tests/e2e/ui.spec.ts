@@ -168,6 +168,15 @@ test('Pod tab: container state, uptime, previous run, limits and probes', async 
   await expect(pod).toContainText('GET :8080/health a cada 10s')
   await expect(pod).toContainText('node-a.example.internal')
 
+  // Access: Service selecting the pod (labels) → OKD Route and Ingress URLs, copied (never opened by the app)
+  const access = win.getByTestId('pod-access')
+  await expect(access).toContainText('https://portal-hml.apps.example.internal/')
+  await expect(access).toContainText('https://portal.example.internal/')
+  await expect(access).toContainText('ClusterIP · 80→8080 (http)')
+  await expect(access).not.toContainText('portal-worker')
+  await access.getByRole('button', { name: 'Copiar https://portal-hml.apps.example.internal/' }).click()
+  await expect.poll(() => app.evaluate(({ clipboard }) => clipboard.readText())).toBe('https://portal-hml.apps.example.internal/')
+
   // php-fpm was OOMKilled once: the previous run shows why and for how long it ran
   await navTree(win).getByRole('group', { name: 'Containers' }).getByRole('button', { name: 'php-fpm', exact: true }).click()
   await expect(pod).toContainText('Container php-fpm')

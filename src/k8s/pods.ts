@@ -19,6 +19,7 @@ export interface PodSummary {
   node?: string
   qosClass?: string
   details?: ContainerDetail[]
+  labels?: Record<string, string>
 }
 
 export type PodKind = 'app' | 'build' | 'deploy'
@@ -206,6 +207,16 @@ function containerDetails(specs: ContainerSpec[] | undefined, statuses: Containe
   return out
 }
 
+const MAX_LABELS = 64
+
+/** Labels/selectors: string values only, capped. */
+export function stringMap(v: unknown): Record<string, string> | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const out: Record<string, string> = {}
+  for (const [k, val] of Object.entries(v).slice(0, MAX_LABELS)) if (typeof val === 'string') out[k.slice(0, 253)] = val.slice(0, 63)
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
 /** Mirrors the STATUS column of `kubectl get pods`. */
 function effectiveStatus(pod: PodJson): string {
   if (pod.metadata?.deletionTimestamp) return 'Terminating'
@@ -255,6 +266,8 @@ export function parsePods(json: string, onInvalid?: (name: string) => void): Pod
     }
     const node = text(pod.spec?.nodeName)
     const qos = text(pod.status?.qosClass)
+    const labels = stringMap(pod.metadata?.labels)
+    if (labels) summary.labels = labels
     if (node) summary.node = node
     if (qos) summary.qosClass = qos
     summary.details = [

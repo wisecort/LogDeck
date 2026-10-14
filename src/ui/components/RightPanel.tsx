@@ -11,6 +11,7 @@ import { groupTitle } from '../group-title'
 import { lineText, ticketText, type TicketSource } from '../ticket'
 import { AiAnswer } from './AiAnswer'
 import { PodTab } from './PodTab'
+import type { PodAccess } from '../pod-access'
 import { IconBookmark, IconCheckCircle, IconCopy, IconGear, IconRows, IconSparkle } from './icons'
 
 export type PanelTab = 'erros' | 'detalhes' | 'pod' | 'ia'
@@ -39,6 +40,7 @@ interface Props {
   container?: string
   runs: readonly TerminatedRun[]
   now: number
+  access?: PodAccess
 }
 
 export function aiLabel(t: Translate, s?: AiStatus): string {
@@ -507,7 +509,7 @@ export function RightPanel(p: Props) {
       </div>
       {p.pod && (
         <div className="panel-body" role="tabpanel" hidden={p.tab !== 'pod'}>
-          <PodTab pod={p.pod} {...(p.container && { container: p.container })} runs={p.runs} now={p.now} />
+          <PodTab pod={p.pod} {...(p.container && { container: p.container })} runs={p.runs} now={p.now} {...(p.access && { access: p.access })} />
         </div>
       )}
       <div className="panel-body" role="tabpanel" hidden={p.tab !== 'ia'}>

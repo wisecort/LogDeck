@@ -4,6 +4,9 @@ import {
   buildGetPodsArgs,
   buildGetBuildsArgs,
   buildGetEventsArgs,
+  buildGetIngressesArgs,
+  buildGetRoutesArgs,
+  buildGetServicesArgs,
   buildVersionArgs,
   validateContextName,
   validateNamespace,
@@ -13,7 +16,8 @@ import {
 import { listContexts, type KubeContext } from './contexts'
 import { friendlyError, KubectlError, runKubectl, type KubectlOptions, type KubectlResult } from './kubectl'
 import { kubectlInstallHint } from '../platform/paths'
-import type { NamespaceList, PodEvent, VersionInfo } from '../shared/ipc'
+import type { Exposure, NamespaceList, PodEvent, VersionInfo } from '../shared/ipc'
+import { parseIngresses, parseRoutes, parseServices } from './exposure'
 import { parseEvents } from './events'
 import { parseNamespaces, parsePods, type PodSummary } from './pods'
 import { parseBuilds, type BuildSummary } from './builds'
@@ -109,5 +113,25 @@ export class K8sService {
     } catch {
       return []
     }
+  }
+
+  /** Services, OKD Routes and Ingresses of a namespace. Each list is [] when its API is missing or forbidden. */
+  async exposure(context: string, namespace: string): Promise<Exposure> {
+    const target = { ...(await this.target(context)), namespace: validateNamespace(namespace) }
+    const read = async <T>(args: string[], parse: (json: string) => T[]): Promise<T[]> => {
+      const r = await this.run(args)
+      if (r.code !== 0) return []
+      try {
+        return parse(r.stdout)
+      } catch {
+        return []
+      }
+    }
+    const [services, routes, ingresses] = await Promise.all([
+      read(buildGetServicesArgs(target), parseServices),
+      read(buildGetRoutesArgs(target), parseRoutes),
+      read(buildGetIngressesArgs(target), parseIngresses),
+    ])
+    return { services, routes: [...routes, ...ingresses] }
   }
 }

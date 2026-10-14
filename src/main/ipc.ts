@@ -84,6 +84,7 @@ export function registerIpc(deps: IpcDeps): void {
   handle(deps, IPC.events, (_e, context: unknown, namespace: unknown, pod: unknown) =>
     service.events(str(context, 'contexto'), str(namespace, 'namespace'), str(pod, 'pod')),
   )
+  handle(deps, IPC.exposure, (_e, context: unknown, namespace: unknown) => service.exposure(str(context, 'contexto'), str(namespace, 'namespace')))
   handle(deps, IPC.pods, (_e, context: unknown, namespace: unknown) =>
     service.pods(str(context, 'contexto'), str(namespace, 'namespace')),
   )

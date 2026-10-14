@@ -1,0 +1,19 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "metadata": { "name": "portal-web" },
+      "spec": {
+        "host": "portal-hml.apps.example.internal",
+        "to": { "kind": "Service", "name": "portal-web" },
+        "port": { "targetPort": "http" },
+        "tls": { "termination": "edge", "insecureEdgeTerminationPolicy": "Redirect" }
+      }
+    },
+    {
+      "metadata": { "name": "portal-web-api" },
+      "spec": { "host": "api-hml.apps.example.internal", "path": "/api", "to": { "kind": "Service", "name": "portal-web" } }
+    }
+  ]
+}

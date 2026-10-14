@@ -8,6 +8,7 @@ export const IPC = {
   pods: 'k8s:pods',
   builds: 'k8s:builds',
   events: 'k8s:events',
+  exposure: 'k8s:exposure',
   startLogs: 'logs:start',
   stopLogs: 'logs:stop',
   logLines: 'logs:lines',
@@ -80,6 +81,29 @@ export interface PodInfo {
   qosClass?: string
   /** Runtime details per container (Pod tab, uptime, restart marks); init containers first. */
   details?: ContainerDetail[]
+  /** Matched against service selectors (Pod tab → Access). */
+  labels?: Record<string, string>
+}
+
+export interface ServiceInfo {
+  name: string
+  type: string
+  /** Empty for services without a selector (ExternalName, manual endpoints): they match no pod. */
+  selector: Record<string, string>
+  ports: Array<{ name?: string; port: number; targetPort?: string }>
+}
+
+/** An OKD Route or an Ingress rule pointing at a service. */
+export interface AccessRoute {
+  kind: 'route' | 'ingress'
+  name: string
+  service: string
+  url: string
+}
+
+export interface Exposure {
+  services: ServiceInfo[]
+  routes: AccessRoute[]
 }
 
 /** How a probe checks the container; exec commands are left out (they may carry secrets). */

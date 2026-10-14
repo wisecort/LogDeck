@@ -96,6 +96,21 @@ export function buildGetEventsArgs(target: Target & { namespace: string }): stri
   return ['get', 'events', '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
 }
 
+/** Services of a namespace (which pods they select, their ports). */
+export function buildGetServicesArgs(target: Target & { namespace: string }): string[] {
+  return ['get', 'services', '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
+}
+
+/** OKD/OpenShift Routes of a namespace (public URL of a service). */
+export function buildGetRoutesArgs(target: Target & { namespace: string }): string[] {
+  return ['get', ROUTES_RESOURCE, '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
+}
+
+/** Ingresses of a namespace (public URL of a service on plain Kubernetes). */
+export function buildGetIngressesArgs(target: Target & { namespace: string }): string[] {
+  return ['get', 'ingresses', '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
+}
+
 /** OKD/OpenShift Build objects (history of a BuildConfig), read-only. */
 export function buildGetBuildsArgs(target: Target & { namespace: string }): string[] {
   return ['get', BUILDS_RESOURCE, '-n', validateNamespace(target.namespace), '-o', 'json', contextFlag(target)]
@@ -164,7 +179,8 @@ export function buildShellArgs(target: PodTarget): string[] {
 const CAN_I_VERBS = new Set(['get', 'list', 'watch'])
 const CAN_I_RESOURCES = new Set(['namespaces', 'pods', 'pods/log'])
 export const BUILDS_RESOURCE = 'builds.build.openshift.io'
-const GET_RESOURCES = new Set(['namespaces', 'pods', 'pod', 'events', BUILDS_RESOURCE])
+export const ROUTES_RESOURCE = 'routes.route.openshift.io'
+const GET_RESOURCES = new Set(['namespaces', 'pods', 'pod', 'events', 'services', 'ingresses', ROUTES_RESOURCE, BUILDS_RESOURCE])
 
 interface FlagRules {
   /** Flags followed by a separate value, with its validator. */

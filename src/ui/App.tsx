@@ -3,7 +3,8 @@ import { compileSearch, entryText, searchWithTimeout, type CompiledSearch } from
 import { LEVELS, type Level } from '../logs/types'
 import type { ExplainGroupInput } from '../shared/ai'
 import type { AiStatus } from '../shared/ai-settings'
-import type { BuildInfo, PodEvent, PodInfo, TerminatedRun, VersionInfo } from '../shared/ipc'
+import type { BuildInfo, Exposure, PodEvent, PodInfo, TerminatedRun, VersionInfo } from '../shared/ipc'
+import { podAccess } from './pod-access'
 import { activeTerms, presetKey, type NamespacePresets } from '../shared/presets'
 import { aroundEntry, visibleLines } from './ai-context'
 import { AiPreferences } from './components/AiPreferences'
@@ -132,6 +133,22 @@ export function App() {
     void window.logdeck.kubectlVersion().then(applyKubectl)
     void window.logdeck.aiStatus().then(setAiStatus)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Services, Routes and Ingresses of the tab's namespace (Pod tab → Access), read when a pod is opened.
+  const [exposure, setExposure] = useState<{ key: string; value: Exposure }>()
+  useEffect(() => {
+    const { context, namespace, pod } = selection
+    if (!context || !namespace || !pod || session.file) return
+    const key = nsKey(context, namespace)
+    let alive = true
+    void window.logdeck.listExposure(context, namespace).then(
+      (value) => alive && setExposure({ key, value }),
+      () => undefined,
+    )
+    return () => {
+      alive = false
+    }
+  }, [selection.context, selection.namespace, selection.pod?.name, session.file]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Kubernetes events of the tab's pod, refreshed with the pod list.
   const [podEvents, setPodEvents] = useState<{ key: string; events: PodEvent[] }>()
@@ -365,6 +382,10 @@ export function App() {
   const liveContainer = containerDetail(livePod, selection.container)
   const runs = (livePod && selection.context && selection.container && nav.runs[runsKey(selection.context, livePod.namespace, livePod.name, selection.container)]) || NO_RUNS
   const upMs = uptime(liveContainer, now)
+  const access = useMemo(
+    () => (livePod && selection.context && exposure?.key === nsKey(selection.context, livePod.namespace) ? podAccess(livePod.labels, exposure.value) : undefined),
+    [livePod, exposure, selection.context],
+  )
 
   // Marks between lines (stream drops, silence, restarts); hidden while searching or showing one error group.
   const marksShown = search.text === '' && !groupKey
@@ -688,6 +709,7 @@ export function App() {
           {...(selection.container && { container: selection.container })}
           runs={runs}
           now={now}
+          {...(access && { access })}
           ticketSource={
             session.file
               ? { file: session.file }
