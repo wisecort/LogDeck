@@ -1,15 +1,20 @@
 // README screenshots (docs/images/ in Portuguese, docs/images/en/ in English) with the fake kubectl and
 // fictional logs. Not part of the harness: run `make screenshots` on macOS (sips resizes to 1600×921).
+// With LOGDECK_SITE_SHOTS=1 (`make site-shots`) it makes the website's Retina JPEGs instead
+// (site/media/shots/<lang>/, 1440×900 window, no build scenes).
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
 import { translator, type Translate } from '../../src/ui/i18n/core'
 import { fakeKubectlEnv } from '../helpers/fake-kubectl'
 
-const SIZE = { width: 1600, height: 921 }
-const OUT = { en: 'docs/images/en', 'pt-BR': 'docs/images' } as const
+const SITE = process.env['LOGDECK_SITE_SHOTS'] === '1'
+const SIZE = SITE ? { width: 1440, height: 900 } : { width: 1600, height: 921 }
+const OUT = SITE
+  ? ({ en: 'site/media/shots/en', 'pt-BR': 'site/media/shots/pt-BR' } as const)
+  : ({ en: 'docs/images/en', 'pt-BR': 'docs/images' } as const)
 
 for (const lang of ['en', 'pt-BR'] as const) {
   test.describe(lang, () => {
@@ -58,7 +63,12 @@ for (const lang of ['en', 'pt-BR'] as const) {
       await win.waitForTimeout(500)
       const file = join(OUT[lang], `${name}.png`)
       await win.screenshot({ path: file })
-      execFileSync('sips', ['-z', String(SIZE.height), String(SIZE.width), file], { stdio: 'ignore' })
+      if (SITE) {
+        execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '82', file, '--out', file.replace(/png$/, 'jpg')], { stdio: 'ignore' })
+        rmSync(file)
+      } else {
+        execFileSync('sips', ['-z', String(SIZE.height), String(SIZE.width), file], { stdio: 'ignore' })
+      }
     }
 
     test('welcome', async () => {
@@ -87,6 +97,7 @@ for (const lang of ['en', 'pt-BR'] as const) {
     })
 
     test('build-log', async () => {
+      test.skip(SITE, 'the website does not show builds')
       const builds = await openBuilds()
       await builds.getByRole('button', { name: /portal-web-12/ }).click()
       await expect(win.locator('.statusbar')).toContainText('sti-build')
@@ -95,6 +106,7 @@ for (const lang of ['en', 'pt-BR'] as const) {
     })
 
     test('build-details', async () => {
+      test.skip(SITE, 'the website does not show builds')
       const builds = await openBuilds()
       await builds.getByRole('button', { name: /portal-web-11/ }).click()
       await shot('build-details')
