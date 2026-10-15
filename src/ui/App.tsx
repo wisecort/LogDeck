@@ -36,9 +36,9 @@ import { MAX_TABS } from './tabs'
 import { nsKey, runsKey, useNavigation } from './useNavigation'
 import { containerDetail, uptime } from './pod-status'
 import { eventMarks, placeMarks, quietMarks, restartMarks } from '../logs/marks'
-import { DEFAULT_CAPACITY } from '../logs/buffer'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
+import { loadBufferLines, saveBufferLines } from './buffer-pref'
 import { findReplacement, loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
 import { useUpdateCheck } from './useUpdateCheck'
 import { UpdateModal } from './components/UpdateModal'
@@ -85,6 +85,7 @@ export function App() {
   const [aiStatus, setAiStatus] = useState<AiStatus>()
   const [aiPrefs, setAiPrefs] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
+  const [bufferLines, setBufferLines] = useState(loadBufferLines)
   const [fileError, setFileError] = useState<{ problem: LogFileProblem; fileName: string }>()
   const [shell, setShell] = useState<ShellTarget>()
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
@@ -678,7 +679,7 @@ export function App() {
                 onUserScrollUp={pause}
                 onResume={resume}
                 marks={placedMarks}
-                dropped={{ n: engine.dropped, capacity: DEFAULT_CAPACITY }}
+                dropped={{ n: engine.dropped, capacity: engine.capacity }}
                 live={!session.file}
                 {...(canCompare && !session.activeTab.compare && { onPrevious: toggleCompare })}
                 {...(hidden && { hidden })}
@@ -782,7 +783,22 @@ export function App() {
           }}
         />
       )}
-      {prefs && <PreferencesModal theme={theme} onTheme={setTheme} lang={lang} onLang={setLang} updates={updates.consent === 'on'} onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')} onClose={() => setPrefs(false)} />}
+      {prefs && (
+        <PreferencesModal
+          theme={theme}
+          onTheme={setTheme}
+          lang={lang}
+          onLang={setLang}
+          updates={updates.consent === 'on'}
+          onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')}
+          bufferLines={bufferLines}
+          onBufferLines={(n) => {
+            setBufferLines(n)
+            saveBufferLines(n)
+          }}
+          onClose={() => setPrefs(false)}
+        />
+      )}
       {updateOpen && updates.available && (
         <UpdateModal
           version={updates.available}

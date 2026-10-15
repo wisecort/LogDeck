@@ -3483,3 +3483,8 @@ button.primary:disabled {
 .file-error-actions {
   justify-content: flex-end;
 }
+
+/* Line limit per live log (RNF2): five short choices on one row */
+.segmented.buffer-choices button {
+  min-width: 0;
+}

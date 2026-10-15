@@ -566,3 +566,20 @@ test('a recent pod recreated under a new name offers the pod that replaced it (1
   await expect(recents).toContainText('portal-web-7d9f8c6b5-x2k4p')
   await expect(recents).not.toContainText('portal-web-7d9f8c6b5-zzzzz')
 })
+
+test('RNF2: the live log line limit is chosen in Preferences and kept', async () => {
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  const limit = win.getByRole('radiogroup', { name: 'Linhas guardadas por log ao vivo' })
+  await expect(limit.getByRole('radio', { name: '50 mil', exact: true })).toHaveAttribute('aria-checked', 'true')
+  await limit.getByRole('radio', { name: '250 mil', exact: true }).click()
+  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByRole('button', { name: 'Fechar' }).click()
+
+  await win.reload()
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  await expect(limit.getByRole('radio', { name: '250 mil', exact: true })).toHaveAttribute('aria-checked', 'true')
+  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByRole('button', { name: 'Fechar' }).click()
+
+  await openWebPod(win)
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  expect(await win.evaluate(() => localStorage.getItem('logdeck.bufferLines'))).toBe('250000')
+})

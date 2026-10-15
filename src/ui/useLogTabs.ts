@@ -4,6 +4,7 @@ import { trackReconnect, type Mark } from '../logs/marks'
 import type { Level } from '../logs/types'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
 import type { LogOptions, Selection } from './view-types'
+import { loadBufferLines } from './buffer-pref'
 import { LogEngine } from './engine'
 import { activateTab, addTab, closeTab, companionKey, homeTab, initialTabs, type TabsState, updateTab } from './tabs'
 
@@ -110,6 +111,9 @@ export function useLogTabs() {
       await stop(tabId)
       const s = slot(tabId)
       const generation = s.generation
+      // The line limit from Preferences applies from the next pod opened (RNF2).
+      const capacity = loadBufferLines()
+      if (s.engine.capacity !== capacity) s.engine = new LogEngine({ capacity })
       s.engine.clear(opts.defaultLevel)
       s.marks = []
       s.status = { state: 'connecting' }

@@ -9,6 +9,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 - **Arquivo de log que não abre ganha um diálogo** no meio da janela, em vez do aviso fino no topo, que passava despercebido (issue #24): o que deu errado (vazio, grande demais, não é texto), o nome do arquivo, o que fazer e **Abrir outro arquivo…**. Fecha com OK ou Esc.
 - **Avisos do topo mais visíveis:** vermelho para erros do kubectl e do cluster (sessão expirada, sem permissão, cluster inacessível, tempo esgotado…), amarelo para avisos do app (limite de abas, pod recente que sumiu, nenhum contexto), com ícone, título curto e um destaque rápido ao aparecer. O aviso de pod recente que sumiu não diz mais "Abri o namespace", como se o app falasse.
 - **Pod recente que foi recriado oferece o novo:** quando um pod dos Recentes sumiu porque o Deployment (ou o DeploymentConfig do OKD) criou outro, o aviso mostra o pod novo e tem **Abrir o pod novo**, que abre o pod e troca o item antigo nos Recentes. Mesmo dono e mesmo container, rodando; primeiro o do mesmo ReplicaSet, depois o mais novo.
+- **Linhas guardadas por log ao vivo** podem ser escolhidas nas Preferências: 10 mil, 50 mil (padrão), 100 mil, 250 mil ou 500 mil. Vale para os pods abertos depois da troca; a marca "N linhas antigas descartadas" mostra o limite escolhido. A SPEC já pedia isso (RNF2), mas estava fixo em 50 mil até agora.
 
 ## [1.6.2] — 14/10/2026
 

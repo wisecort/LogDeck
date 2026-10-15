@@ -1,6 +1,7 @@
 import { APP_AUTHOR, APP_REPOSITORY } from '../../shared/app-info'
 import logo from '../assets/logo.png'
 import { LANGUAGES, useI18n, type Lang, type MessageKey } from '../i18n'
+import { BUFFER_CHOICES } from '../buffer-pref'
 import { THEME_PREVIEW, THEMES, type ThemeId } from '../theme'
 import { IconGithub, IconLinkedin, IconSliders, IconX } from './icons'
 
@@ -11,6 +12,9 @@ interface Props {
   onLang(l: Lang): void
   updates: boolean
   onUpdates(on: boolean): void
+  /** Lines each live log keeps (RNF2). */
+  bufferLines: number
+  onBufferLines(n: number): void
   onClose(): void
 }
 
@@ -71,6 +75,18 @@ export function PreferencesModal(p: Props) {
                 ))}
               </div>
               <p className="muted pref-note">{t('pref.languageNote')}</p>
+            </section>
+
+            <section className="pref-section">
+              <div className="panel-section-title">{t('pref.bufferLines')}</div>
+              <div className="segmented buffer-choices" role="radiogroup" aria-label={t('pref.bufferLines')}>
+                {BUFFER_CHOICES.map((n) => (
+                  <button key={n} role="radio" aria-checked={p.bufferLines === n} className={p.bufferLines === n ? 'on' : ''} onClick={() => p.onBufferLines(n)}>
+                    {t('pref.bufferChoice', { n: n / 1000 })}
+                  </button>
+                ))}
+              </div>
+              <p className="muted pref-note">{t('pref.bufferNote')}</p>
             </section>
 
             <section className="pref-section">

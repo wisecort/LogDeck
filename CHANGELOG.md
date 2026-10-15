@@ -9,6 +9,7 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 - **A log file that cannot be opened gets a dialog** in the middle of the window instead of the thin notice on top, which was easy to miss (issue #24): what went wrong (empty, too large, not text), the file name, what to do about it, and **Open another file…**. It closes with OK or Esc.
 - **Notices on top are easier to see:** red for kubectl and cluster errors (session expired, no permission, cluster unreachable, timeout…), amber for app warnings (tab limit, a recent pod that is gone, no contexts), with an icon, a short title and a brief highlight when they appear. The "recent pod is gone" notice no longer says "Opened its namespace" as if the app were talking.
 - **A recent pod that was recreated offers the new one:** when a pod in Recents is gone because its Deployment (or OKD DeploymentConfig) created another one, the notice names the new pod and has **Open the new pod**, which opens it and replaces the old entry in Recents. Same owner and container, running; the same ReplicaSet first, then the newest.
+- **Lines kept per live log** can be chosen in Preferences: 10k, 50k (default), 100k, 250k or 500k. It applies to pods opened after the change; the "N old lines dropped" mark shows the chosen limit. The SPEC asked for this (RNF2) but it was fixed at 50k until now.
 
 ## [1.6.2] — 2026-10-14
 

@@ -218,7 +218,7 @@ chown: changing ownership of '/var/log/php-fpm/error.log': Operation not permitt
 | # | Requisito | Como é verificado |
 |---|---|---|
 | RNF1 | Sustentar **2.000 linhas/s** sem travar a UI (frame > 50 ms raro) | teste de integração com kubectl fake em 2.000 l/s por 30 s; E2E mede long tasks |
-| RNF2 | Ring buffer padrão **50.000 entradas**, configurável (10k–500k) | `buffer.test` |
+| RNF2 | Ring buffer padrão **50.000 entradas** por log ao vivo, configurável (10k, 50k, 100k, 250k ou 500k em Preferências → Linhas guardadas por log ao vivo; vale para os pods abertos depois da troca) | `buffer.test` |
 | RNF3 | Memória total do app **< 500 MB** com 50k linhas | E2E lê `app.getAppMetrics()` |
 | RNF4 | Busca sobre 50k linhas em ≤ 100 ms (texto) e regex abortada em ≤ 250 ms | `search.test` |
 | RNF5 | UI atualizada em lotes a cada **100 ms** | teste do batcher com relógio falso |

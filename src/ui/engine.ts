@@ -36,6 +36,11 @@ export class LogEngine {
     this.buffer = new LogBuffer({ ...(opts.capacity && { capacity: opts.capacity }) })
   }
 
+  /** Lines kept before the oldest are dropped. */
+  get capacity(): number {
+    return this.buffer.capacity
+  }
+
   /** Increments on every change; cheap memo key for the UI. */
   get version(): number {
     return this.changes
