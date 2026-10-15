@@ -48,6 +48,8 @@ export const ptBR = {
   'sidebar.recents': 'Recentes',
   'sidebar.forgetRecent': 'Tirar {pod} dos recentes',
   'recent.gone': '{pod} não existe mais (o pod pode ter sido recriado). O namespace está aberto para você escolher outro.',
+  'recent.replaced': '{pod} não existe mais. O deployment criou {next} no lugar dele.',
+  'recent.openReplacement': 'Abrir o pod novo',
   'sidebar.favorites': 'Favoritos',
   'sidebar.containers': 'Containers',
   'sidebar.podTitle': '{name}\n{status} · {ready} prontos · {restarts} restarts',

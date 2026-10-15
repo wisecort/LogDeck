@@ -27,6 +27,11 @@ export function NoticeBar({ notice, onClose }: { notice: Notice; onClose(): void
         <strong>{t(`notice.${notice.kind}`)}</strong>
         <span>{notice.text}</span>
       </span>
+      {notice.action && (
+        <button className="primary notice-action" onClick={notice.action.run}>
+          {notice.action.label}
+        </button>
+      )}
       <button className="icon-btn notice-close" aria-label={t('common.close')} title={t('common.close')} onClick={onClose}>
         <IconX />
       </button>

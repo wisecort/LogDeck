@@ -564,6 +564,13 @@ button:disabled {
   flex: none;
 }
 
+.notice-action {
+  flex: none;
+  align-self: center;
+  height: 26px;
+  padding: 0 12px;
+}
+
 @keyframes notice-in {
   from {
     opacity: 0;

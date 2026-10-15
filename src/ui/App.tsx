@@ -39,7 +39,7 @@ import { eventMarks, placeMarks, quietMarks, restartMarks } from '../logs/marks'
 import { DEFAULT_CAPACITY } from '../logs/buffer'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
-import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
+import { findReplacement, loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
 import { useUpdateCheck } from './useUpdateCheck'
 import { UpdateModal } from './components/UpdateModal'
 
@@ -268,11 +268,34 @@ export function App() {
     setSelection({ context, namespace, build })
   }
 
+  const forgetRecent = (r: RecentPod) =>
+    setRecents((prev) => {
+      const next = prev.filter((x) => recentKey(x) !== recentKey(r))
+      saveRecents(next)
+      return next
+    })
+
   /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
   const openRecent = async (r: RecentPod) => {
     await nav.openNamespace(r.context, r.namespace, true)
-    const pod = (await nav.loadPods(r.context, r.namespace))?.find((p) => p.name === r.pod)
-    if (!pod) return setNotice({ kind: 'recentGone', text: t('recent.gone', { pod: r.pod }) })
+    const pods = await nav.loadPods(r.context, r.namespace)
+    const pod = pods?.find((p) => p.name === r.pod)
+    if (!pod) {
+      const next = pods && findReplacement(r.pod, r.container, pods)
+      if (!next) return setNotice({ kind: 'recentGone', text: t('recent.gone', { pod: r.pod }) })
+      return setNotice({
+        kind: 'recentGone',
+        text: t('recent.replaced', { pod: r.pod, next: next.name }),
+        action: {
+          label: t('recent.openReplacement'),
+          run: () => {
+            setNotice(undefined)
+            forgetRecent(r)
+            void selectPod(r.context, r.namespace, next, r.container)
+          },
+        },
+      })
+    }
     await selectPod(r.context, r.namespace, pod, r.container)
   }
 
@@ -545,13 +568,7 @@ export function App() {
           onPreferences={() => setPrefs(true)}
           recents={recents}
           onRecent={(r) => void openRecent(r)}
-          onForgetRecent={(r) =>
-            setRecents((prev) => {
-              const next = prev.filter((x) => recentKey(x) !== recentKey(r))
-              saveRecents(next)
-              return next
-            })
-          }
+          onForgetRecent={forgetRecent}
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}

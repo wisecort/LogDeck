@@ -49,6 +49,8 @@ export const en: Record<MessageKey, string> = {
   'sidebar.recents': 'Recent',
   'sidebar.forgetRecent': 'Remove {pod} from recent',
   'recent.gone': '{pod} no longer exists (the pod may have been recreated). Its namespace is open so you can pick another one.',
+  'recent.replaced': '{pod} no longer exists. Its deployment created {next} in its place.',
+  'recent.openReplacement': 'Open the new pod',
   'sidebar.favorites': 'Favorites',
   'sidebar.containers': 'Containers',
   'sidebar.podTitle': '{name}\n{status} · {ready} ready · {restarts} restarts',

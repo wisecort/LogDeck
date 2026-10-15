@@ -20,6 +20,8 @@ export type NoticeKind =
 export interface Notice {
   kind: NoticeKind
   text: string
+  /** One button next to the text, e.g. open the pod that replaced a recent one. */
+  action?: { label: string; run(): void }
 }
 
 const LANGS = ['pt-BR', 'pt-PT', 'en', 'es']

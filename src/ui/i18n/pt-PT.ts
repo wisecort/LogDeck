@@ -32,6 +32,8 @@ export const ptPT: Record<MessageKey, string> = {
   'sidebar.recents': 'Recentes',
   'sidebar.forgetRecent': 'Retirar {pod} dos recentes',
   'recent.gone': '{pod} já não existe (o pod pode ter sido recriado). O namespace está aberto para escolher outro.',
+  'recent.replaced': '{pod} já não existe. O deployment criou {next} no lugar dele.',
+  'recent.openReplacement': 'Abrir o pod novo',
   'sidebar.buildOpenLog': 'Clique para abrir o log do build',
   'sidebar.buildNoLog': 'Sem log (pod removido): clique para ver os detalhes do build',
   'sidebar.manageContexts': 'Gerir contextos…',

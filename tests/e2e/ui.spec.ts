@@ -546,3 +546,23 @@ test('6.5: themes, bookmarks and favourite namespaces', async () => {
   await win.getByRole('button', { name: 'Favoritar portal-hml' }).first().click()
   await expect(navTree(win)).toContainText('Favoritos')
 })
+
+test('a recent pod recreated under a new name offers the pod that replaced it (1.6.3)', async () => {
+  await win.evaluate((ctx) => {
+    const gone = { context: ctx, namespace: 'portal-hml', pod: 'portal-web-7d9f8c6b5-zzzzz', container: 'httpd' }
+    localStorage.setItem('logdeck.recents', JSON.stringify([gone]))
+  }, HML)
+  await win.reload()
+  await win.getByRole('list', { name: 'Recentes' }).getByRole('button', { name: /^portal-web-7d9f8c6b5-zzzzz/ }).click()
+
+  const notice = win.getByTestId('notice')
+  await expect(notice).toHaveClass(/tone-warn/)
+  await expect(notice).toContainText('portal-web-7d9f8c6b5-x2k4p')
+  await notice.getByRole('button', { name: 'Abrir o pod novo' }).click()
+
+  await expect(notice).toHaveCount(0)
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  const recents = win.getByRole('list', { name: 'Recentes' })
+  await expect(recents).toContainText('portal-web-7d9f8c6b5-x2k4p')
+  await expect(recents).not.toContainText('portal-web-7d9f8c6b5-zzzzz')
+})
