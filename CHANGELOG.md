@@ -6,6 +6,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+- **A log file that cannot be opened gets a dialog** in the middle of the window instead of the thin notice on top, which was easy to miss (issue #24): what went wrong (empty, too large, not text), the file name, what to do about it, and **Open another file…**. It closes with OK or Esc.
+
 ## [1.6.2] — 2026-10-14
 
 - **Kubernetes events in the timeline:** warnings about the pod (failed probes, back-off, OOM, failed mounts…) and the Killing event appear between the log lines at the time they happened, with how many times and from when to when, and as purple diamonds on the histogram. Read with `kubectl get events -n <namespace> -o json` every 5 s while the pod is open and filtered by pod in the app; `events` joins the read-only allowlist (no `--watch`, no field selectors). Without permission to read events nothing is shown.

@@ -14,6 +14,7 @@ import { LogList, type ScrollCommand } from './components/LogList'
 import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
 import { ShortcutsModal } from './components/ShortcutsModal'
+import { FileErrorModal } from './components/FileErrorModal'
 import { Sidebar, type Selection } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TopBar, type LogOptions, type SearchState } from './components/TopBar'
@@ -22,7 +23,7 @@ import { parseTerms } from './format'
 import { browserRegexRunner } from './regex-runner'
 import { isMacUserAgent } from '../platform/keys'
 import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from './i18n'
-import { LogFileError, MAX_LOG_FILE_BYTES } from '../logs/file'
+import { LogFileError, MAX_LOG_FILE_BYTES, type LogFileProblem } from '../logs/file'
 import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogTabs } from './useLogTabs'
@@ -82,6 +83,7 @@ export function App() {
   const [aiStatus, setAiStatus] = useState<AiStatus>()
   const [aiPrefs, setAiPrefs] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
+  const [fileError, setFileError] = useState<{ problem: LogFileProblem; fileName: string }>()
   const [shell, setShell] = useState<ShellTarget>()
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const [lang, setLang] = useState<Lang>(loadLanguage)
@@ -285,11 +287,9 @@ export function App() {
     try {
       await session.openFile(f)
     } catch (err) {
-      setNotice(
-        err instanceof LogFileError
-          ? t(`file.${err.problem}`, { name: err.fileName, mb: MAX_LOG_FILE_BYTES / 1024 / 1024 })
-          : (err as Error).message,
-      )
+      // The user just picked this file: the reason gets a dialog, not the thin notice on top (issue #24).
+      if (err instanceof LogFileError) setFileError({ problem: err.problem, fileName: err.fileName })
+      else setNotice((err as Error).message)
     }
   }
 
@@ -496,6 +496,7 @@ export function App() {
         setSelectedSeq(undefined)
         setShortcuts(false)
         setUpdateOpen(false)
+        setFileError(undefined)
       } else if (e.key === '?' && !typing) {
         setShortcuts(true)
       }
@@ -758,6 +759,17 @@ export function App() {
         />
       )}
       {shortcuts && <ShortcutsModal onClose={() => setShortcuts(false)} />}
+      {fileError && (
+        <FileErrorModal
+          {...fileError}
+          mb={MAX_LOG_FILE_BYTES / 1024 / 1024}
+          onClose={() => setFileError(undefined)}
+          onOpenOther={() => {
+            setFileError(undefined)
+            fileRef.current?.click()
+          }}
+        />
+      )}
       {prefs && <PreferencesModal theme={theme} onTheme={setTheme} lang={lang} onLang={setLang} updates={updates.consent === 'on'} onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')} onClose={() => setPrefs(false)} />}
       {updateOpen && updates.available && (
         <UpdateModal

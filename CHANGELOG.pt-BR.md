@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- **Arquivo de log que não abre ganha um diálogo** no meio da janela, em vez do aviso fino no topo, que passava despercebido (issue #24): o que deu errado (vazio, grande demais, não é texto), o nome do arquivo, o que fazer e **Abrir outro arquivo…**. Fecha com OK ou Esc.
+
 ## [1.6.2] — 14/10/2026
 
 - **Eventos do Kubernetes na linha do tempo:** avisos sobre o pod (probe falhando, back-off, OOM, volume que não montou…) e o evento Killing aparecem entre as linhas do log no horário em que aconteceram, com quantas vezes e de quando a quando, e como losangos roxos no histograma. Lidos com `kubectl get events -n <namespace> -o json` a cada 5 s enquanto o pod está aberto e filtrados pelo pod no app; `events` entra na allowlist de leitura (sem `--watch` e sem field selector). Sem permissão para ler eventos, nada aparece.

@@ -387,7 +387,23 @@ test('opens a saved log file and refuses binary ones', async () => {
   await expect(win.getByTestId('error-group').filter({ hasText: 'Timeout Apache → PHP-FPM' })).toContainText('6×')
 
   await win.getByLabel('Arquivo de log').setInputFiles({ name: 'x.gz', mimeType: 'application/gzip', buffer: Buffer.from([0x1f, 0x8b, 0, 0]) })
-  await expect(win.getByRole('status')).toContainText('não parece texto')
+  const dialog = win.getByRole('alertdialog')
+  await expect(dialog).toContainText('Não parece um arquivo de texto')
+  await expect(dialog).toContainText('x.gz')
+  await dialog.getByRole('button', { name: 'OK' }).click()
+  await expect(dialog).toHaveCount(0)
+})
+
+test('issue #24: an empty log file opens a centered dialog that needs a click (or Esc)', async () => {
+  await win.getByLabel('Arquivo de log').setInputFiles({ name: 'vazio.log', mimeType: 'text/plain', buffer: Buffer.alloc(0) })
+  const dialog = win.getByRole('alertdialog')
+  await expect(dialog).toContainText('O arquivo está vazio')
+  await expect(dialog).toContainText('vazio.log')
+  await expect(dialog.getByRole('button', { name: 'Abrir outro arquivo…' })).toBeFocused()
+  await win.screenshot({ path: 'test-results/ui-file-error.png', animations: 'disabled' })
+  await expect(win.locator('.notice')).toHaveCount(0)
+  await win.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
 })
 
 test('G5: production contexts are flagged PROD in the picker and the status bar (no banner)', async () => {

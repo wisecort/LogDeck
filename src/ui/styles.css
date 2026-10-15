@@ -3386,3 +3386,33 @@ button.primary:disabled {
   gap: 8px;
   margin-top: 6px;
 }
+
+/* File that could not be opened (issue #24) */
+.file-error-modal {
+  width: min(440px, calc(100vw - 32px));
+  overflow-x: hidden;
+}
+
+.modal-head-icon.tone-warn {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+}
+
+.file-error-name {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--bg-3);
+}
+
+.file-error-modal p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.file-error-actions {
+  justify-content: flex-end;
+}
