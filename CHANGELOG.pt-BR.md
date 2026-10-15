@@ -7,6 +7,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 ## [Não lançado]
 
 - **Arquivo de log que não abre ganha um diálogo** no meio da janela, em vez do aviso fino no topo, que passava despercebido (issue #24): o que deu errado (vazio, grande demais, não é texto), o nome do arquivo, o que fazer e **Abrir outro arquivo…**. Fecha com OK ou Esc.
+- **Avisos do topo mais visíveis:** vermelho para erros do kubectl e do cluster (sessão expirada, sem permissão, cluster inacessível, tempo esgotado…), amarelo para avisos do app (limite de abas, pod recente que sumiu, nenhum contexto), com ícone, título curto e um destaque rápido ao aparecer. O aviso de pod recente que sumiu não diz mais "Abri o namespace", como se o app falasse.
 
 ## [1.6.2] — 14/10/2026
 

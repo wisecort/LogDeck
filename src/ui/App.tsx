@@ -14,6 +14,8 @@ import { LogList, type ScrollCommand } from './components/LogList'
 import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
 import { ShortcutsModal } from './components/ShortcutsModal'
+import { NoticeBar } from './components/NoticeBar'
+import { noticeFromError, type Notice } from './notice'
 import { FileErrorModal } from './components/FileErrorModal'
 import { Sidebar, type Selection } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
@@ -57,8 +59,8 @@ const NOOP = () => {}
 const EMPTY_SEARCH: SearchState = { text: '', regex: false, caseSensitive: false, exclude: '' }
 
 export function App() {
-  const [notice, setNotice] = useState<string>()
-  const onError = useCallback((m: string) => setNotice(m), [])
+  const [notice, setNotice] = useState<Notice>()
+  const onError = useCallback((m: string) => setNotice(noticeFromError(m)), [])
   const nav = useNavigation(onError)
   const [now, setNow] = useState(() => Date.now())
   const [levels, setLevels] = useState<ReadonlySet<Level>>(new Set(LEVELS))
@@ -120,16 +122,16 @@ export function App() {
     if (!v.installed) {
       // A missing kubectl gets the install card on the welcome screen instead of a notice.
       if (v.missing && v.installHint) return setKubectlMissing(v.installHint)
-      return setNotice(v.message)
+      return setNotice(noticeFromError(v.message ?? ''))
     }
     setKubectlMissing(undefined)
     if (v.version) setKubectlVersion(v.version)
     try {
       const list = await window.logdeck.listContexts()
       nav.showContexts(list)
-      if (list.length === 0) setNotice(t('app.noContexts'))
+      if (list.length === 0) setNotice({ kind: 'noContexts', text: t('app.noContexts') })
     } catch (err) {
-      setNotice((err as Error).message)
+      setNotice(noticeFromError((err as Error).message))
     }
   }
 
@@ -239,7 +241,7 @@ export function App() {
     let tabId: string | undefined
     if (inNewTab) {
       tabId = session.newTab()
-      if (!tabId) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+      if (!tabId) return setNotice({ kind: 'tabsLimit', text: t('tabs.limit', { n: MAX_TABS }) })
     }
     setShell(undefined)
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
@@ -270,7 +272,7 @@ export function App() {
   const openRecent = async (r: RecentPod) => {
     await nav.openNamespace(r.context, r.namespace, true)
     const pod = (await nav.loadPods(r.context, r.namespace))?.find((p) => p.name === r.pod)
-    if (!pod) return setNotice(t('recent.gone', { pod: r.pod }))
+    if (!pod) return setNotice({ kind: 'recentGone', text: t('recent.gone', { pod: r.pod }) })
     await selectPod(r.context, r.namespace, pod, r.container)
   }
 
@@ -289,7 +291,7 @@ export function App() {
     } catch (err) {
       // The user just picked this file: the reason gets a dialog, not the thin notice on top (issue #24).
       if (err instanceof LogFileError) setFileError({ problem: err.problem, fileName: err.fileName })
-      else setNotice((err as Error).message)
+      else setNotice(noticeFromError((err as Error).message))
     }
   }
 
@@ -512,14 +514,7 @@ export function App() {
   return (
     <I18nProvider lang={lang}>
     <div className="app">
-      {notice && (
-        <div className="notice" role="status">
-          <span className="spacer">{notice}</span>
-          <button className="link" onClick={() => setNotice(undefined)}>
-            ×
-          </button>
-        </div>
-      )}
+      {notice && <NoticeBar key={notice.text} notice={notice} onClose={() => setNotice(undefined)} />}
       <input
         ref={fileRef}
         type="file"
@@ -576,7 +571,7 @@ export function App() {
             }}
             homeActive={isEmptyTab}
             onHome={() => {
-              if (!session.openHome()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+              if (!session.openHome()) return setNotice({ kind: 'tabsLimit', text: t('tabs.limit', { n: MAX_TABS }) })
               afterTabChange()
             }}
           />

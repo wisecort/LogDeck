@@ -1,5 +1,8 @@
 // Full path renderer → preload → main → kubectl (fake) → back, without a real cluster.
 import { execFileSync } from 'node:child_process'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { _electron as electron, expect, test, type ElectronApplication } from '@playwright/test'
 import { fakeKubectlEnv } from '../helpers/fake-kubectl'
 
@@ -101,4 +104,22 @@ test('streams live logs and leaves no kubectl behind when the app quits (F3, F3.
   expect(kubectlLogsProcesses()).toHaveLength(1)
   await app.close()
   await expect.poll(kubectlLogsProcesses, { timeout: 5000 }).toEqual([])
+})
+
+test('a kubectl error shows a red notice on top with a short title (1.6.3)', async () => {
+  const { app } = await launch({ FAKE_KUBECTL_MODE: 'auth-error', LOGDECK_USER_DATA: mkdtempSync(join(tmpdir(), 'logdeck-e2e-')) })
+  try {
+    const win = await app.firstWindow()
+    await win.getByRole('button', { name: 'portal-hml', exact: true }).click()
+    const notice = win.getByTestId('notice')
+    await expect(notice).toHaveAttribute('role', 'alert')
+    await expect(notice).toHaveClass(/tone-error/)
+    await expect(notice.locator('strong')).toHaveText('Sessão expirada')
+    await expect(notice).toContainText('oc login')
+    await win.screenshot({ path: 'test-results/k8s-notice.png', animations: 'disabled' })
+    await notice.getByRole('button', { name: 'Fechar' }).click()
+    await expect(notice).toHaveCount(0)
+  } finally {
+    await app.close()
+  }
 })
