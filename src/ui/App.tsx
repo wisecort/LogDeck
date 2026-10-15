@@ -25,7 +25,7 @@ import { parseTerms } from './format'
 import { browserRegexRunner } from './regex-runner'
 import { isMacUserAgent } from '../platform/keys'
 import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from './i18n'
-import { LogFileError, MAX_LOG_FILE_BYTES, type LogFileProblem } from '../logs/file'
+import { isLargeLogFile, LogFileError, MAX_LOG_FILE_BYTES, type LogFileProblem } from '../logs/file'
 import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogTabs } from './useLogTabs'
@@ -86,7 +86,7 @@ export function App() {
   const [aiPrefs, setAiPrefs] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
   const [bufferLines, setBufferLines] = useState(loadBufferLines)
-  const [fileError, setFileError] = useState<{ problem: LogFileProblem; fileName: string }>()
+  const [fileError, setFileError] = useState<{ problem: LogFileProblem | 'large'; file: File }>()
   const [shell, setShell] = useState<ShellTarget>()
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const [lang, setLang] = useState<Lang>(loadLanguage)
@@ -307,14 +307,17 @@ export function App() {
     openLogs(context, namespace, pod, c, options)
   }
 
-  const openFile = async (f: File) => {
+  const openFile = async (f: File, confirmed = false) => {
+    // Above 1 GiB the file takes a lot of memory and a few seconds: ask first.
+    if (!confirmed && isLargeLogFile(f.size) && f.size <= MAX_LOG_FILE_BYTES) return setFileError({ problem: 'large', file: f })
     setShell(undefined)
     resetView()
     try {
-      await session.openFile(f)
+      const { truncated } = await session.openFile(f)
+      if (truncated) setNotice({ kind: 'fileTruncated', text: t('file.truncated', { n: truncated.lines.toLocaleString(lang), pct: Math.floor(truncated.fraction * 100) }) })
     } catch (err) {
       // The user just picked this file: the reason gets a dialog, not the thin notice on top (issue #24).
-      if (err instanceof LogFileError) setFileError({ problem: err.problem, fileName: err.fileName })
+      if (err instanceof LogFileError) setFileError({ problem: err.problem, file: f })
       else setNotice(noticeFromError((err as Error).message))
     }
   }
@@ -380,14 +383,16 @@ export function App() {
     return g ? new Set(g.seqs) : undefined
   }, [groups, groupKey])
 
-  const viewVersion = frozen ?? version
+  // Pausing freezes a live log's lines; a file never changes once read, and while it is being read a pause
+  // (scrolling up to start reading) must not keep the view stuck on the first batch.
+  const viewVersion = session.file ? version : (frozen ?? version)
   const effectiveRegex = useMemo(() => (regexActive ? (regexMatches ?? new Set<number>()) : undefined), [regexActive, regexMatches])
   const baseFilter = useMemo(
     () => ({ levels, ...(compiled && { search: compiled }), ...(effectiveRegex && { regexMatches: effectiveRegex }), ...(groupSeqs && { groupSeqs }) }),
     [levels, compiled, effectiveRegex, groupSeqs],
   )
   const histogramEntries = useMemo(
-    () => (showVolume ? engine.view({ ...baseFilter, collapse: false }).map((r) => r.entry) : []),
+    () => (showVolume ? engine.viewEntries(baseFilter) : []),
     [engine, viewVersion, baseFilter, showVolume], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const rows = useMemo(
@@ -407,10 +412,9 @@ export function App() {
     if (session.activeTab.compare) return void session.stopCompare()
     if (context && namespace && pod && container) void session.startCompare({ context, namespace, pod: pod.name, container, tail: options.tail })
   }
-  const entriesBySeq = useMemo(() => new Map(engine.entries().map((e) => [e.seq, e])), [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
-  const selectedEntry = selectedSeq !== undefined ? entriesBySeq.get(selectedSeq) : undefined
+  const selectedEntry = selectedSeq !== undefined ? engine.bySeq(selectedSeq) : undefined
   const bookmarkedEntries = [...bookmarks].flatMap((s) => {
-    const e = entriesBySeq.get(s)
+    const e = engine.bySeq(s)
     return e ? [e] : []
   })
 
@@ -497,7 +501,7 @@ export function App() {
         title: groupTitle(t, g),
         count: g.count,
         lines: g.seqs.flatMap((seq) => {
-          const e = entriesBySeq.get(seq)
+          const e = engine.bySeq(seq)
           return e ? [entryText(e)] : []
         }),
       }))
@@ -762,7 +766,7 @@ export function App() {
         />
         )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} {...(upMs !== undefined && liveContainer && { uptime: { ms: upMs, container: liveContainer.name, restarts: liveContainer.restarts } })} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(session.loading !== undefined && { loading: session.loading })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} {...(upMs !== undefined && liveContainer && { uptime: { ms: upMs, container: liveContainer.name, restarts: liveContainer.restarts } })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {
@@ -774,8 +778,14 @@ export function App() {
       {shortcuts && <ShortcutsModal onClose={() => setShortcuts(false)} />}
       {fileError && (
         <FileErrorModal
-          {...fileError}
-          mb={MAX_LOG_FILE_BYTES / 1024 / 1024}
+          problem={fileError.problem}
+          fileName={fileError.file.name}
+          size={fileError.file.size}
+          max={MAX_LOG_FILE_BYTES}
+          onConfirm={() => {
+            setFileError(undefined)
+            void openFile(fileError.file, true)
+          }}
           onClose={() => setFileError(undefined)}
           onOpenOther={() => {
             setFileError(undefined)

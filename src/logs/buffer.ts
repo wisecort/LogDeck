@@ -7,7 +7,10 @@ function zeroCounts(): Record<Level, number> {
   return Object.fromEntries(LEVELS.map((l) => [l, 0])) as Record<Level, number>
 }
 
-/** Fixed-size ring buffer of entries; drops the oldest when full (RNF2, RNF6). */
+/**
+ * Fixed-size ring buffer of entries; drops the oldest when full (RNF2, RNF6).
+ * `capacity: Infinity` keeps everything (a local file: it has a fixed size, nothing to drop).
+ */
 export class LogBuffer {
   readonly capacity: number
   private ring: Array<LogEntry | undefined>
@@ -19,11 +22,11 @@ export class LogBuffer {
 
   constructor(opts: { capacity?: number } = {}) {
     const capacity = opts.capacity ?? DEFAULT_CAPACITY
-    if (!Number.isInteger(capacity) || capacity < 1 || capacity > MAX_CAPACITY) {
+    if (capacity !== Infinity && (!Number.isInteger(capacity) || capacity < 1 || capacity > MAX_CAPACITY)) {
       throw new RangeError(`capacity must be an integer between 1 and ${MAX_CAPACITY}, got ${capacity}`)
     }
     this.capacity = capacity
-    this.ring = new Array<LogEntry | undefined>(capacity)
+    this.ring = this.emptyRing()
   }
 
   get size(): number {
@@ -83,8 +86,13 @@ export class LogBuffer {
     return out
   }
 
+  /** Preallocated for a ring; grows as needed without a limit (x % Infinity === x, so the indexing still holds). */
+  private emptyRing(): Array<LogEntry | undefined> {
+    return this.capacity === Infinity ? [] : new Array<LogEntry | undefined>(this.capacity)
+  }
+
   clear(): void {
-    this.ring = new Array<LogEntry | undefined>(this.capacity)
+    this.ring = this.emptyRing()
     this.head = 0
     this.length = 0
     this.droppedCount = 0

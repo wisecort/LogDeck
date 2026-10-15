@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { checkLogFile, LogFileError, splitLogText } from '../logs/file'
+import { checkLogFile, LogFileError, MAX_LOG_FILE_BYTES, MAX_LOG_FILE_LINES, readLogLines } from '../logs/file'
 import { trackReconnect, type Mark } from '../logs/marks'
 import type { Level } from '../logs/types'
 import type { StartLogsRequest, StreamStatus } from '../shared/ipc'
@@ -9,7 +9,8 @@ import { LogEngine } from './engine'
 import { activateTab, addTab, closeTab, companionKey, homeTab, initialTabs, type TabsState, updateTab } from './tabs'
 
 const RENDER_MS = 100
-const FILE_CHUNK = 5000
+const PROGRESS_MS = 250
+const SAMPLE_BYTES = 8192
 
 const yieldToUi = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
@@ -22,6 +23,8 @@ interface Slot {
   status?: StreamStatus
   /** Stream drops seen on this tab (reconnect marks). */
   marks: Mark[]
+  /** While a file is being read: fraction of its bytes, 0 to 1. */
+  loading?: number
 }
 
 /**
@@ -142,29 +145,55 @@ export function useLogTabs() {
     [stop, slot, commit, scheduleRender, slots],
   )
 
-  /** Loads a user-picked file into the tab; throws a LogFileError when it cannot be opened. */
+  /**
+   * Loads a user-picked file into the tab; throws a LogFileError when it cannot be opened. `truncated` past
+   * MAX_LOG_FILE_LINES: the lines read so far stay, with the share of the file they cover.
+   */
   const openFile = useCallback(
     async (f: File, tabId: string = stateRef.current.active) => {
       await stop(tabId)
-      const tooBig = checkLogFile(f, '')
-      if (tooBig) throw new LogFileError(tooBig, f.name)
-      const text = await f.text()
-      const problem = checkLogFile(f, text)
+      // Size, emptiness and binary content are checked on the first bytes, before the tab changes.
+      const problem = checkLogFile(f, f.size > 0 && f.size <= MAX_LOG_FILE_BYTES ? await f.slice(0, SAMPLE_BYTES).text() : '')
       if (problem) throw new LogFileError(problem, f.name)
       const s = slot(tabId)
+      const generation = s.generation
+      // A file keeps every line: it has a fixed size, so nothing needs dropping (1.6.3).
+      if (s.engine.capacity !== Infinity) s.engine = new LogEngine({ capacity: Infinity })
       s.engine.clear()
       s.marks = []
       s.status = undefined
+      s.loading = 0
       commit(updateTab(stateRef.current, tabId, { file: f.name, selection: {} }))
-      const lines = splitLogText(text)
-      for (let i = 0; i < lines.length; i += FILE_CHUNK) {
-        s.engine.ingest(lines.slice(i, i + FILE_CHUNK))
-        setVersion((v) => v + 1)
-        await yieldToUi()
-      }
+      // Each render filters, groups and charts every line loaded so far, so while reading only the first batch
+      // is shown and the status bar counts up; the full view is built once, at the end.
+      let first = true
+      let tickAt = 0
+      const result = await readLogLines(f.stream(), f.size, {
+        onLines: async (lines) => {
+          s.engine.ingest(lines)
+          if (first) {
+            first = false
+            setVersion((v) => v + 1)
+          }
+          await yieldToUi()
+        },
+        onProgress: (fraction) => {
+          s.loading = fraction
+          if (Date.now() - tickAt >= PROGRESS_MS) {
+            tickAt = Date.now()
+            setStatusTick((n) => n + 1)
+          }
+        },
+        cancelled: () => s.generation !== generation || !slots.has(tabId),
+        full: () => s.engine.size >= MAX_LOG_FILE_LINES,
+      })
+      const fraction = s.loading ?? 1
+      s.loading = undefined
       setVersion((v) => v + 1)
+      if (result === 'binary') throw new LogFileError('binary', f.name)
+      return result === 'full' ? { truncated: { lines: s.engine.size, fraction } } : {}
     },
-    [stop, slot, commit],
+    [stop, slot, commit, slots],
   )
 
   /** Returns the new tab id, or undefined at the limit. */
@@ -259,13 +288,15 @@ export function useLogTabs() {
     tabs: state.tabs,
     activeTab,
     engine: activeSlot.engine,
-    // version changes on every ingest for the active tab and on tab switches (engine identity changes too)
-    version: version + activeSlot.engine.version + (companionSlot?.engine.version ?? 0),
+    // version changes on every ingest for the active tab and on tab switches (engine identity changes too);
+    // not while a file is being read (see openFile), or every re-render would redo the view over all lines
+    version: activeSlot.loading !== undefined ? version : version + activeSlot.engine.version + (companionSlot?.engine.version ?? 0),
     companion: companionSlot && { engine: companionSlot.engine, status: companionSlot.status },
     startCompare,
     stopCompare,
     status: activeSlot.status,
     marks: activeSlot.marks,
+    loading: activeSlot.loading,
     file: activeTab.file,
     start,
     stop,

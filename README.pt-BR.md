@@ -215,7 +215,7 @@ As regras completas estão em [`GUARDRAILS.md`](GUARDRAILS.md) e o escopo em [`S
 | Erro de autenticação | o token expirou: faça login de novo no cluster |
 | Não lista namespaces | falta permissão de listar; digite o nome do namespace e tecle Enter |
 | Build sem log | o cluster já removeu o pod do build; abra builds enquanto rodam ou logo depois |
-| Linhas antigas sumiram | o limite é 50 mil linhas; a barra de status mostra quantas foram descartadas |
+| Linhas antigas sumiram | o log ao vivo guarda 50 mil linhas por padrão (de 10 mil a 500 mil nas Preferências); a barra de status mostra quantas foram descartadas. Um arquivo de log guarda todas as linhas, até 1 GB ou 6 milhões de linhas |
 | "LogDeck está danificado" (versões até 1.2.0) | o app não está danificado: era a assinatura incompleta. Rode o `xattr` da [instalação](#macos-apple-silicon-ou-intel) ou atualize |
 
 ## Construir a partir do código

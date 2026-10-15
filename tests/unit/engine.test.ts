@@ -95,3 +95,18 @@ describe('LogEngine', () => {
     expect(e.groups()).toEqual([])
   })
 })
+
+describe('LogEngine without extra copies (large files, 1.6.3)', () => {
+  it('bySeq finds an entry through the buffer index', () => {
+    const e = loaded()
+    const third = e.entries()[2]!
+    expect(e.bySeq(third.seq)).toBe(third)
+    expect(e.bySeq(-1)).toBeUndefined()
+  })
+
+  it('viewEntries matches view() without the row wrappers', () => {
+    const e = loaded()
+    const filter = { levels: new Set(['ERROR' as const]), search: search('FPM') }
+    expect(e.viewEntries(filter)).toEqual(e.view({ ...filter, collapse: false }).map((r) => r.entry))
+  })
+})

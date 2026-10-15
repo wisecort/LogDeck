@@ -216,7 +216,7 @@ The full rules are in [`GUARDRAILS.md`](GUARDRAILS.md) and the scope in [`SPEC.m
 | Authentication error | the token expired: log in to the cluster again |
 | Namespaces are not listed | you lack permission to list them; type the namespace name and press Enter |
 | Build without a log | the cluster already removed the build pod; open builds while they run or right after |
-| Old lines disappeared | the limit is 50,000 lines; the status bar shows how many were dropped |
+| Old lines disappeared | a live log keeps 50,000 lines by default (10k to 500k in Preferences); the status bar shows how many were dropped. A log file keeps every line, up to 1 GB or 6 million lines |
 | "LogDeck is damaged" (versions up to 1.2.0) | the app is not damaged: the signature was incomplete. Run the `xattr` command from the [installation](#macos-apple-silicon-or-intel) or update |
 
 ## Build from source

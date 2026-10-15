@@ -85,21 +85,36 @@ export class LogEngine {
     return this.signatures.groups()
   }
 
-  view(filter: ViewFilter): Row[] {
+  /** The entry with this sequence number, through the buffer's own index (no copy of all entries). */
+  bySeq(seq: number): LogEntry | undefined {
+    return this.buffer.bySeq(seq)
+  }
+
+  /** Entries passing the filter, in order; reads the buffer in place (a file can hold millions). */
+  viewEntries(filter: Omit<ViewFilter, 'collapse'>): LogEntry[] {
     const { levels, search, regexMatches, groupSeqs, timeRange } = filter
-    const visible = this.buffer.toArray().filter((e) => {
-      if (!levels.has(e.level)) return false
-      if (groupSeqs && !groupSeqs.has(e.seq)) return false
+    const visible: LogEntry[] = []
+    for (let i = 0; i < this.buffer.size; i++) {
+      const e = this.buffer.at(i)!
+      if (!levels.has(e.level)) continue
+      if (groupSeqs && !groupSeqs.has(e.seq)) continue
       if (timeRange) {
         const t = timelineTime(e)
-        if (t === undefined || t < timeRange[0] || t > timeRange[1]) return false
+        if (t === undefined || t < timeRange[0] || t > timeRange[1]) continue
       }
-      if (regexMatches && !regexMatches.has(e.seq)) return false
-      if (!search) return true
-      const text = entryText(e)
-      if (search.excluded(text)) return false
-      return regexMatches ? true : search.matches(text)
-    })
+      if (regexMatches && !regexMatches.has(e.seq)) continue
+      if (search) {
+        const text = entryText(e)
+        if (search.excluded(text)) continue
+        if (!regexMatches && !search.matches(text)) continue
+      }
+      visible.push(e)
+    }
+    return visible
+  }
+
+  view(filter: ViewFilter): Row[] {
+    const visible = this.viewEntries(filter)
     return filter.collapse ? collapseRows(visible) : visible.map((entry) => ({ entry, count: 1 }))
   }
 

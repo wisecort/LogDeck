@@ -583,3 +583,13 @@ test('RNF2: the live log line limit is chosen in Preferences and kept', async ()
   await expect(win.getByTestId('match-count')).toContainText('/ 465')
   expect(await win.evaluate(() => localStorage.getItem('logdeck.bufferLines'))).toBe('250000')
 })
+
+test('a local file keeps every line, past the live log limit (1.6.3)', async () => {
+  const lines = Array.from({ length: 60_000 }, (_, i) => `2026-10-09T03:24:00.000000Z [INFO] linha ${i + 1}`).join('\n')
+  await win.getByLabel('Arquivo de log').setInputFiles({ name: 'grande.log', mimeType: 'text/plain', buffer: Buffer.from(lines) })
+  await expect(win.getByTestId('stream-status')).toHaveText('Arquivo')
+  await expect(win.getByTestId('match-count')).toContainText('60.000 / 60.000')
+  await expect(win.getByText('linhas antigas descartadas')).toHaveCount(0)
+  await win.getByLabel('Buscar').fill('linha 1')
+  await expect(win.getByTestId('log-row').first()).toContainText('linha 1')
+})
