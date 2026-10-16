@@ -126,6 +126,32 @@ describe('LogEngine with several pods (one stream per replica)', () => {
     expect(e.entries().map((x) => `${x.pod}:${x.raw}`)).toEqual(['web-a:a first', 'web-b:b first', 'web-b:b second', 'web-a:a second'])
   })
 
+  it('a pod still sending its backlog holds the later lines of the others, so they interleave', () => {
+    const clock = { now: 0 }
+    const e = merged(clock)
+    e.ingest([line(1, 'a 1'), line(2, 'a 2'), line(3, 'a 3'), line(4, 'a 4')], 'web-a')
+    e.ingest([line(1, 'b 1')], 'web-b')
+    // web-b is still sending (slow kubectl): only what it already covers comes out
+    clock.now = 400
+    e.ingest([line(2, 'b 2')], 'web-b')
+    e.flush(600, 500)
+    expect(e.entries().map((x) => x.raw)).toEqual(['a 1', 'b 1', 'a 2'])
+    clock.now = 900
+    e.ingest([line(3, 'b 3'), line(4, 'b 4')], 'web-b')
+    e.flush(1500, 500)
+    expect(e.entries().map((x) => x.raw)).toEqual(['a 1', 'b 1', 'a 2', 'b 2', 'a 3', 'b 3', 'a 4', 'b 4'])
+  })
+
+  it('a pod that went quiet does not hold the others back', () => {
+    const clock = { now: 0 }
+    const e = merged(clock)
+    e.ingest([line(1, 'b 1')], 'web-b')
+    clock.now = 5000
+    e.ingest([line(9, 'a 9')], 'web-a')
+    e.flush(5600, 500)
+    expect(e.entries().map((x) => x.raw)).toEqual(['b 1', 'a 9'])
+  })
+
   it('keeps each pod stack trace on its own entry, even across batches', () => {
     const clock = { now: 0 }
     const e = merged(clock)

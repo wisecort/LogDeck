@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+- **Todas as réplicas numa aba:** quando o kubectl de um pod demora mais para mandar as primeiras linhas (comum no OKD, onde cada um faz login antes), as linhas dele agora se intercalam pela hora com as dos outros pods, em vez de ficarem depois delas.
+
 ## [1.6.3] — 16/10/2026
 
 - **Arquivo de log que não abre ganha um diálogo** no meio da janela, em vez do aviso fino no topo, que passava despercebido (issue #24): o que deu errado (vazio, grande demais, não é texto), o nome do arquivo, o que fazer e **Abrir outro arquivo…**. Fecha com OK ou Esc.
