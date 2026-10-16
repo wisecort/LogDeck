@@ -502,11 +502,14 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await expect(win.getByRole('button', { name: 'Definições', exact: true })).toBeVisible()
 })
 
-test('Preferences: in the default 1280×800 window the About card shows without scrolling', async () => {
+test('Preferences: in a short 620 px window the About card shows without scrolling', async () => {
+  // CI runners have small screens that shrink the default 1280×800 window.
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setContentSize(1280, 620))
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
   const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
   await expect(prefs.getByTestId('about')).toBeInViewport({ ratio: 1 })
   await expect(prefs.getByRole('radio', { name: 'Catppuccin Mocha' })).toBeInViewport({ ratio: 1 })
+  await expect(prefs.getByRole('radio', { name: '500 mil' })).toBeInViewport({ ratio: 1 })
 })
 
 test('6.5: themes, bookmarks and favourite namespaces', async () => {
