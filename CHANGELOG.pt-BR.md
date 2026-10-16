@@ -6,6 +6,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). 
 
 ## [Não lançado]
 
+## [1.6.3] — 16/10/2026
+
 - **Arquivo de log que não abre ganha um diálogo** no meio da janela, em vez do aviso fino no topo, que passava despercebido (issue #24): o que deu errado (vazio, grande demais, não é texto), o nome do arquivo, o que fazer e **Abrir outro arquivo…**. Fecha com OK ou Esc.
 - **Avisos do topo mais visíveis:** vermelho para erros do kubectl e do cluster (sessão expirada, sem permissão, cluster inacessível, tempo esgotado…), amarelo para avisos do app (limite de abas, pod recente que sumiu, nenhum contexto), com ícone, título curto e um destaque rápido ao aparecer. O aviso de pod recente que sumiu não diz mais "Abri o namespace", como se o app falasse.
 - **Pod recente que foi recriado oferece o novo:** quando um pod dos Recentes sumiu porque o Deployment (ou o DeploymentConfig do OKD) criou outro, o aviso mostra o pod novo e tem **Abrir o pod novo**, que abre o pod e troca o item antigo nos Recentes. Mesmo dono e mesmo container, rodando; primeiro o do mesmo ReplicaSet, depois o mais novo.
