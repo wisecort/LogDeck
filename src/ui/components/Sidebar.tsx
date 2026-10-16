@@ -3,12 +3,13 @@ import { formatAge } from '../../k8s/pods'
 import type { LogEntry } from '../../logs/types'
 import type { BuildInfo, PodInfo } from '../../shared/ipc'
 import { displayLabel } from '../context-view'
-import type { RecentPod } from '../recents'
+import { recentKey, type RecentPod } from '../recents'
 import { ContextsModal } from './ContextsModal'
 import { formatTime } from '../format'
 import { useI18n } from '../i18n'
 import { nsKey, type Navigation } from '../useNavigation'
-import { IconBookmark, IconBuild, IconChevron, IconClock, IconCube, IconFile, IconGear, IconKeyboard, IconSliders, IconStar, IconTerminal, IconX } from './icons'
+import { groupPods, type Workload } from '../workloads'
+import { IconBookmark, IconBuild, IconChevron, IconClock, IconCube, IconFile, IconGear, IconKeyboard, IconReplicas, IconSliders, IconStar, IconTerminal, IconX } from './icons'
 
 export type { Selection } from '../view-types'
 import type { Selection } from '../view-types'
@@ -17,6 +18,8 @@ interface Props {
   nav: Navigation
   selection: Selection
   onPod(context: string, namespace: string, pod: PodInfo, inNewTab: boolean): void
+  /** Logs of every replica of a workload in one tab. */
+  onGroup(context: string, namespace: string, group: Workload, inNewTab: boolean): void
   /** A build whose pod the cluster already removed: show its details. */
   onBuild(context: string, namespace: string, build: BuildInfo): void
   onContainer(name: string): void
@@ -82,6 +85,9 @@ function formatDuration(ms: number): string {
   const s = Math.round(ms / 1000)
   return s >= 60 ? `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s` : `${s}s`
 }
+
+/** kubectl short names, so the kind fits next to the name. */
+const KIND_SHORT: Record<string, string> = { StatefulSet: 'sts', Deployment: 'deploy', DeploymentConfig: 'dc', DaemonSet: 'ds', ReplicaSet: 'rs', ReplicationController: 'rc', Job: 'job' }
 
 function podDot(status: string): string {
   if (status === 'Running' || status === 'Completed') return 'ok'
@@ -152,7 +158,9 @@ export function Sidebar(p: Props) {
             title={`${t('sidebar.podTitle', { name: pod.name, status: pod.status, ready: pod.ready, restarts: pod.restarts })}\n${t('sidebar.newTabHint')}`}
           >
             <span className={`dot ${podDot(pod.status)}`} />
-            <span className="node-label mono">{pod.name}</span>
+            <span className="node-label mono">
+              <bdi>{pod.name}</bdi>
+            </span>
             {pod.kind !== 'app' && <span className="pill pod-kind">{pod.kind}</span>}
             {pod.restarts > 0 && <span className="node-meta">↻{pod.restarts}</span>}
             {pod.createdAt !== undefined && <span className="node-meta">{formatAge(p.now - pod.createdAt)}</span>}
@@ -161,7 +169,31 @@ export function Sidebar(p: Props) {
         </li>
       )
     }
-    const rows = shown.filter((pod) => pod.kind === 'app').map(row)
+    // Replicas of one StatefulSet/Deployment go under its name, with a row that opens all their logs together.
+    const groupRow = (g: Workload, pods: PodInfo[]) => {
+      const selected = selection.context === context && selection.namespace === namespace && selection.group?.kind === g.kind && selection.group.name === g.name
+      return (
+        <li key={`group:${g.kind}/${g.name}`}>
+          <button
+            className={`node group-row ${selected ? 'selected' : ''}`}
+            aria-label={t('sidebar.allLogsOf', { name: g.name, n: pods.length })}
+            title={`${g.name} (${KIND_SHORT[g.kind] ?? g.kind.toLowerCase()}, ${g.kind})\n${t('sidebar.allLogsOf', { name: g.name, n: pods.length })}\n${t('sidebar.newTabHint')}`}
+            onClick={(e) => p.onGroup(context, namespace, g, e.metaKey || e.ctrlKey)}
+            onAuxClick={(e) => {
+              if (e.button === 1) p.onGroup(context, namespace, g, true)
+            }}
+          >
+            <IconReplicas />
+            <span className="node-label mono">{g.name}</span>
+            <span className="group-all">{t('sidebar.allLogsShort')}</span>
+          </button>
+          <ul className="group-pods" role="group" aria-label={g.name}>
+            {pods.map(row)}
+          </ul>
+        </li>
+      )
+    }
+    const rows = groupPods(shown.filter((pod) => pod.kind === 'app')).map((item) => ('group' in item ? groupRow(item.group, item.pods) : row(item.pod)))
     // OKD Build objects first (their pod, when still there, opens the log); then deployer pods and build pods
     // without a Build object.
     const byName = new Map(list.map((pod) => [pod.name, pod]))
@@ -291,8 +323,9 @@ export function Sidebar(p: Props) {
             </div>
             <ul className="tree" aria-label={t('sidebar.recents')}>
               {p.recents.map((r) => (
-                <li key={`${r.context}::${r.namespace}::${r.pod}`} className="recent-item">
-                  <button className="node" onClick={() => p.onRecent(r)} title={`${r.namespace} / ${r.pod} / ${r.container}\n${r.context}`}>
+                <li key={recentKey(r)} className="recent-item">
+                  <button className="node" onClick={() => p.onRecent(r)} title={`${r.namespace} / ${r.group ? `${r.group} ${r.pod} (${t('sidebar.allLogs')})` : r.pod} / ${r.container}\n${r.context}`}>
+                    {r.group && <IconReplicas />}
                     <span className="node-label mono">{r.pod}</span>
                     <span className="node-meta">{r.namespace}</span>
                   </button>

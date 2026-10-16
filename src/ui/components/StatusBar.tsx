@@ -48,7 +48,7 @@ function state(t: Translate, status: StreamStatus | undefined, paused: boolean, 
 export function StatusBar(p: Props) {
   const { t, n } = useI18n()
   const [text, cls] = state(t, p.status, p.paused, p.file, p.loading)
-  const parts = p.file ? [p.file] : [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name ?? p.selection.build?.name, p.selection.container].filter((x): x is string => !!x)
+  const parts = p.file ? [p.file] : [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name ?? p.selection.group?.name ?? p.selection.build?.name, p.selection.container].filter((x): x is string => !!x)
   const where = parts.join(' › ')
   return (
     <footer className="statusbar">

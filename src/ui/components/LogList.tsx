@@ -31,9 +31,12 @@ interface RowProps {
   onSelect(seq: number): void
   onBookmark(seq: number): void
   markable: boolean
+  /** Color slot of the line's pod, in a tab that reads several replicas. */
+  podColor?: number
+  onOpenPod?(pod: string): void
 }
 
-const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked, wrap, onSelect, onBookmark, markable }: RowProps) {
+const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked, wrap, onSelect, onBookmark, markable, podColor, onOpenPod }: RowProps) {
   const { t } = useI18n()
   const { entry } = row
   const time = displayTime(entry)
@@ -60,6 +63,19 @@ const LogRow = memo(function LogRow({ row, search, selected, cursor, bookmarked,
         )}
         {time.divergent && <span className="diverge" aria-label={t('log.diverge')}> ⚠</span>}
       </span>
+      {entry.pod !== undefined && (
+        <button
+          className={`pod-tag pc-${podColor ?? 'none'}`}
+          data-testid="pod-tag"
+          title={t('group.openPod', { pod: entry.pod })}
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpenPod?.(entry.pod!)
+          }}
+        >
+          <bdi>{entry.pod}</bdi>
+        </button>
+      )}
       <span className={`badge lvl-${entry.level}`}>{entry.level}</span>
       {row.count > 1 && (
         <span className="repeat" title={`${formatTime(row.firstTime)} → ${formatTime(row.lastTime)}`}>
@@ -120,6 +136,9 @@ interface Props {
   hidden?: { loaded: number; byPresets: number }
   onPresetsOff?(): void
   onClearFilters?(): void
+  /** Several replicas in the tab: color slot of each pod, and opening one pod on its own. */
+  podColor?(pod: string): number | undefined
+  onOpenPod?(pod: string): void
 }
 
 export function LogList(p: Props) {
@@ -187,6 +206,8 @@ export function LogList(p: Props) {
                   onSelect={p.onSelect}
                   onBookmark={p.onBookmark}
                   markable={p.markable ?? true}
+                  {...(row.entry.pod !== undefined && p.podColor && { podColor: p.podColor(row.entry.pod) })}
+                  {...(p.onOpenPod && { onOpenPod: p.onOpenPod })}
                 />
                 {last && p.marks?.trailing.map((m, i) => <MarkLine key={i} mark={m} live={p.live ?? false} {...(p.onPrevious && { onPrevious: p.onPrevious })} />)}
               </div>

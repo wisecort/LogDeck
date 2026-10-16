@@ -7,6 +7,14 @@
         "name": "portal-web-7d9f8c6b5-x2k4p",
         "namespace": "portal-hml",
         "creationTimestamp": "2026-10-09T03:24:00Z",
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "portal-web-7d9f8c6b5",
+            "controller": true
+          }
+        ],
         "labels": {
           "app": "portal-web",
           "pod-template-hash": "7d9f8c6b5"
@@ -115,6 +123,14 @@
         "name": "portal-worker-5c7d9b8f4-q8w2e",
         "namespace": "portal-hml",
         "creationTimestamp": "2026-10-09T02:00:00Z",
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "ReplicaSet",
+            "name": "portal-worker-5c7d9b8f4",
+            "controller": true
+          }
+        ],
         "labels": {
           "app": "portal-worker",
           "pod-template-hash": "5c7d9b8f4"
@@ -163,9 +179,101 @@
     },
     {
       "metadata": {
+        "name": "portal-cache-0",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-05T10:00:00Z",
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "StatefulSet",
+            "name": "portal-cache",
+            "controller": true
+          }
+        ],
+        "labels": {
+          "app": "portal-cache",
+          "statefulset.kubernetes.io/pod-name": "portal-cache-0"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "cache",
+            "image": "registry.example.internal/portal-cache:7.2.4"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {
+            "name": "cache",
+            "ready": true,
+            "restartCount": 0,
+            "state": {
+              "running": {
+                "startedAt": "2026-10-05T10:00:00Z"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "portal-cache-1",
+        "namespace": "portal-hml",
+        "creationTimestamp": "2026-10-05T10:01:00Z",
+        "ownerReferences": [
+          {
+            "apiVersion": "apps/v1",
+            "kind": "StatefulSet",
+            "name": "portal-cache",
+            "controller": true
+          }
+        ],
+        "labels": {
+          "app": "portal-cache",
+          "statefulset.kubernetes.io/pod-name": "portal-cache-1"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "cache",
+            "image": "registry.example.internal/portal-cache:7.2.4"
+          }
+        ]
+      },
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {
+            "name": "cache",
+            "ready": true,
+            "restartCount": 0,
+            "state": {
+              "running": {
+                "startedAt": "2026-10-05T10:01:00Z"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
         "name": "portal-migrate-29341-7xk2m",
         "namespace": "portal-hml",
-        "creationTimestamp": "2026-10-09T01:00:00Z"
+        "creationTimestamp": "2026-10-09T01:00:00Z",
+        "ownerReferences": [
+          {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "name": "portal-migrate-29341",
+            "controller": true
+          }
+        ]
       },
       "spec": {
         "containers": [

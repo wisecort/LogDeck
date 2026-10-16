@@ -20,6 +20,13 @@ export interface PodSummary {
   qosClass?: string
   details?: ContainerDetail[]
   labels?: Record<string, string>
+  /** What created the pod (StatefulSet, Deployment...): replicas share it and open together. */
+  owner?: PodOwner
+}
+
+export interface PodOwner {
+  kind: string
+  name: string
 }
 
 export type PodKind = 'app' | 'build' | 'deploy'
@@ -74,6 +81,12 @@ interface ContainerSpec {
   startupProbe?: ProbeJson
 }
 
+interface OwnerReference {
+  kind?: unknown
+  name?: unknown
+  controller?: unknown
+}
+
 interface PodJson {
   metadata?: {
     name?: string
@@ -82,6 +95,7 @@ interface PodJson {
     deletionTimestamp?: string
     labels?: Record<string, string>
     annotations?: Record<string, string>
+    ownerReferences?: OwnerReference[]
   }
   spec?: { nodeName?: string; containers?: ContainerSpec[]; initContainers?: ContainerSpec[] }
   status?: { phase?: string; qosClass?: string; containerStatuses?: ContainerStatus[]; initContainerStatuses?: ContainerStatus[] }
@@ -217,6 +231,31 @@ export function stringMap(v: unknown): Record<string, string> | undefined {
   return Object.keys(out).length > 0 ? out : undefined
 }
 
+const KIND = /^[A-Z][A-Za-z0-9]{0,62}$/
+const DC_KEY = 'openshift.io/deployment-config.name'
+
+/**
+ * The workload behind the pod, from its controller owner reference. A Deployment's ReplicaSet
+ * (`<deployment>-<pod-template-hash>`) and an OKD DeploymentConfig's ReplicationController are shown as the
+ * Deployment/DeploymentConfig, so pods of an old and a new rollout stay in one group.
+ */
+export function podOwner(metadata: PodJson['metadata']): PodOwner | undefined {
+  const refs = Array.isArray(metadata?.ownerReferences) ? metadata.ownerReferences : []
+  const ref = refs.find((r) => r?.controller === true) ?? refs[0]
+  if (!ref || typeof ref.kind !== 'string' || typeof ref.name !== 'string' || !KIND.test(ref.kind)) return undefined
+  try {
+    validatePodName(ref.name)
+  } catch (err) {
+    if (!(err instanceof UnsafeArgsError)) throw err
+    return undefined
+  }
+  const hash = metadata?.labels?.['pod-template-hash']
+  if (ref.kind === 'ReplicaSet' && hash && ref.name.endsWith(`-${hash}`)) return { kind: 'Deployment', name: ref.name.slice(0, -hash.length - 1) }
+  const dc = metadata?.labels?.[DC_KEY] ?? metadata?.annotations?.[DC_KEY]
+  if (ref.kind === 'ReplicationController' && typeof dc === 'string' && dc) return { kind: 'DeploymentConfig', name: dc.slice(0, 253) }
+  return { kind: ref.kind, name: ref.name }
+}
+
 /** Mirrors the STATUS column of `kubectl get pods`. */
 function effectiveStatus(pod: PodJson): string {
   if (pod.metadata?.deletionTimestamp) return 'Terminating'
@@ -268,6 +307,8 @@ export function parsePods(json: string, onInvalid?: (name: string) => void): Pod
     const qos = text(pod.status?.qosClass)
     const labels = stringMap(pod.metadata?.labels)
     if (labels) summary.labels = labels
+    const owner = podOwner(pod.metadata)
+    if (owner) summary.owner = owner
     if (node) summary.node = node
     if (qos) summary.qosClass = qos
     summary.details = [

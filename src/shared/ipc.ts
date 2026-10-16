@@ -83,6 +83,8 @@ export interface PodInfo {
   details?: ContainerDetail[]
   /** Matched against service selectors (Pod tab → Access). */
   labels?: Record<string, string>
+  /** StatefulSet, Deployment, DeploymentConfig, DaemonSet...: replicas share it and can be read together. */
+  owner?: { kind: string; name: string }
 }
 
 export interface ServiceInfo {

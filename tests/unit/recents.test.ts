@@ -25,6 +25,11 @@ describe('pushRecent', () => {
     expect(list).toHaveLength(2)
     expect(recentKey(list[0]!)).not.toBe(recentKey(list[1]!))
   })
+
+  it('a group of replicas is its own entry, apart from a pod with the same name', () => {
+    const list = pushRecent([r('cache')], { ...r('cache'), group: 'StatefulSet' })
+    expect(list.map((x) => x.group ?? 'pod')).toEqual(['StatefulSet', 'pod'])
+  })
 })
 
 describe('findReplacement (a recent pod recreated under a new name)', () => {

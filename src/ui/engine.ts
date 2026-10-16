@@ -17,8 +17,13 @@ export interface ViewFilter {
   groupSeqs?: ReadonlySet<number>
   /** [from, to] epoch ms, inclusive (histogram selection). */
   timeRange?: readonly [number, number]
+  /** Pods turned off in a tab that reads several replicas. */
+  hiddenPods?: ReadonlySet<string>
   collapse: boolean
 }
+
+/** Order of lines from several pods: the kubectl `--timestamps` time, else the log's own, else arrival. */
+const mergeTime = (e: LogEntry) => e.k8sTime ?? e.logTime ?? e.ingestTime
 
 export interface EngineOptions {
   capacity?: number
@@ -30,6 +35,13 @@ export class LogEngine {
   private buffer: LogBuffer
   private signatures = new SignatureIndex()
   private changes = 0
+  // Several pods (ingest with a source): one assembler per pod so each stack trace stays on its entry,
+  // one shared sequence, and lines held in `pending` until flush() puts them in time order.
+  private sources = new Map<string, { assembler: LogAssembler; last?: LogEntry }>()
+  private pending: LogEntry[] = []
+  private seq = 1
+  private perPod = new Map<string, number>()
+  private defaultLevel: Level | undefined
 
   constructor(private readonly opts: EngineOptions = {}) {
     this.assembler = new LogAssembler({ ...(opts.now && { now: opts.now }) })
@@ -64,7 +76,14 @@ export class LogEngine {
     return last && timelineTime(last)
   }
 
-  ingest(lines: readonly string[]): void {
+  /** Lines received per pod (several replicas in one tab). */
+  get podCounts(): ReadonlyMap<string, number> {
+    return this.perPod
+  }
+
+  /** `source`: the pod the lines came from, when the tab reads several; they wait in order for flush(). */
+  ingest(lines: readonly string[], source?: string): void {
+    if (source !== undefined) return this.ingestFrom(source, lines)
     for (const line of lines) {
       const event = this.assembler.push(line)
       if (event.type === 'entry') {
@@ -75,6 +94,46 @@ export class LogEngine {
       }
     }
     this.changes++
+  }
+
+  private ingestFrom(source: string, lines: readonly string[]): void {
+    let s = this.sources.get(source)
+    if (!s) {
+      const assembler = new LogAssembler({ ...(this.opts.now && { now: this.opts.now }), ...(this.defaultLevel && { defaultLevel: this.defaultLevel }), nextSeq: () => this.seq++ })
+      s = { assembler }
+      this.sources.set(source, s)
+    }
+    for (const line of lines) {
+      const event = s.assembler.push(line)
+      if (event.type === 'entry') {
+        event.entry.pod = source
+        s.last = event.entry
+        this.pending.push(event.entry)
+      } else if (s.last) {
+        // Same object in `pending` or in the buffer: the trace lands on its entry either way.
+        s.last.continuation.push(event.text)
+        this.changes++
+      }
+    }
+  }
+
+  /**
+   * Moves the lines from several pods that arrived at least `holdMs` before `now` into the list, in time
+   * order, so a pod a bit slower than the others does not land out of place. True when lines were added.
+   */
+  flush(now: number, holdMs: number): boolean {
+    const cut = now - holdMs
+    const ready = this.pending.filter((e) => e.ingestTime <= cut)
+    if (ready.length === 0) return false
+    this.pending = this.pending.filter((e) => e.ingestTime > cut)
+    ready.sort((a, b) => mergeTime(a) - mergeTime(b) || a.seq - b.seq)
+    for (const e of ready) {
+      this.buffer.push(e)
+      this.signatures.add(e)
+      this.perPod.set(e.pod!, (this.perPod.get(e.pod!) ?? 0) + 1)
+    }
+    this.changes++
+    return true
   }
 
   entries(): LogEntry[] {
@@ -92,11 +151,12 @@ export class LogEngine {
 
   /** Entries passing the filter, in order; reads the buffer in place (a file can hold millions). */
   viewEntries(filter: Omit<ViewFilter, 'collapse'>): LogEntry[] {
-    const { levels, search, regexMatches, groupSeqs, timeRange } = filter
+    const { levels, search, regexMatches, groupSeqs, timeRange, hiddenPods } = filter
     const visible: LogEntry[] = []
     for (let i = 0; i < this.buffer.size; i++) {
       const e = this.buffer.at(i)!
       if (!levels.has(e.level)) continue
+      if (hiddenPods && e.pod !== undefined && hiddenPods.has(e.pod)) continue
       if (groupSeqs && !groupSeqs.has(e.seq)) continue
       if (timeRange) {
         const t = timelineTime(e)
@@ -123,6 +183,11 @@ export class LogEngine {
     this.assembler = new LogAssembler({ ...(this.opts.now && { now: this.opts.now }), ...(defaultLevel && { defaultLevel }) })
     this.buffer.clear()
     this.signatures.clear()
+    this.defaultLevel = defaultLevel
+    this.sources.clear()
+    this.pending = []
+    this.seq = 1
+    this.perPod = new Map()
     this.changes++
   }
 }

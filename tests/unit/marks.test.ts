@@ -110,3 +110,15 @@ describe('eventMarks: Kubernetes events about the pod', () => {
     expect(marks).toHaveLength(2)
   })
 })
+
+describe('trackReconnect with several pods in one tab', () => {
+  it('each pod has its own mark', () => {
+    let marks = trackReconnect([], { state: 'reconnecting' }, T0, T0, 'web-a')
+    marks = trackReconnect(marks, { state: 'reconnecting' }, T0 + 500, T0, 'web-b')
+    marks = trackReconnect(marks, { state: 'live' }, T0 + 1000, T0, 'web-a')
+    expect(marks).toEqual([
+      { kind: 'reconnect', time: T0, lostAt: T0, backAt: T0 + 1000, pod: 'web-a' },
+      { kind: 'reconnect', time: T0, lostAt: T0 + 500, pod: 'web-b' },
+    ])
+  })
+})

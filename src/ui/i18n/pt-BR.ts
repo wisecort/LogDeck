@@ -36,6 +36,7 @@ export const ptBR = {
   'notice.recentGone': 'Pod não existe mais',
   'notice.tabsLimit': 'Limite de abas',
   'notice.fileTruncated': 'Linhas demais',
+  'notice.group': 'Todos os logs',
 
   'sidebar.navigation': 'Navegação',
   'sidebar.context': 'Contexto',
@@ -421,6 +422,23 @@ export const ptBR = {
   'pref.updates': 'Atualizações',
   'pref.updatesToggle': 'Avisar quando houver versão nova',
   'pref.updatesNote': 'Uma consulta anônima a api.github.com, no máximo uma vez por dia. O LogDeck nunca baixa nem instala nada sozinho.',
+  'sidebar.allLogs': 'Todos os logs',
+  'sidebar.allLogsShort': 'Todos',
+  'sidebar.allLogsOf': 'Abrir numa aba os logs dos {n} pods de {name}',
+  'group.pods': 'Pods da aba',
+  'group.chipHint': '{pod}: {n} linhas recebidas\nClique para esconder ou mostrar as linhas deste pod; Alt-clique mostra só ele',
+  'group.state.connecting': 'conectando…',
+  'group.state.reconnecting': 'reconectando…',
+  'group.state.error': 'erro',
+  'group.state.ended': 'terminou',
+  'group.openPod': 'Abrir {pod} numa aba só dele',
+  'group.limit': '{name} tem {total} pods; a aba segue os {n} mais novos (cada pod é um kubectl rodando).',
+  'group.none': 'Nenhum pod de {name} está rodando agora.',
+  'group.noContainer': 'Os pods de {name} não têm um container em comum; abra um pod de cada vez.',
+  'mark.podJoined': 'Pod {pod} entrou na aba',
+  'mark.podLeft': 'Pod {pod} saiu',
+  'mark.podJoinedHint': 'réplica nova; as linhas dela aparecem daqui em diante',
+  'mark.podLeftHint': 'o pod não existe mais; as linhas dele continuam acima',
 } as const
 
 export type MessageKey = keyof typeof ptBR

@@ -41,6 +41,9 @@ import { groupTitle } from './group-title'
 import { loadBufferLines, saveBufferLines } from './buffer-pref'
 import { findReplacement, loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
 import { useUpdateCheck } from './useUpdateCheck'
+import { PodChips } from './components/PodChips'
+import { groupMembers, sharedContainer, type Workload } from './workloads'
+import type { PodGroup } from './view-types'
 import { UpdateModal } from './components/UpdateModal'
 
 const POD_REFRESH_MS = 5000
@@ -79,6 +82,9 @@ export function App() {
   const [cursor, setCursor] = useState<number>()
   const [selectedSeq, setSelectedSeq] = useState<number>()
   const [bookmarks, setBookmarks] = useState<ReadonlySet<number>>(new Set())
+  // Group tab: pods turned off, and a color per pod that stays while the tab lives (tab id → pod → slot).
+  const [hiddenPods, setHiddenPods] = useState<ReadonlySet<string>>(new Set())
+  const podColors = useRef(new Map<string, Map<string, number>>())
   const [command, setCommand] = useState<{ cmd: ScrollCommand; nonce: number }>()
   const [tab, setTab] = useState<PanelTab>('erros')
   const [aiMode, setAiMode] = useState<AiContextMode>('grupos')
@@ -201,6 +207,18 @@ export function App() {
     return () => clearInterval(timer)
   }, [selection.context, selection.namespace]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Group tab: pods of the workload come and go (scale, rollout, recreated replica); follow them.
+  useEffect(() => {
+    const { context, namespace, group, container } = selection
+    if (!context || !namespace || !group || !container) return
+    const list = nav.pods[nsKey(context, namespace)]
+    if (!list) return
+    const next = groupMembers(list, group).pods.filter((p) => p.containers.includes(container)).map((p) => p.name)
+    if (next.length === 0 || (next.length === group.pods.length && next.every((name, i) => name === group.pods[i]))) return
+    setSelection({ ...selection, group: { ...group, pods: next } })
+    void session.syncGroup({ context, namespace, container, tail: options.tail, ...(options.since && { since: options.since }) }, next)
+  }, [nav.pods]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const resetView = () => {
     setFrozen(undefined)
     setGroupKey(undefined)
@@ -209,6 +227,7 @@ export function App() {
     setBookmarks(new Set())
     setTimeRange(undefined)
     setCursor(undefined)
+    setHiddenPods(new Set())
   }
 
   /** Tab switches restart the view state (selection, bookmarks, pause, group/time filters); presets follow the tab. */
@@ -261,6 +280,40 @@ export function App() {
     }
   }
 
+  const openGroupLogs = (context: string, namespace: string, group: PodGroup, container: string, o: LogOptions, tabId?: string) => {
+    resetView()
+    void session.stopCompare(tabId)
+    podColors.current.delete(tabId ?? session.activeTab.id)
+    setRecents((prev) => {
+      const next = pushRecent(prev, { context, namespace, pod: group.name, container, group: group.kind })
+      saveRecents(next)
+      return next
+    })
+    void session.startGroup({ context, namespace, container, tail: o.tail, ...(o.since && { since: o.since }) }, group.pods, tabId)
+  }
+
+  /** Every replica of a workload in one tab: one kubectl stream per pod (at most MAX_GROUP_PODS). */
+  const selectGroup = async (context: string, namespace: string, w: Workload, inNewTab = false, preferred?: string) => {
+    const pods = nav.pods[nsKey(context, namespace)] ?? (await nav.loadPods(context, namespace)) ?? []
+    const { pods: members, total } = groupMembers(pods, w)
+    if (members.length === 0) return setNotice({ kind: 'group', text: t('group.none', { name: w.name }) })
+    const container = sharedContainer(members, preferred)
+    if (!container) return setNotice({ kind: 'group', text: t('group.noContainer', { name: w.name }) })
+    let tabId: string | undefined
+    if (inNewTab) {
+      tabId = session.newTab()
+      if (!tabId) return setNotice({ kind: 'tabsLimit', text: t('tabs.limit', { n: MAX_TABS }) })
+    }
+    setShell(undefined)
+    if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
+    const group: PodGroup = { kind: w.kind, name: w.name, pods: members.map((p) => p.name) }
+    const opts = { ...options, previous: false }
+    setOptions(opts, tabId)
+    setSelection({ context, namespace, group, container }, tabId)
+    openGroupLogs(context, namespace, group, container, opts, tabId)
+    if (total > members.length) setNotice({ kind: 'group', text: t('group.limit', { name: w.name, total, n: members.length }) })
+  }
+
   /** A build whose pod is gone: stop this tab's log and show the build details. */
   const openBuild = async (context: string, namespace: string, build: BuildInfo) => {
     setShell(undefined)
@@ -279,6 +332,7 @@ export function App() {
   /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
   const openRecent = async (r: RecentPod) => {
     await nav.openNamespace(r.context, r.namespace, true)
+    if (r.group) return selectGroup(r.context, r.namespace, { kind: r.group, name: r.pod }, false, r.container)
     const pods = await nav.loadPods(r.context, r.namespace)
     const pod = pods?.find((p) => p.name === r.pod)
     if (!pod) {
@@ -301,7 +355,11 @@ export function App() {
   }
 
   const selectContainer = (c: string) => {
-    const { context, namespace, pod } = selection
+    const { context, namespace, pod, group } = selection
+    if (context && namespace && group) {
+      setSelection({ ...selection, container: c })
+      return openGroupLogs(context, namespace, group, c, options)
+    }
     if (!context || !namespace || !pod) return
     setSelection({ ...selection, container: c })
     openLogs(context, namespace, pod, c, options)
@@ -339,7 +397,8 @@ export function App() {
   })
 
   const reopen = (o: LogOptions = options) => {
-    const { context, namespace, pod, container } = selection
+    const { context, namespace, pod, container, group } = selection
+    if (context && namespace && group && container) return openGroupLogs(context, namespace, group, container, o)
     if (context && namespace && pod && container) openLogs(context, namespace, pod, container, o)
   }
 
@@ -388,8 +447,8 @@ export function App() {
   const viewVersion = session.file ? version : (frozen ?? version)
   const effectiveRegex = useMemo(() => (regexActive ? (regexMatches ?? new Set<number>()) : undefined), [regexActive, regexMatches])
   const baseFilter = useMemo(
-    () => ({ levels, ...(compiled && { search: compiled }), ...(effectiveRegex && { regexMatches: effectiveRegex }), ...(groupSeqs && { groupSeqs }) }),
-    [levels, compiled, effectiveRegex, groupSeqs],
+    () => ({ levels, ...(compiled && { search: compiled }), ...(effectiveRegex && { regexMatches: effectiveRegex }), ...(groupSeqs && { groupSeqs }), ...(hiddenPods.size > 0 && { hiddenPods }) }),
+    [levels, compiled, effectiveRegex, groupSeqs, hiddenPods],
   )
   const histogramEntries = useMemo(
     () => (showVolume ? engine.viewEntries(baseFilter) : []),
@@ -489,7 +548,7 @@ export function App() {
       .view({ ...baseFilter, ...(timeRange && { timeRange }), collapse: false })
       .map((r) => entryText(r.entry))
       .join('\n')
-    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? session.file?.replace(/\.[^.]+$/, '') ?? 'log'}.log`)
+    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? selection.group?.name ?? session.file?.replace(/\.[^.]+$/, '') ?? 'log'}.log`)
   }
 
   const buildContext = (mode: AiContextMode): ExplainGroupInput[] => {
@@ -537,7 +596,20 @@ export function App() {
 
   // Empty tab: welcome screen instead of the log views, and no right panel.
   const showingBuild = !!selection.build && !selection.pod
-  const isEmptyTab = !selection.pod && !session.file && !showingBuild
+  const isEmptyTab = !selection.pod && !selection.group && !session.file && !showingBuild
+  // Colors follow the order pods first appear in the tab, so a pod keeps its color when others join or leave.
+  const colorOf = (pod: string): number | undefined => {
+    let colors = podColors.current.get(session.activeTab.id)
+    if (!colors) podColors.current.set(session.activeTab.id, (colors = new Map()))
+    if (!colors.has(pod)) colors.set(pod, colors.size % 8)
+    return colors.get(pod)
+  }
+  const groupContainers = useMemo(() => {
+    const { context, namespace, group } = selection
+    if (!context || !namespace || !group) return []
+    const pods = (nav.pods[nsKey(context, namespace)] ?? []).filter((p) => group.pods.includes(p.name))
+    return pods[0]?.containers.filter((c) => pods.every((p) => p.containers.includes(c))) ?? []
+  }, [nav.pods, selection])
   const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
     <I18nProvider lang={lang}>
@@ -560,6 +632,7 @@ export function App() {
           nav={nav}
           selection={selection}
           onPod={(c, n, p, inNewTab) => void selectPod(c, n, p, undefined, inNewTab)}
+          onGroup={(c, n, g, inNewTab) => void selectGroup(c, n, g, inNewTab)}
           onBuild={(c, n, b) => void openBuild(c, n, b)}
           onContainer={selectContainer}
           bookmarks={bookmarkedEntries}
@@ -666,6 +739,25 @@ export function App() {
               if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
             }}
           />
+          {session.members && (
+            <PodChips
+              members={session.members}
+              hidden={hiddenPods}
+              colorOf={colorOf}
+              onToggle={(pod, solo) =>
+                setHiddenPods((prev) => {
+                  if (solo) return new Set(session.members!.map((m) => m.pod).filter((x) => x !== pod))
+                  const next = new Set(prev)
+                  if (next.has(pod)) next.delete(pod)
+                  else next.add(pod)
+                  return next
+                })
+              }
+              containers={groupContainers}
+              {...(selection.container && { container: selection.container })}
+              onContainer={selectContainer}
+            />
+          )}
           {showVolume && <VolumeChart entries={histogramEntries} marks={allMarks} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
           {(() => {
             const main = (
@@ -689,6 +781,15 @@ export function App() {
                 {...(hidden && { hidden })}
                 onPresetsOff={() => presets && void savePresets({ ...presets, active: [] })}
                 onClearFilters={clearFilters}
+                {...(selection.group && {
+                  podColor: colorOf,
+                  onOpenPod: (name: string) => {
+                    const { context, namespace } = selection
+                    const pod = context && namespace ? nav.pods[nsKey(context, namespace)]?.find((x) => x.name === name) : undefined
+                    if (context && namespace && pod) void selectPod(context, namespace, pod, selection.container, true)
+                    else setNotice({ kind: 'recentGone', text: t('recent.gone', { pod: name }) })
+                  },
+                })}
               />
             )
             if (!companion) return main

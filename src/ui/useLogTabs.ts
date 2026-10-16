@@ -11,13 +11,41 @@ import { activateTab, addTab, closeTab, companionKey, homeTab, initialTabs, type
 const RENDER_MS = 100
 const PROGRESS_MS = 250
 const SAMPLE_BYTES = 8192
+// Several pods in one tab: lines wait this long to be put in time order with the other pods' lines...
+const MERGE_HOLD_MS = 500
+const MERGE_TICK_MS = 150
+// ...and at the start, until every pod sent its first lines (its tail), at most this long.
+const MERGE_WARMUP_MS = 3000
 
 const yieldToUi = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
-/** One engine and (at most) one stream per tab. */
+/** One pod of a tab that reads several replicas (one kubectl stream each). */
+interface Member {
+  streamId?: string
+  status?: StreamStatus
+  /** First lines arrived (or the stream ended): the tab stops waiting for its tail. */
+  started?: boolean
+}
+
+/** What a stream feeds: a tab, and the pod when the tab reads several. */
+interface Route {
+  tabId: string
+  pod?: string
+}
+
+export interface GroupMember {
+  pod: string
+  status?: StreamStatus
+  lines: number
+}
+
+/** One engine and (at most) one stream per tab, or one stream per pod for a group of replicas. */
 interface Slot {
   engine: LogEngine
   streamId?: string
+  /** Replicas read together: pod name → its stream. */
+  members?: Map<string, Member>
+  membersSince?: number
   /** Bumped on every start/stop so a late startLogs answer for an old stream is ignored. */
   generation: number
   status?: StreamStatus
@@ -37,7 +65,7 @@ export function useLogTabs() {
   const stateRef = useRef(state)
   // One mutable map for the whole hook (state slot keeps the identity; it is read during render).
   const [slots] = useState(() => new Map<string, Slot>())
-  const byStream = useRef(new Map<string, string>())
+  const byStream = useRef(new Map<string, Route>())
   // Events that arrive before startLogs resolves with the id.
   const early = useRef(new Map<string, string[][]>())
   const earlyStatus = useRef(new Map<string, StreamStatus>())
@@ -69,33 +97,63 @@ export function useLogTabs() {
     }, RENDER_MS)
   }, [])
 
+  const ingest = useCallback((s: Slot, route: Route, lines: string[]) => {
+    if (route.pod === undefined) return s.engine.ingest(lines)
+    s.engine.ingest(lines, route.pod)
+    const m = s.members?.get(route.pod)
+    if (m) m.started = true
+  }, [])
+
+  /** Status of one pod of a group; the tab shows the best of them (live if any pod is live). */
+  const memberStatus = useCallback((s: Slot, route: Route, status: StreamStatus) => {
+    const m = s.members?.get(route.pod!)
+    if (!m) return
+    m.status = status
+    if (status.state === 'ended' || status.state === 'error') m.started = true
+    s.marks = trackReconnect(s.marks, status, Date.now(), s.engine.lastTime, route.pod)
+    s.status = groupStatus([...s.members!.values()])
+  }, [])
+
   useEffect(() => {
     const offLines = window.logdeck.onLogLines(({ streamId, lines }) => {
-      const tabId = byStream.current.get(streamId)
-      if (tabId === undefined) {
+      const route = byStream.current.get(streamId)
+      if (route === undefined) {
         early.current.set(streamId, [...(early.current.get(streamId) ?? []), lines])
         return
       }
-      slot(tabId).engine.ingest(lines)
-      if (isVisible(tabId)) scheduleRender()
+      ingest(slot(route.tabId), route, lines)
+      if (route.pod === undefined && isVisible(route.tabId)) scheduleRender()
     })
     const offStatus = window.logdeck.onLogStatus(({ streamId, status }) => {
-      const tabId = byStream.current.get(streamId)
-      if (tabId === undefined) {
+      const route = byStream.current.get(streamId)
+      if (route === undefined) {
         earlyStatus.current.set(streamId, status)
         return
       }
-      const s = slot(tabId)
-      s.status = status
-      s.marks = trackReconnect(s.marks, status, Date.now(), s.engine.lastTime)
-      if (isVisible(tabId)) setStatusTick((n) => n + 1)
+      const s = slot(route.tabId)
+      if (route.pod !== undefined) memberStatus(s, route, status)
+      else {
+        s.status = status
+        s.marks = trackReconnect(s.marks, status, Date.now(), s.engine.lastTime)
+      }
+      if (isVisible(route.tabId)) setStatusTick((n) => n + 1)
     })
+    // Groups of replicas: put the held lines in order and into the list.
+    const merge = setInterval(() => {
+      const now = Date.now()
+      for (const [tabId, s] of slots) {
+        if (!s.members) continue
+        const warming = [...s.members.values()].some((m) => !m.started) && now - (s.membersSince ?? 0) < MERGE_WARMUP_MS
+        if (!warming && s.engine.flush(now, MERGE_HOLD_MS) && isVisible(tabId)) scheduleRender()
+      }
+    }, MERGE_TICK_MS)
     return () => {
       offLines()
       offStatus()
+      clearInterval(merge)
       if (timer.current) clearTimeout(timer.current)
     }
-  }, [scheduleRender, slot])
+  }, [scheduleRender, slot, slots, ingest, memberStatus])
 
   const stop = useCallback(async (tabId: string = stateRef.current.active) => {
     const s = slots.get(tabId)
@@ -103,9 +161,16 @@ export function useLogTabs() {
     s.generation++
     const id = s.streamId
     s.streamId = undefined
+    const members = s.members
+    s.members = undefined
     if (id) {
       byStream.current.delete(id)
       await window.logdeck.stopLogs(id)
+    }
+    for (const m of members?.values() ?? []) {
+      if (!m.streamId) continue
+      byStream.current.delete(m.streamId)
+      await window.logdeck.stopLogs(m.streamId)
     }
   }, [slots])
 
@@ -130,7 +195,7 @@ export function useLogTabs() {
           return
         }
         s.streamId = id
-        byStream.current.set(id, tabId)
+        byStream.current.set(id, { tabId })
         for (const lines of early.current.get(id) ?? []) s.engine.ingest(lines)
         const latest = earlyStatus.current.get(id)
         if (latest) s.status = latest
@@ -143,6 +208,78 @@ export function useLogTabs() {
       }
     },
     [stop, slot, commit, scheduleRender, slots],
+  )
+
+  /** Starts one pod's stream in a group tab; its lines and status go to the tab, tagged with the pod. */
+  const startMember = useCallback(
+    async (tabId: string, s: Slot, request: StartLogsRequest) => {
+      const generation = s.generation
+      const member: Member = {}
+      s.members?.set(request.pod, member)
+      const route: Route = { tabId, pod: request.pod }
+      try {
+        const id = await window.logdeck.startLogs(request)
+        if (s.generation !== generation || s.members?.get(request.pod) !== member || !slots.has(tabId)) {
+          await window.logdeck.stopLogs(id)
+          return
+        }
+        member.streamId = id
+        byStream.current.set(id, route)
+        for (const lines of early.current.get(id) ?? []) ingest(s, route, lines)
+        const latest = earlyStatus.current.get(id)
+        if (latest) memberStatus(s, route, latest)
+        early.current.delete(id)
+        earlyStatus.current.delete(id)
+      } catch (err) {
+        if (s.members?.get(request.pod) === member) memberStatus(s, route, { state: 'error', message: (err as Error).message })
+      }
+      setStatusTick((n) => n + 1)
+    },
+    [slots, ingest, memberStatus],
+  )
+
+  /** Reads several replicas in one tab: one stream per pod, lines merged by time (`base` without the pod). */
+  const startGroup = useCallback(
+    async (base: Omit<StartLogsRequest, 'pod'>, pods: readonly string[], tabId: string = stateRef.current.active) => {
+      await stop(tabId)
+      const s = slot(tabId)
+      const capacity = loadBufferLines()
+      if (s.engine.capacity !== capacity) s.engine = new LogEngine({ capacity })
+      s.engine.clear()
+      s.marks = []
+      s.status = { state: 'connecting' }
+      s.members = new Map()
+      s.membersSince = Date.now()
+      commit(updateTab(stateRef.current, tabId, { file: undefined }))
+      setVersion((v) => v + 1)
+      await Promise.all(pods.map((pod) => startMember(tabId, s, { ...base, pod })))
+    },
+    [stop, slot, commit, startMember],
+  )
+
+  /** Pods of the group changed (scaled, recreated): opens the new ones, stops the gone ones, marks both. */
+  const syncGroup = useCallback(
+    async (base: Omit<StartLogsRequest, 'pod'>, pods: readonly string[], tabId: string = stateRef.current.active) => {
+      const s = slots.get(tabId)
+      if (!s?.members) return
+      const now = Date.now()
+      const wanted = new Set(pods)
+      for (const [pod, m] of [...s.members]) {
+        if (wanted.has(pod)) continue
+        s.members.delete(pod)
+        s.marks = [...s.marks, { kind: 'pod', time: now, pod, change: 'left' }]
+        if (m.streamId) {
+          byStream.current.delete(m.streamId)
+          void window.logdeck.stopLogs(m.streamId)
+        }
+      }
+      const added = pods.filter((pod) => !s.members!.has(pod))
+      for (const pod of added) s.marks = [...s.marks, { kind: 'pod', time: now, pod, change: 'joined' }]
+      s.status = groupStatus([...s.members.values()])
+      setStatusTick((n) => n + 1)
+      await Promise.all(added.map((pod) => startMember(tabId, s, { ...base, pod })))
+    },
+    [slots, startMember],
   )
 
   /**
@@ -283,6 +420,9 @@ export function useLogTabs() {
 
   const activeTab = state.tabs.find((t) => t.id === state.active) ?? state.tabs[0]!
   const activeSlot = slot(activeTab.id)
+  const counts = activeSlot.engine.podCounts
+  const members: GroupMember[] | undefined =
+    activeSlot.members && [...activeSlot.members].map(([pod, m]) => ({ pod, lines: counts.get(pod) ?? 0, ...(m.status && { status: m.status }) }))
   const companionSlot = activeTab.compare ? slot(companionKey(activeTab.id)) : undefined
   return {
     tabs: state.tabs,
@@ -295,10 +435,13 @@ export function useLogTabs() {
     startCompare,
     stopCompare,
     status: activeSlot.status,
+    members,
     marks: activeSlot.marks,
     loading: activeSlot.loading,
     file: activeTab.file,
     start,
+    startGroup,
+    syncGroup,
     stop,
     openFile,
     newTab,
@@ -312,3 +455,14 @@ export function useLogTabs() {
 }
 
 export type LogTabs = ReturnType<typeof useLogTabs>
+
+/** A group tab is live while any pod is; it reconnects when none is live and one is reconnecting. */
+export function groupStatus(members: readonly { status?: StreamStatus }[]): StreamStatus {
+  const states = members.map((m) => m.status?.state ?? 'connecting')
+  if (states.includes('live')) return { state: 'live' }
+  const reconnecting = members.find((m) => m.status?.state === 'reconnecting')
+  if (reconnecting?.status) return reconnecting.status
+  if (states.includes('connecting')) return { state: 'connecting' }
+  if (states.length > 0 && states.every((x) => x === 'error')) return members[0]!.status!
+  return { state: 'ended' }
+}

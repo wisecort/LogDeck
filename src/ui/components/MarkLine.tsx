@@ -9,10 +9,14 @@ const clock = (ms: number) => formatTime(ms).slice(0, 8)
 /** One-line description of a mark (also the histogram tooltip). */
 export function markTitle(t: Translate, m: Mark): string {
   switch (m.kind) {
-    case 'reconnect':
-      return m.backAt !== undefined ? t('mark.reconnect', { lost: clock(m.lostAt), back: clock(m.backAt) }) : t('mark.reconnecting', { lost: clock(m.lostAt) })
+    case 'reconnect': {
+      const text = m.backAt !== undefined ? t('mark.reconnect', { lost: clock(m.lostAt), back: clock(m.backAt) }) : t('mark.reconnecting', { lost: clock(m.lostAt) })
+      return m.pod ? `${m.pod}: ${text}` : text
+    }
     case 'quiet':
       return t('mark.quiet', { d: formatDuration(m.to - m.from) })
+    case 'pod':
+      return m.change === 'joined' ? t('mark.podJoined', { pod: m.pod }) : t('mark.podLeft', { pod: m.pod })
     case 'restart':
       return t('mark.restart', { name: m.container })
     case 'event':
@@ -26,6 +30,8 @@ function detail(t: Translate, m: Mark, live: boolean): string {
       return m.backAt !== undefined ? t('mark.reconnectHint') : t('mark.reconnectingHint')
     case 'quiet':
       return `${clock(m.from)} → ${clock(m.to)}${live ? ` · ${t('mark.quietHint')}` : ''}`
+    case 'pod':
+      return `${t('mark.restartAt', { time: clock(m.time) })} · ${m.change === 'joined' ? t('mark.podJoinedHint') : t('mark.podLeftHint')}`
     case 'restart':
       return `${t('mark.restartAt', { time: clock(m.time) })} · ${runText(t, { ...(m.reason && { reason: m.reason }), ...(m.exitCode !== undefined && { exitCode: m.exitCode }), ...(m.ranMs !== undefined && { startedAt: m.time - m.ranMs, finishedAt: m.time }) })}`
     case 'event': {
@@ -35,7 +41,7 @@ function detail(t: Translate, m: Mark, live: boolean): string {
   }
 }
 
-const ICON: Record<Mark['kind'], string> = { reconnect: '⇢', quiet: '…', restart: '↻', event: '◆' }
+const ICON: Record<Mark['kind'], string> = { reconnect: '⇢', quiet: '…', restart: '↻', event: '◆', pod: '⊕' }
 
 interface Props {
   mark: Mark
@@ -50,7 +56,7 @@ export function MarkLine({ mark, live, onPrevious }: Props) {
   return (
     <div className={`mark-line mark-${mark.kind} ${mark.kind === 'event' && mark.type === 'Warning' ? 'warning' : ''}`} data-testid="log-mark" data-kind={mark.kind} role="note">
       <span className="mark-icon" aria-hidden="true">
-        {ICON[mark.kind]}
+        {mark.kind === 'pod' && mark.change === 'left' ? '⊖' : ICON[mark.kind]}
       </span>
       <span className="mark-title">{markTitle(t, mark)}</span>
       <span className="mark-detail">{detail(t, mark, live)}</span>

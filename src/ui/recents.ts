@@ -6,12 +6,14 @@ export interface RecentPod {
   namespace: string
   pod: string
   container: string
+  /** Set when the entry is a group of replicas: the owner kind, and `pod` is the owner name. */
+  group?: string
 }
 
 const KEY = 'logdeck.recents'
 const MAX = 5
 
-export const recentKey = (r: Pick<RecentPod, 'context' | 'namespace' | 'pod'>) => `${r.context}::${r.namespace}::${r.pod}`
+export const recentKey = (r: Pick<RecentPod, 'context' | 'namespace' | 'pod' | 'group'>) => `${r.context}::${r.namespace}::${r.group ? `${r.group}/` : ''}${r.pod}`
 
 export function pushRecent(list: readonly RecentPod[], item: RecentPod): RecentPod[] {
   const key = recentKey(item)
@@ -19,7 +21,10 @@ export function pushRecent(list: readonly RecentPod[], item: RecentPod): RecentP
 }
 
 const isRecent = (v: unknown): v is RecentPod =>
-  !!v && typeof v === 'object' && ['context', 'namespace', 'pod', 'container'].every((k) => typeof (v as Record<string, unknown>)[k] === 'string')
+  !!v &&
+  typeof v === 'object' &&
+  ['context', 'namespace', 'pod', 'container'].every((k) => typeof (v as Record<string, unknown>)[k] === 'string') &&
+  ['string', 'undefined'].includes(typeof (v as Record<string, unknown>)['group'])
 
 export function loadRecents(): RecentPod[] {
   try {

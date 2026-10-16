@@ -35,7 +35,7 @@
 ## Why LogDeck
 
 - **Look, don't touch.** kubectl only runs with read verbs (`get`, `logs`, `config get-contexts`, `auth can-i`), and your kubeconfig is never changed.
-- **Built to find the problem fast.** Colored levels across many log formats, errors and timeouts grouped with counts, a volume histogram and a side-by-side view of the container that crashed.
+- **Built to find the problem fast.** Colored levels across many log formats, errors and timeouts grouped with counts, a volume histogram, a side-by-side view of the container that crashed, and every replica of a StatefulSet or Deployment merged in one tab.
 - **Built for everyday OKD/OpenShift work.** Build history inside the namespace, readable build logs (steps, push, errors) and build pods kept out of the way.
 - **Good-looking and fast.** 50,000 lines without stutter, 9 themes, 4 languages and keyboard shortcuts for everything.
 

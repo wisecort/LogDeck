@@ -158,6 +158,13 @@ export const IconCube = () => (
     <path d="M3 7l9 5 9-5M12 12v10" />
   </Svg>
 )
+/** Replicas of one workload: copies of the same box. */
+export const IconReplicas = () => (
+  <Svg size={14}>
+    <rect x="8" y="8" width="13" height="13" rx="2" />
+    <path d="M4 16V5a1 1 0 0 1 1-1h11" />
+  </Svg>
+)
 export const IconHistory = () => (
   <Svg size={22}>
     <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />

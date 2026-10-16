@@ -78,6 +78,7 @@ Formato: **Dado / Quando / Então**. Cada critério vira pelo menos um teste (un
 - **F2.2.1** No OKD/OpenShift, cada namespace mostra primeiro os pods da aplicação e depois a pasta **Builds e deploys** (recolhida por padrão, estado salvo): os objetos `Build` (`kubectl get builds.build.openshift.io`, só leitura), do mais novo para o mais antigo, com status, commit, duração e idade; clicar abre o log do pod do build quando ele ainda existe (anotação `openshift.io/build.pod-name`), senão o item fica desabilitado com o aviso de que o cluster removeu o pod. Na mesma pasta ficam os pods de deploy (`openshift.io/deployer-pod-for.name`) e pods de build sem objeto `Build`. Em clusters sem a API de builds ou sem permissão, a lista de builds fica vazia, sem erro.
 - **F2.3** Dado um pod com mais de um container (inclui init containers), quando selecionado, então o app pede a escolha do container antes de abrir o log. Pod com um container abre direto.
 - **F2.4** Nomes recebidos do cluster são validados antes de reutilizados em argumentos: namespace e container como DNS-1123 label, pod como DNS-1123 subdomain. Nome inválido é descartado e registrado como aviso.
+- **F2.5** Réplicas juntas (1.6.3): os pods com o mesmo dono (`metadata.ownerReferences` do `get pods -o json`, o controlador; ReplicaSet de Deployment aparece como o Deployment pelo `pod-template-hash`, ReplicationController do OKD como o DeploymentConfig) ficam agrupados na barra lateral quando são dois ou mais, com **Todos** para abrir os logs de todos numa aba. O app roda um `kubectl logs -f` por pod (as mesmas flags de F3.1, sem verbo nem flag nova), no máximo 10 pods por aba (os mais novos, com aviso), e junta as linhas pela hora do `--timestamps`: cada pod tem o seu montador de linhas (stack traces não se misturam), as linhas esperam 500 ms para entrar em ordem e, no início, até cada pod mandar o seu `--tail` (no máximo 3 s). Cada linha mostra o pod numa cor; chips ligam/desligam pods (Alt-clique deixa só um); clicar no pod da linha abre o pod numa aba própria. A lista de pods (F2.2) acompanha o grupo: pod novo abre stream, pod que sumiu tem o stream parado, e os dois viram marca na linha do tempo; cada pod reconecta sozinho (F3.4) com marca própria. Terminal, aba Pod e `--previous` lado a lado são de um pod só e ficam desligados na aba do grupo. O grupo entra nos Recentes e reabre com os pods daquele momento.
 
 ### F3 — Log ao vivo
 
@@ -250,7 +251,6 @@ Integração com cluster real (`kind`) é **manual**, via `make harness-integrat
 - Publicação na internet, modo web, multiusuário
 - Qualquer escrita no cluster (scale, delete, rollout, edit, apply, patch...)
 - Assinatura/notarização Apple e auto-update
-- Logs agregados de vários pods/deployment ao mesmo tempo
 
 ## 8. Fases
 

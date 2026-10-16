@@ -593,3 +593,39 @@ test('a local file keeps every line, past the live log limit (1.6.3)', async () 
   await win.getByLabel('Buscar').fill('linha 1')
   await expect(win.getByTestId('log-row').first()).toContainText('linha 1')
 })
+
+test('replicas: all pods of a StatefulSet in one tab, merged by time, each line tagged with its pod', async () => {
+  const nav = navTree(win)
+  await nav.getByRole('button', { name: 'portal-hml', exact: true }).click()
+  await nav.getByRole('button', { name: /logs dos 2 pods de portal-cache/ }).click()
+
+  const tabList = win.getByRole('tablist', { name: 'Abas' })
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('portal-cache (2 pods)')
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  // one kubectl per pod: 465 lines each
+  await expect(win.getByTestId('match-count')).toContainText('/ 930')
+  const chips = win.getByTestId('pod-chips').getByRole('button')
+  await expect(chips).toHaveCount(2)
+  await expect(win.getByTestId('pod-tag').filter({ hasText: 'portal-cache-0' }).first()).toBeVisible()
+  await expect(win.getByTestId('pod-tag').filter({ hasText: 'portal-cache-1' }).first()).toBeVisible()
+  // the Pod tab, the terminal and --previous are for one pod: not offered here
+  await expect(win.getByRole('button', { name: 'Abrir terminal' })).toBeDisabled()
+  await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
+  await win.screenshot({ path: 'test-results/ui-replicas.png' })
+
+  // turning a pod off hides its lines
+  await chips.filter({ hasText: 'portal-cache-0' }).click()
+  await expect(chips.filter({ hasText: 'portal-cache-0' })).toHaveAttribute('aria-pressed', 'false')
+  for (const text of await win.getByTestId('pod-tag').allInnerTexts()) expect(text).toBe('portal-cache-1')
+
+  // the pod name on a line opens that pod in its own tab
+  await win.getByTestId('pod-tag').first().click()
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('portal-cache-1 / cache')
+
+  // the group is one entry in Recentes and reopens as a group
+  const recents = nav.getByRole('list', { name: 'Recentes' })
+  await expect(recents.getByRole('button', { name: /^portal-cache portal-hml$/ })).toHaveCount(1)
+  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await recents.getByRole('button', { name: /^portal-cache portal-hml$/ }).click()
+  await expect(win.getByTestId('pod-chips').getByRole('button')).toHaveCount(2)
+})

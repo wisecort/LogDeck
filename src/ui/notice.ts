@@ -17,6 +17,7 @@ export type NoticeKind =
   | 'recentGone'
   | 'tabsLimit'
   | 'fileTruncated'
+  | 'group'
 
 export interface Notice {
   kind: NoticeKind
@@ -27,7 +28,7 @@ export interface Notice {
 
 const LANGS = ['pt-BR', 'pt-PT', 'en', 'es']
 const KUBECTL_KINDS = ['auth', 'forbidden', 'unreachable', 'notFound', 'noContext', 'plugin', 'timeout', 'missing'] as const
-const WARN: ReadonlySet<NoticeKind> = new Set(['noContexts', 'recentGone', 'tabsLimit', 'fileTruncated'])
+const WARN: ReadonlySet<NoticeKind> = new Set(['noContexts', 'recentGone', 'tabsLimit', 'fileTruncated', 'group'])
 
 /** Kind of a kubectl error message, in any interface language; `error` when it is none of the known ones. */
 export function noticeFromError(text: string): Notice {

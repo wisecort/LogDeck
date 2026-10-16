@@ -110,3 +110,66 @@ describe('LogEngine without extra copies (large files, 1.6.3)', () => {
     expect(e.viewEntries(filter)).toEqual(e.view({ ...filter, collapse: false }).map((r) => r.entry))
   })
 })
+
+describe('LogEngine with several pods (one stream per replica)', () => {
+  const line = (sec: number, text: string) => `2026-10-09T03:26:${String(sec).padStart(2, '0')}Z ${text}`
+  const merged = (clock: { now: number }) => new LogEngine({ now: () => clock.now })
+
+  it('holds lines briefly and releases them in time order, each tagged with its pod', () => {
+    const clock = { now: 0 }
+    const e = merged(clock)
+    e.ingest([line(1, 'a first'), line(4, 'a second')], 'web-a')
+    e.ingest([line(2, 'b first'), line(3, 'b second')], 'web-b')
+    expect(e.size).toBe(0)
+    expect(e.flush(100, 500)).toBe(false)
+    expect(e.flush(600, 500)).toBe(true)
+    expect(e.entries().map((x) => `${x.pod}:${x.raw}`)).toEqual(['web-a:a first', 'web-b:b first', 'web-b:b second', 'web-a:a second'])
+  })
+
+  it('keeps each pod stack trace on its own entry, even across batches', () => {
+    const clock = { now: 0 }
+    const e = merged(clock)
+    e.ingest([line(1, '2026-10-09 03:26:01.000 ERROR 1 --- [main] app : failed')], 'web-a')
+    e.ingest([line(1, '2026-10-09 03:26:01.000 INFO 1 --- [main] app : fine')], 'web-b')
+    e.ingest([line(1, '\tat a.b.C.d(C.java:1)')], 'web-a')
+    e.flush(1000, 0)
+    e.ingest([line(1, '\tat a.b.C.e(C.java:2)')], 'web-a')
+    const failed = e.entries().find((x) => x.pod === 'web-a')!
+    expect(failed.continuation).toEqual(['\tat a.b.C.d(C.java:1)', '\tat a.b.C.e(C.java:2)'])
+    expect(e.entries().find((x) => x.pod === 'web-b')!.continuation).toEqual([])
+  })
+
+  it('gives every entry its own sequence number and counts lines per pod', () => {
+    const e = merged({ now: 0 })
+    e.ingest([line(1, 'x'), line(2, 'y')], 'web-a')
+    e.ingest([line(1, 'x')], 'web-b')
+    e.flush(0, 0)
+    expect(new Set(e.entries().map((x) => x.seq)).size).toBe(3)
+    expect(e.podCounts).toEqual(new Map([['web-a', 2], ['web-b', 1]]))
+  })
+
+  it('hides the pods turned off', () => {
+    const e = merged({ now: 0 })
+    e.ingest([line(1, 'x')], 'web-a')
+    e.ingest([line(2, 'y')], 'web-b')
+    e.flush(0, 0)
+    const rows = e.view({ levels: ALL, hiddenPods: new Set(['web-a']), collapse: false })
+    expect(rows.map((r) => r.entry.pod)).toEqual(['web-b'])
+  })
+
+  it('does not collapse the same line from two pods into one row', () => {
+    const e = merged({ now: 0 })
+    e.ingest([line(1, 'GET /health 200')], 'web-a')
+    e.ingest([line(1, 'GET /health 200')], 'web-b')
+    e.flush(0, 0)
+    expect(e.view({ levels: ALL, collapse: true })).toHaveLength(2)
+  })
+
+  it('clear forgets pending lines and counts', () => {
+    const e = merged({ now: 0 })
+    e.ingest([line(1, 'x')], 'web-a')
+    e.clear()
+    expect(e.flush(10_000, 0)).toBe(false)
+    expect(e.podCounts.size).toBe(0)
+  })
+})

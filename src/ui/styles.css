@@ -3488,3 +3488,132 @@ button.primary:disabled {
 .segmented.buffer-choices button {
   min-width: 0;
 }
+
+/* Replicas of one workload: a row that opens all their logs in one tab */
+.group-row > svg {
+  width: 14px;
+  height: 14px;
+}
+
+.group-all {
+  margin-left: auto;
+  flex: none;
+  font-size: var(--fs-2xs);
+  line-height: 16px;
+  padding: 0 5px;
+  border-radius: var(--r-sm);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.group-row:hover .group-all {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Pod of each line when a tab reads several replicas; the same color on its chip above the list */
+.pod-tag,
+.pod-chip {
+  --pc: var(--muted);
+}
+.pc-0 { --pc: #2bb3a8; }
+.pc-1 { --pc: #9a7cf0; }
+.pc-2 { --pc: #e08a3c; }
+.pc-3 { --pc: #e070a8; }
+.pc-4 { --pc: #4a90e2; }
+.pc-5 { --pc: #8bbf3c; }
+.pc-6 { --pc: #c9a227; }
+.pc-7 { --pc: #c0705a; }
+
+.pod-tag {
+  flex: none;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* the end of the name (replica number, random suffix) is the part that tells pods apart */
+  direction: rtl;
+  text-align: left;
+  font: inherit;
+  font-size: var(--fs-2xs);
+  padding: 0 0 0 6px;
+  border: 0;
+  border-left: 3px solid var(--pc);
+  background: none;
+  color: color-mix(in srgb, var(--pc) 75%, var(--fg));
+  cursor: pointer;
+}
+
+.pod-tag:hover {
+  text-decoration: underline;
+}
+
+.pod-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pod-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  color: var(--fg);
+  background: color-mix(in srgb, var(--pc) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+  cursor: pointer;
+}
+
+.pod-chip .swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pc);
+}
+
+.pod-chip .chip-name {
+  font-family: var(--mono);
+}
+
+.pod-chip .chip-count {
+  color: var(--muted);
+}
+
+.pod-chip[aria-pressed='false'] {
+  background: none;
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.pod-chip[aria-pressed='false'] .swatch {
+  background: none;
+  border: 1.5px solid var(--pc);
+}
+
+.pod-chip.state-bad {
+  border-color: var(--bad);
+}
+
+.pod-chip .chip-state {
+  color: var(--bad);
+}
+
+.pod-chips .chips-container {
+  margin-left: auto;
+}
+
+.group-row .node-label {
+  min-width: 6ch;
+}
+
+/* Replicas differ only at the end of the name (-0, -1, random suffix): cut the start instead */
+.group-pods .node-label {
+  direction: rtl;
+  text-align: left;
+}

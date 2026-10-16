@@ -7,7 +7,9 @@ import type { LogEntry } from './types'
 
 export type Mark =
   /** kubectl stream dropped; `time` is the last line received before the drop. */
-  | { kind: 'reconnect'; time: number; lostAt: number; backAt?: number }
+  | { kind: 'reconnect'; time: number; lostAt: number; backAt?: number; pod?: string }
+  /** A replica joined or left a tab that reads several pods together. */
+  | { kind: 'pod'; time: number; pod: string; change: 'joined' | 'left' }
   /** Connected, but the container wrote nothing from `from` to `to`. */
   | { kind: 'quiet'; time: number; from: number; to: number }
   /** A previous run of the container ended (`time` = finishedAt). */
@@ -42,11 +44,12 @@ export function quietMarks(entries: readonly LogEntry[]): Mark[] {
 }
 
 /** Opens a reconnect mark when the stream starts reconnecting and closes it when it is live again. */
-export function trackReconnect(marks: readonly Mark[], status: StreamStatus, now: number, lastLineTime: number | undefined): Mark[] {
-  const open = marks.findIndex((m) => m.kind === 'reconnect' && m.backAt === undefined)
+export function trackReconnect(marks: readonly Mark[], status: StreamStatus, now: number, lastLineTime: number | undefined, pod?: string): Mark[] {
+  // With several pods in the tab, each stream has its own mark.
+  const open = marks.findIndex((m) => m.kind === 'reconnect' && m.backAt === undefined && m.pod === pod)
   if (status.state === 'reconnecting') {
     if (open >= 0 || lastLineTime === undefined) return [...marks]
-    return [...marks, { kind: 'reconnect', time: lastLineTime, lostAt: now }]
+    return [...marks, { kind: 'reconnect', time: lastLineTime, lostAt: now, ...(pod && { pod }) }]
   }
   if (status.state === 'live' && open >= 0) {
     return marks.map((m, i) => (i === open ? { ...m, backAt: now } : m))
