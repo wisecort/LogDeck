@@ -42,19 +42,22 @@ export type AssembleEvent =
 export interface AssembleOptions {
   now?: () => number
   startSeq?: number
+  /** Shared sequence for several assemblers feeding one list (one per pod); replaces startSeq. */
+  nextSeq?: () => number
   /** Level for lines no parser recognizes (INFO for OKD build pods, whose RUN output has no format). */
   defaultLevel?: Level
 }
 
 /** Streaming line → entry assembler (parsing, timestamps, multiline). */
 export class LogAssembler {
-  private nextSeq: number
+  private readonly nextSeq: () => number
   private lastSeq: number | undefined
   private readonly now: () => number
   private readonly defaultLevel: Level
 
   constructor(opts: AssembleOptions = {}) {
-    this.nextSeq = opts.startSeq ?? 1
+    let seq = opts.startSeq ?? 1
+    this.nextSeq = opts.nextSeq ?? (() => seq++)
     this.now = opts.now ?? Date.now
     this.defaultLevel = opts.defaultLevel ?? 'UNKNOWN'
   }
@@ -68,7 +71,7 @@ export class LogAssembler {
     }
     const parsed = parseLine(rest)
     const entry: LogEntry = {
-      seq: this.nextSeq++,
+      seq: this.nextSeq(),
       raw: rest,
       message: parsed.message,
       level: parsed.level ?? this.defaultLevel,

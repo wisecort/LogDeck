@@ -34,7 +34,30 @@ export const IPC = {
   setLanguage: 'app:set-language',
   openLink: 'app:open-link',
   checkUpdate: 'app:check-update',
+  kubeconfigGet: 'kubeconfig:get',
+  kubeconfigAdd: 'kubeconfig:add',
+  kubeconfigRemove: 'kubeconfig:remove',
+  kubeconfigUseDefault: 'kubeconfig:use-default',
 } as const
+
+/** A kubeconfig file or a folder of them, picked by the user in a system dialog (F1.6). */
+export interface KubeconfigSource {
+  kind: 'file' | 'folder'
+  path: string
+}
+
+export interface KubeconfigSettings {
+  /** The default kubeconfig (KUBECONFIG or kubectl's default path) stays in the list. */
+  useDefault: boolean
+  sources: KubeconfigSource[]
+}
+
+/** What the contexts dialog shows: paths only, never file contents (G3). */
+export interface KubeconfigView {
+  useDefault: boolean
+  defaults: string[]
+  sources: Array<KubeconfigSource & { files: number; missing: boolean }>
+}
 
 export type IpcResult<T> = { ok: true; value: T } | { ok: false; error: string }
 
@@ -83,6 +106,8 @@ export interface PodInfo {
   details?: ContainerDetail[]
   /** Matched against service selectors (Pod tab → Access). */
   labels?: Record<string, string>
+  /** StatefulSet, Deployment, DeploymentConfig, DaemonSet...: replicas share it and can be read together. */
+  owner?: { kind: string; name: string }
 }
 
 export interface ServiceInfo {

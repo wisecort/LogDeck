@@ -35,7 +35,7 @@
 ## Why LogDeck
 
 - **Look, don't touch.** kubectl only runs with read verbs (`get`, `logs`, `config get-contexts`, `auth can-i`), and your kubeconfig is never changed.
-- **Built to find the problem fast.** Colored levels across many log formats, errors and timeouts grouped with counts, a volume histogram and a side-by-side view of the container that crashed.
+- **Built to find the problem fast.** Colored levels across many log formats, errors and timeouts grouped with counts, a volume histogram, a side-by-side view of the container that crashed, and every replica of a StatefulSet or Deployment merged in one tab.
 - **Built for everyday OKD/OpenShift work.** Build history inside the namespace, readable build logs (steps, push, errors) and build pods kept out of the way.
 - **Good-looking and fast.** 50,000 lines without stutter, 9 themes, 4 languages and keyboard shortcuts for everything.
 
@@ -161,7 +161,7 @@ All files are on the [Releases](https://github.com/wisecort/LogDeck/releases) pa
 
 ## Usage
 
-1. **Pick the context** at the top of the sidebar. It starts on your kubeconfig's current context; **Manage contexts…** lets you rename or hide contexts inside LogDeck only.
+1. **Pick the context** at the top of the sidebar. It starts on your kubeconfig's current context; **Manage contexts…** lets you rename or hide contexts inside LogDeck only, and add kubeconfig files or a folder of them besides the default one.
 2. **Open a namespace** and click a pod (green dot: running; red: in trouble; ↻ = restarts). If the pod has more than one container, pick the container. ⌘-click opens it in a new tab.
 3. **Follow the log live.** Scrolling up or clicking a line pauses the view; **Live** jumps back to the end.
 4. **Filter:** levels (⌥+click shows only one), search (⌘F, `Aa`, `.*`), exclusions and presets, **Time** (tail, since when, `--previous`) and the histogram.
@@ -211,12 +211,12 @@ The full rules are in [`GUARDRAILS.md`](GUARDRAILS.md) and the scope in [`SPEC.m
 | Symptom | What to do |
 |---|---|
 | "kubectl not found" | install kubectl (see [Requirements](#requirements)) and reopen LogDeck |
-| No contexts show up | check `~/.kube/config` or the `KUBECONFIG` variable; on OKD, run `oc login` |
+| No contexts show up | check `~/.kube/config` or the `KUBECONFIG` variable, or add your kubeconfig file or folder in **Manage contexts…**; on OKD, run `oc login` |
 | "The cluster did not answer within 30 s" | VPN off, network issue or expired login for the context (`oc login`, `aws sso login`…); try `kubectl --context <ctx> get namespaces` |
 | Authentication error | the token expired: log in to the cluster again |
 | Namespaces are not listed | you lack permission to list them; type the namespace name and press Enter |
 | Build without a log | the cluster already removed the build pod; open builds while they run or right after |
-| Old lines disappeared | the limit is 50,000 lines; the status bar shows how many were dropped |
+| Old lines disappeared | a live log keeps 50,000 lines by default (10k to 500k in Preferences); the status bar shows how many were dropped. A log file keeps every line, up to 1 GB or 6 million lines |
 | "LogDeck is damaged" (versions up to 1.2.0) | the app is not damaged: the signature was incomplete. Run the `xattr` command from the [installation](#macos-apple-silicon-or-intel) or update |
 
 ## Build from source

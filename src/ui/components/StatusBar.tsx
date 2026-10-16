@@ -12,6 +12,8 @@ interface Props {
   dropped: number
   aiLabel: string
   file?: string
+  /** While a file is being read: fraction of its bytes. */
+  loading?: number
   /** Context as shown to the user (alias when set). */
   contextName?: string
   /** Production context (G5): a red PROD badge next to the location. */
@@ -23,7 +25,8 @@ interface Props {
   uptime?: { ms: number; container: string; restarts: number }
 }
 
-function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string): [string, string] {
+function state(t: Translate, status: StreamStatus | undefined, paused: boolean, file?: string, loading?: number): [string, string] {
+  if (!status && file && loading !== undefined) return [t('st.fileLoading', { pct: Math.floor(loading * 100) }), 'connecting']
   if (!status && file) return [t('st.file'), 'file']
   if (status?.state === 'live' && paused) return [t('st.paused'), 'paused']
   switch (status?.state) {
@@ -44,8 +47,8 @@ function state(t: Translate, status: StreamStatus | undefined, paused: boolean, 
 
 export function StatusBar(p: Props) {
   const { t, n } = useI18n()
-  const [text, cls] = state(t, p.status, p.paused, p.file)
-  const parts = p.file ? [p.file] : [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name ?? p.selection.build?.name, p.selection.container].filter((x): x is string => !!x)
+  const [text, cls] = state(t, p.status, p.paused, p.file, p.loading)
+  const parts = p.file ? [p.file] : [p.contextName ?? p.selection.context, p.selection.namespace, p.selection.pod?.name ?? p.selection.group?.name ?? p.selection.build?.name, p.selection.container].filter((x): x is string => !!x)
   const where = parts.join(' › ')
   return (
     <footer className="statusbar">

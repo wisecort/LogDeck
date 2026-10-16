@@ -94,3 +94,23 @@ describe('LogBuffer', () => {
     expect(b.at(0)).toBe(es[150_000])
   })
 })
+
+describe('LogBuffer without a limit (local files, 1.6.3)', () => {
+  it('keeps every entry, never drops, and clears like the ring', () => {
+    const b = new LogBuffer({ capacity: Infinity })
+    const all = Array.from({ length: MAX_CAPACITY + 10 }, () => entry())
+    b.pushMany(all)
+    expect(b.capacity).toBe(Infinity)
+    expect(b.size).toBe(all.length)
+    expect(b.dropped).toBe(0)
+    expect(b.at(0)).toBe(all[0])
+    expect(b.at(all.length - 1)).toBe(all.at(-1))
+    expect(b.bySeq(all[7]!.seq)).toBe(all[7])
+    expect(b.toArray()).toHaveLength(all.length)
+    expect(sum(b.counts)).toBe(all.length)
+    b.clear()
+    expect(b.size).toBe(0)
+    b.push(all[0]!)
+    expect(b.toArray()).toEqual([all[0]])
+  })
+})

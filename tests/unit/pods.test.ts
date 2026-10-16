@@ -70,6 +70,7 @@ describe('parsePods (F2.2, F2.3)', () => {
       node: 'node-a.example.internal',
       qosClass: 'Burstable',
       labels: { app: 'portal-web', 'pod-template-hash': '7d9f8c6b5' },
+      owner: { kind: 'Deployment', name: 'portal-web' },
     })
   })
 
@@ -128,6 +129,33 @@ describe('parsePods (F2.2, F2.3)', () => {
   it('tolerates pods without status details', () => {
     const [p] = parsePods(list({ metadata: { name: 'bare', namespace: 'ns' } }))
     expect(p).toMatchObject({ name: 'bare', phase: 'Unknown', status: 'Unknown', ready: '0/0', restarts: 0, containers: [] })
+  })
+})
+
+describe('pod owner (replicas opened together)', () => {
+  const owner = (meta: PodJson) => parsePods(list(pod('p-1', { phase: 'Running' }, undefined, meta)))[0]!.owner
+  const ref = (kind: string, name: string, controller = true) => ({ ownerReferences: [{ kind, name, controller }] })
+
+  it('reads the StatefulSet from the fixture', () => {
+    const pods = parsePods(PODS)
+    expect(pods.find((p) => p.name === 'portal-cache-1')!.owner).toEqual({ kind: 'StatefulSet', name: 'portal-cache' })
+    expect(pods.find((p) => p.name.startsWith('portal-migrate'))!.owner).toEqual({ kind: 'Job', name: 'portal-migrate-29341' })
+  })
+
+  it('a ReplicaSet made by a Deployment is shown as the Deployment (pod-template-hash)', () => {
+    expect(owner({ labels: { 'pod-template-hash': '7d9f8c6b5' }, ...ref('ReplicaSet', 'web-7d9f8c6b5') })).toEqual({ kind: 'Deployment', name: 'web' })
+    expect(owner(ref('ReplicaSet', 'web-7d9f8c6b5'))).toEqual({ kind: 'ReplicaSet', name: 'web-7d9f8c6b5' })
+  })
+
+  it('an OKD ReplicationController is shown as its DeploymentConfig', () => {
+    expect(owner({ annotations: { 'openshift.io/deployment-config.name': 'web' }, ...ref('ReplicationController', 'web-3') })).toEqual({ kind: 'DeploymentConfig', name: 'web' })
+  })
+
+  it('uses the controller reference and ignores bad names', () => {
+    expect(owner({ ownerReferences: [{ kind: 'Other', name: 'x' }, { kind: 'DaemonSet', name: 'agent', controller: true }] })).toEqual({ kind: 'DaemonSet', name: 'agent' })
+    expect(owner(ref('StatefulSet', 'Bad;Name'))).toBeUndefined()
+    expect(owner(ref('Stateful Set!', 'ok'))).toBeUndefined()
+    expect(owner({})).toBeUndefined()
   })
 })
 

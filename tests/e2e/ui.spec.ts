@@ -1,5 +1,5 @@
 // End-to-end UI flow with the fake kubectl (SPEC §6) plus the phase 6.5 UI/UX features.
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
@@ -387,7 +387,23 @@ test('opens a saved log file and refuses binary ones', async () => {
   await expect(win.getByTestId('error-group').filter({ hasText: 'Timeout Apache → PHP-FPM' })).toContainText('6×')
 
   await win.getByLabel('Arquivo de log').setInputFiles({ name: 'x.gz', mimeType: 'application/gzip', buffer: Buffer.from([0x1f, 0x8b, 0, 0]) })
-  await expect(win.getByRole('status')).toContainText('não parece texto')
+  const dialog = win.getByRole('alertdialog')
+  await expect(dialog).toContainText('Não parece um arquivo de texto')
+  await expect(dialog).toContainText('x.gz')
+  await dialog.getByRole('button', { name: 'OK' }).click()
+  await expect(dialog).toHaveCount(0)
+})
+
+test('issue #24: an empty log file opens a centered dialog that needs a click (or Esc)', async () => {
+  await win.getByLabel('Arquivo de log').setInputFiles({ name: 'vazio.log', mimeType: 'text/plain', buffer: Buffer.alloc(0) })
+  const dialog = win.getByRole('alertdialog')
+  await expect(dialog).toContainText('O arquivo está vazio')
+  await expect(dialog).toContainText('vazio.log')
+  await expect(dialog.getByRole('button', { name: 'Abrir outro arquivo…' })).toBeFocused()
+  await win.screenshot({ path: 'test-results/ui-file-error.png', animations: 'disabled' })
+  await expect(win.locator('.notice')).toHaveCount(0)
+  await win.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
 })
 
 test('G5: production contexts are flagged PROD in the picker and the status bar (no banner)', async () => {
@@ -486,11 +502,14 @@ test('language: English, Spanish and pt-PT translate the interface and persist',
   await expect(win.getByRole('button', { name: 'Definições', exact: true })).toBeVisible()
 })
 
-test('Preferences: in the default 1280×800 window the About card shows without scrolling', async () => {
+test('Preferences: in a short 620 px window the About card shows without scrolling', async () => {
+  // CI runners have small screens that shrink the default 1280×800 window.
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]!.setContentSize(1280, 620))
   await win.getByRole('button', { name: 'Preferências', exact: true }).click()
   const prefs = win.getByRole('dialog', { name: 'Preferências', exact: true })
   await expect(prefs.getByTestId('about')).toBeInViewport({ ratio: 1 })
   await expect(prefs.getByRole('radio', { name: 'Catppuccin Mocha' })).toBeInViewport({ ratio: 1 })
+  await expect(prefs.getByRole('radio', { name: '500 mil' })).toBeInViewport({ ratio: 1 })
 })
 
 test('6.5: themes, bookmarks and favourite namespaces', async () => {
@@ -529,4 +548,119 @@ test('6.5: themes, bookmarks and favourite namespaces', async () => {
 
   await win.getByRole('button', { name: 'Favoritar portal-hml' }).first().click()
   await expect(navTree(win)).toContainText('Favoritos')
+})
+
+test('a recent pod recreated under a new name offers the pod that replaced it (1.6.3)', async () => {
+  await win.evaluate((ctx) => {
+    const gone = { context: ctx, namespace: 'portal-hml', pod: 'portal-web-7d9f8c6b5-zzzzz', container: 'httpd' }
+    localStorage.setItem('logdeck.recents', JSON.stringify([gone]))
+  }, HML)
+  await win.reload()
+  await win.getByRole('list', { name: 'Recentes' }).getByRole('button', { name: /^portal-web-7d9f8c6b5-zzzzz/ }).click()
+
+  const notice = win.getByTestId('notice')
+  await expect(notice).toHaveClass(/tone-warn/)
+  await expect(notice).toContainText('portal-web-7d9f8c6b5-x2k4p')
+  await notice.getByRole('button', { name: 'Abrir o pod novo' }).click()
+
+  await expect(notice).toHaveCount(0)
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  const recents = win.getByRole('list', { name: 'Recentes' })
+  await expect(recents).toContainText('portal-web-7d9f8c6b5-x2k4p')
+  await expect(recents).not.toContainText('portal-web-7d9f8c6b5-zzzzz')
+})
+
+test('RNF2: the live log line limit is chosen in Preferences and kept', async () => {
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  const limit = win.getByRole('radiogroup', { name: 'Linhas guardadas por log ao vivo' })
+  await expect(limit.getByRole('radio', { name: '50 mil', exact: true })).toHaveAttribute('aria-checked', 'true')
+  await limit.getByRole('radio', { name: '250 mil', exact: true }).click()
+  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByRole('button', { name: 'Fechar' }).click()
+
+  await win.reload()
+  await win.getByRole('button', { name: 'Preferências', exact: true }).click()
+  await expect(limit.getByRole('radio', { name: '250 mil', exact: true })).toHaveAttribute('aria-checked', 'true')
+  await win.getByRole('dialog', { name: 'Preferências', exact: true }).getByRole('button', { name: 'Fechar' }).click()
+
+  await openWebPod(win)
+  await expect(win.getByTestId('match-count')).toContainText('/ 465')
+  expect(await win.evaluate(() => localStorage.getItem('logdeck.bufferLines'))).toBe('250000')
+})
+
+test('a local file keeps every line, past the live log limit (1.6.3)', async () => {
+  const lines = Array.from({ length: 60_000 }, (_, i) => `2026-10-09T03:24:00.000000Z [INFO] linha ${i + 1}`).join('\n')
+  await win.getByLabel('Arquivo de log').setInputFiles({ name: 'grande.log', mimeType: 'text/plain', buffer: Buffer.from(lines) })
+  await expect(win.getByTestId('stream-status')).toHaveText('Arquivo')
+  await expect(win.getByTestId('match-count')).toContainText('60.000 / 60.000')
+  await expect(win.getByText('linhas antigas descartadas')).toHaveCount(0)
+  await win.getByLabel('Buscar').fill('linha 1')
+  await expect(win.getByTestId('log-row').first()).toContainText('linha 1')
+})
+
+test('replicas: all pods of a StatefulSet in one tab, merged by time, each line tagged with its pod', async () => {
+  const nav = navTree(win)
+  await nav.getByRole('button', { name: 'portal-hml', exact: true }).click()
+  await nav.getByRole('button', { name: /logs dos 2 pods de portal-cache/ }).click()
+
+  const tabList = win.getByRole('tablist', { name: 'Abas' })
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('portal-cache (2 pods)')
+  await expect(win.getByTestId('stream-status')).toContainText('Conectado')
+  // one kubectl per pod: 465 lines each
+  await expect(win.getByTestId('match-count')).toContainText('/ 930')
+  const chips = win.getByTestId('pod-chips').getByRole('button')
+  await expect(chips).toHaveCount(2)
+  await expect(win.getByTestId('pod-tag').filter({ hasText: 'portal-cache-0' }).first()).toBeVisible()
+  await expect(win.getByTestId('pod-tag').filter({ hasText: 'portal-cache-1' }).first()).toBeVisible()
+  // the Pod tab, the terminal and --previous are for one pod: not offered here
+  await expect(win.getByRole('button', { name: 'Abrir terminal' })).toBeDisabled()
+  await expect(win.getByRole('button', { name: 'Comparar com o anterior' })).toBeDisabled()
+  await win.screenshot({ path: 'test-results/ui-replicas.png' })
+
+  // turning a pod off hides its lines
+  await chips.filter({ hasText: 'portal-cache-0' }).click()
+  await expect(chips.filter({ hasText: 'portal-cache-0' })).toHaveAttribute('aria-pressed', 'false')
+  for (const text of await win.getByTestId('pod-tag').allInnerTexts()) expect(text).toBe('portal-cache-1')
+
+  // the pod name on a line opens that pod in its own tab
+  await win.getByTestId('pod-tag').first().click()
+  await expect(tabList.getByRole('tab', { selected: true })).toContainText('portal-cache-1 / cache')
+
+  // the group is one entry in Recentes and reopens as a group
+  const recents = nav.getByRole('list', { name: 'Recentes' })
+  await expect(recents.getByRole('button', { name: /^portal-cache portal-hml$/ })).toHaveCount(1)
+  await win.getByRole('button', { name: 'Início', exact: true }).click()
+  await recents.getByRole('button', { name: /^portal-cache portal-hml$/ }).click()
+  await expect(win.getByTestId('pod-chips').getByRole('button')).toHaveCount(2)
+})
+
+test('F1.6: a folder of kubeconfig files adds its contexts; LogDeck keeps the path, kubectl reads the files', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'logdeck-kubeconfigs-'))
+  // contents are irrelevant: only kubectl (here the fake) would read them
+  writeFileSync(join(dir, 'extra-team-b.yaml'), 'apiVersion: v1\n')
+  writeFileSync(join(dir, 'README.md'), 'not a kubeconfig\n')
+  await app.evaluate(({ dialog }, picked) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [picked] })) as typeof dialog.showOpenDialog
+  }, dir)
+
+  await win.getByLabel('Contexto', { exact: true }).selectOption({ label: 'Gerenciar contextos…' })
+  const modal = win.getByRole('dialog', { name: 'Gerenciar contextos' })
+  await expect(modal.getByTestId('ctx-row')).toHaveCount(3)
+  await expect(modal.getByLabel('Usar o kubeconfig padrão')).toBeDisabled()
+
+  await modal.getByRole('button', { name: 'Adicionar pasta…' }).click()
+  const source = modal.getByTestId('kubeconfig-source')
+  await expect(source).toContainText('1 arquivo')
+  await expect(modal.getByTestId('ctx-row')).toHaveCount(4)
+  await expect(modal.getByLabel('Nome no LogDeck para team-b')).toBeVisible()
+  await expect(modal.getByLabel('Usar o kubeconfig padrão')).toBeEnabled()
+  await win.screenshot({ path: 'test-results/ui-kubeconfigs.png' })
+
+  // kept after a restart of the window
+  await win.reload()
+  await win.getByLabel('Contexto', { exact: true }).selectOption({ label: 'Gerenciar contextos…' })
+  await expect(modal.getByTestId('kubeconfig-source')).toHaveCount(1)
+
+  await modal.getByRole('button', { name: /^Tirar .* da lista$/ }).click()
+  await expect(modal.getByTestId('kubeconfig-source')).toHaveCount(0)
+  await expect(modal.getByTestId('ctx-row')).toHaveCount(3)
 })

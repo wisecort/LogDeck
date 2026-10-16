@@ -72,7 +72,8 @@ export function updateTab(s: TabsState, id: string, patch: Partial<Omit<Tab, 'id
 /** Undefined for an empty tab: it shows the home screen and stays out of the tab bar. */
 export function tabLabel(tab: Tab): string | undefined {
   if (tab.file) return tab.file
-  const { pod, container, build } = tab.selection
+  const { pod, container, build, group } = tab.selection
+  if (group) return `${group.name} (${group.pods.length} pods)`
   if (!pod) return build?.name
 
   return container ? `${pod.name} / ${container}` : pod.name

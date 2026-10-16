@@ -12,7 +12,8 @@ export interface Row {
 }
 
 function key(entry: LogEntry): string {
-  const base = `${entry.level}\u0000${stripTimestamps(entry.raw)}`
+  // The same line from two replicas stays two rows: each says which pod wrote it.
+  const base = `${entry.pod ?? ''}\u0000${entry.level}\u0000${stripTimestamps(entry.raw)}`
   return entry.continuation.length === 0 ? base : `${base}\u0000${entry.continuation.join('\n')}`
 }
 

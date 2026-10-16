@@ -14,6 +14,9 @@ import { LogList, type ScrollCommand } from './components/LogList'
 import { aiLabel, RightPanel, type AiContextMode, type PanelTab } from './components/RightPanel'
 import { ShellPanel, type ShellTarget } from './components/ShellPanel'
 import { ShortcutsModal } from './components/ShortcutsModal'
+import { NoticeBar } from './components/NoticeBar'
+import { noticeFromError, type Notice } from './notice'
+import { FileErrorModal } from './components/FileErrorModal'
 import { Sidebar, type Selection } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TopBar, type LogOptions, type SearchState } from './components/TopBar'
@@ -22,7 +25,7 @@ import { parseTerms } from './format'
 import { browserRegexRunner } from './regex-runner'
 import { isMacUserAgent } from '../platform/keys'
 import { I18nProvider, loadLanguage, saveLanguage, translator, type Lang } from './i18n'
-import { LogFileError, MAX_LOG_FILE_BYTES } from '../logs/file'
+import { isLargeLogFile, LogFileError, MAX_LOG_FILE_BYTES, type LogFileProblem } from '../logs/file'
 import { PreferencesModal } from './components/PreferencesModal'
 import { applyTheme, loadTheme, type ThemeId } from './theme'
 import { useLogTabs } from './useLogTabs'
@@ -33,11 +36,14 @@ import { MAX_TABS } from './tabs'
 import { nsKey, runsKey, useNavigation } from './useNavigation'
 import { containerDetail, uptime } from './pod-status'
 import { eventMarks, placeMarks, quietMarks, restartMarks } from '../logs/marks'
-import { DEFAULT_CAPACITY } from '../logs/buffer'
 import { displayLabel } from './context-view'
 import { groupTitle } from './group-title'
-import { loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
+import { loadBufferLines, saveBufferLines } from './buffer-pref'
+import { findReplacement, loadRecents, pushRecent, recentKey, saveRecents, type RecentPod } from './recents'
 import { useUpdateCheck } from './useUpdateCheck'
+import { PodChips } from './components/PodChips'
+import { groupMembers, sharedContainer, type Workload } from './workloads'
+import type { PodGroup } from './view-types'
 import { UpdateModal } from './components/UpdateModal'
 
 const POD_REFRESH_MS = 5000
@@ -56,8 +62,8 @@ const NOOP = () => {}
 const EMPTY_SEARCH: SearchState = { text: '', regex: false, caseSensitive: false, exclude: '' }
 
 export function App() {
-  const [notice, setNotice] = useState<string>()
-  const onError = useCallback((m: string) => setNotice(m), [])
+  const [notice, setNotice] = useState<Notice>()
+  const onError = useCallback((m: string) => setNotice(noticeFromError(m)), [])
   const nav = useNavigation(onError)
   const [now, setNow] = useState(() => Date.now())
   const [levels, setLevels] = useState<ReadonlySet<Level>>(new Set(LEVELS))
@@ -76,12 +82,17 @@ export function App() {
   const [cursor, setCursor] = useState<number>()
   const [selectedSeq, setSelectedSeq] = useState<number>()
   const [bookmarks, setBookmarks] = useState<ReadonlySet<number>>(new Set())
+  // Group tab: pods turned off, and a color per pod that stays while the tab lives (tab id → pod → slot).
+  const [hiddenPods, setHiddenPods] = useState<ReadonlySet<string>>(new Set())
+  const podColors = useRef(new Map<string, Map<string, number>>())
   const [command, setCommand] = useState<{ cmd: ScrollCommand; nonce: number }>()
   const [tab, setTab] = useState<PanelTab>('erros')
   const [aiMode, setAiMode] = useState<AiContextMode>('grupos')
   const [aiStatus, setAiStatus] = useState<AiStatus>()
   const [aiPrefs, setAiPrefs] = useState(false)
   const [shortcuts, setShortcuts] = useState(false)
+  const [bufferLines, setBufferLines] = useState(loadBufferLines)
+  const [fileError, setFileError] = useState<{ problem: LogFileProblem | 'large'; file: File }>()
   const [shell, setShell] = useState<ShellTarget>()
   const [theme, setTheme] = useState<ThemeId>(loadTheme)
   const [lang, setLang] = useState<Lang>(loadLanguage)
@@ -118,16 +129,16 @@ export function App() {
     if (!v.installed) {
       // A missing kubectl gets the install card on the welcome screen instead of a notice.
       if (v.missing && v.installHint) return setKubectlMissing(v.installHint)
-      return setNotice(v.message)
+      return setNotice(noticeFromError(v.message ?? ''))
     }
     setKubectlMissing(undefined)
     if (v.version) setKubectlVersion(v.version)
     try {
       const list = await window.logdeck.listContexts()
       nav.showContexts(list)
-      if (list.length === 0) setNotice(t('app.noContexts'))
+      if (list.length === 0) setNotice({ kind: 'noContexts', text: t('app.noContexts') })
     } catch (err) {
-      setNotice((err as Error).message)
+      setNotice(noticeFromError((err as Error).message))
     }
   }
 
@@ -196,6 +207,18 @@ export function App() {
     return () => clearInterval(timer)
   }, [selection.context, selection.namespace]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Group tab: pods of the workload come and go (scale, rollout, recreated replica); follow them.
+  useEffect(() => {
+    const { context, namespace, group, container } = selection
+    if (!context || !namespace || !group || !container) return
+    const list = nav.pods[nsKey(context, namespace)]
+    if (!list) return
+    const next = groupMembers(list, group).pods.filter((p) => p.containers.includes(container)).map((p) => p.name)
+    if (next.length === 0 || (next.length === group.pods.length && next.every((name, i) => name === group.pods[i]))) return
+    setSelection({ ...selection, group: { ...group, pods: next } })
+    void session.syncGroup({ context, namespace, container, tail: options.tail, ...(options.since && { since: options.since }) }, next)
+  }, [nav.pods]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const resetView = () => {
     setFrozen(undefined)
     setGroupKey(undefined)
@@ -204,6 +227,7 @@ export function App() {
     setBookmarks(new Set())
     setTimeRange(undefined)
     setCursor(undefined)
+    setHiddenPods(new Set())
   }
 
   /** Tab switches restart the view state (selection, bookmarks, pause, group/time filters); presets follow the tab. */
@@ -237,7 +261,7 @@ export function App() {
     let tabId: string | undefined
     if (inNewTab) {
       tabId = session.newTab()
-      if (!tabId) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+      if (!tabId) return setNotice({ kind: 'tabsLimit', text: t('tabs.limit', { n: MAX_TABS }) })
     }
     setShell(undefined)
     if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
@@ -256,6 +280,40 @@ export function App() {
     }
   }
 
+  const openGroupLogs = (context: string, namespace: string, group: PodGroup, container: string, o: LogOptions, tabId?: string) => {
+    resetView()
+    void session.stopCompare(tabId)
+    podColors.current.delete(tabId ?? session.activeTab.id)
+    setRecents((prev) => {
+      const next = pushRecent(prev, { context, namespace, pod: group.name, container, group: group.kind })
+      saveRecents(next)
+      return next
+    })
+    void session.startGroup({ context, namespace, container, tail: o.tail, ...(o.since && { since: o.since }) }, group.pods, tabId)
+  }
+
+  /** Every replica of a workload in one tab: one kubectl stream per pod (at most MAX_GROUP_PODS). */
+  const selectGroup = async (context: string, namespace: string, w: Workload, inNewTab = false, preferred?: string) => {
+    const pods = nav.pods[nsKey(context, namespace)] ?? (await nav.loadPods(context, namespace)) ?? []
+    const { pods: members, total } = groupMembers(pods, w)
+    if (members.length === 0) return setNotice({ kind: 'group', text: t('group.none', { name: w.name }) })
+    const container = sharedContainer(members, preferred)
+    if (!container) return setNotice({ kind: 'group', text: t('group.noContainer', { name: w.name }) })
+    let tabId: string | undefined
+    if (inNewTab) {
+      tabId = session.newTab()
+      if (!tabId) return setNotice({ kind: 'tabsLimit', text: t('tabs.limit', { n: MAX_TABS }) })
+    }
+    setShell(undefined)
+    if (selection.context !== context || selection.namespace !== namespace) setPresets(await window.logdeck.getPresets(presetKey(context, namespace)))
+    const group: PodGroup = { kind: w.kind, name: w.name, pods: members.map((p) => p.name) }
+    const opts = { ...options, previous: false }
+    setOptions(opts, tabId)
+    setSelection({ context, namespace, group, container }, tabId)
+    openGroupLogs(context, namespace, group, container, opts, tabId)
+    if (total > members.length) setNotice({ kind: 'group', text: t('group.limit', { name: w.name, total, n: members.length }) })
+  }
+
   /** A build whose pod is gone: stop this tab's log and show the build details. */
   const openBuild = async (context: string, namespace: string, build: BuildInfo) => {
     setShell(undefined)
@@ -264,32 +322,61 @@ export function App() {
     setSelection({ context, namespace, build })
   }
 
+  const forgetRecent = (r: RecentPod) =>
+    setRecents((prev) => {
+      const next = prev.filter((x) => recentKey(x) !== recentKey(r))
+      saveRecents(next)
+      return next
+    })
+
   /** Reopens a recent pod; pods recreated by a deployment get a new name, so it may be gone. */
   const openRecent = async (r: RecentPod) => {
     await nav.openNamespace(r.context, r.namespace, true)
-    const pod = (await nav.loadPods(r.context, r.namespace))?.find((p) => p.name === r.pod)
-    if (!pod) return setNotice(t('recent.gone', { pod: r.pod }))
+    if (r.group) return selectGroup(r.context, r.namespace, { kind: r.group, name: r.pod }, false, r.container)
+    const pods = await nav.loadPods(r.context, r.namespace)
+    const pod = pods?.find((p) => p.name === r.pod)
+    if (!pod) {
+      const next = pods && findReplacement(r.pod, r.container, pods)
+      if (!next) return setNotice({ kind: 'recentGone', text: t('recent.gone', { pod: r.pod }) })
+      return setNotice({
+        kind: 'recentGone',
+        text: t('recent.replaced', { pod: r.pod, next: next.name }),
+        action: {
+          label: t('recent.openReplacement'),
+          run: () => {
+            setNotice(undefined)
+            forgetRecent(r)
+            void selectPod(r.context, r.namespace, next, r.container)
+          },
+        },
+      })
+    }
     await selectPod(r.context, r.namespace, pod, r.container)
   }
 
   const selectContainer = (c: string) => {
-    const { context, namespace, pod } = selection
+    const { context, namespace, pod, group } = selection
+    if (context && namespace && group) {
+      setSelection({ ...selection, container: c })
+      return openGroupLogs(context, namespace, group, c, options)
+    }
     if (!context || !namespace || !pod) return
     setSelection({ ...selection, container: c })
     openLogs(context, namespace, pod, c, options)
   }
 
-  const openFile = async (f: File) => {
+  const openFile = async (f: File, confirmed = false) => {
+    // Above 1 GiB the file takes a lot of memory and a few seconds: ask first.
+    if (!confirmed && isLargeLogFile(f.size) && f.size <= MAX_LOG_FILE_BYTES) return setFileError({ problem: 'large', file: f })
     setShell(undefined)
     resetView()
     try {
-      await session.openFile(f)
+      const { truncated } = await session.openFile(f)
+      if (truncated) setNotice({ kind: 'fileTruncated', text: t('file.truncated', { n: truncated.lines.toLocaleString(lang), pct: Math.floor(truncated.fraction * 100) }) })
     } catch (err) {
-      setNotice(
-        err instanceof LogFileError
-          ? t(`file.${err.problem}`, { name: err.fileName, mb: MAX_LOG_FILE_BYTES / 1024 / 1024 })
-          : (err as Error).message,
-      )
+      // The user just picked this file: the reason gets a dialog, not the thin notice on top (issue #24).
+      if (err instanceof LogFileError) setFileError({ problem: err.problem, file: f })
+      else setNotice(noticeFromError((err as Error).message))
     }
   }
 
@@ -310,7 +397,8 @@ export function App() {
   })
 
   const reopen = (o: LogOptions = options) => {
-    const { context, namespace, pod, container } = selection
+    const { context, namespace, pod, container, group } = selection
+    if (context && namespace && group && container) return openGroupLogs(context, namespace, group, container, o)
     if (context && namespace && pod && container) openLogs(context, namespace, pod, container, o)
   }
 
@@ -354,14 +442,16 @@ export function App() {
     return g ? new Set(g.seqs) : undefined
   }, [groups, groupKey])
 
-  const viewVersion = frozen ?? version
+  // Pausing freezes a live log's lines; a file never changes once read, and while it is being read a pause
+  // (scrolling up to start reading) must not keep the view stuck on the first batch.
+  const viewVersion = session.file ? version : (frozen ?? version)
   const effectiveRegex = useMemo(() => (regexActive ? (regexMatches ?? new Set<number>()) : undefined), [regexActive, regexMatches])
   const baseFilter = useMemo(
-    () => ({ levels, ...(compiled && { search: compiled }), ...(effectiveRegex && { regexMatches: effectiveRegex }), ...(groupSeqs && { groupSeqs }) }),
-    [levels, compiled, effectiveRegex, groupSeqs],
+    () => ({ levels, ...(compiled && { search: compiled }), ...(effectiveRegex && { regexMatches: effectiveRegex }), ...(groupSeqs && { groupSeqs }), ...(hiddenPods.size > 0 && { hiddenPods }) }),
+    [levels, compiled, effectiveRegex, groupSeqs, hiddenPods],
   )
   const histogramEntries = useMemo(
-    () => (showVolume ? engine.view({ ...baseFilter, collapse: false }).map((r) => r.entry) : []),
+    () => (showVolume ? engine.viewEntries(baseFilter) : []),
     [engine, viewVersion, baseFilter, showVolume], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const rows = useMemo(
@@ -381,10 +471,9 @@ export function App() {
     if (session.activeTab.compare) return void session.stopCompare()
     if (context && namespace && pod && container) void session.startCompare({ context, namespace, pod: pod.name, container, tail: options.tail })
   }
-  const entriesBySeq = useMemo(() => new Map(engine.entries().map((e) => [e.seq, e])), [engine, version]) // eslint-disable-line react-hooks/exhaustive-deps
-  const selectedEntry = selectedSeq !== undefined ? entriesBySeq.get(selectedSeq) : undefined
+  const selectedEntry = selectedSeq !== undefined ? engine.bySeq(selectedSeq) : undefined
   const bookmarkedEntries = [...bookmarks].flatMap((s) => {
-    const e = entriesBySeq.get(s)
+    const e = engine.bySeq(s)
     return e ? [e] : []
   })
 
@@ -459,7 +548,7 @@ export function App() {
       .view({ ...baseFilter, ...(timeRange && { timeRange }), collapse: false })
       .map((r) => entryText(r.entry))
       .join('\n')
-    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? session.file?.replace(/\.[^.]+$/, '') ?? 'log'}.log`)
+    void window.logdeck.saveText(text, `logdeck-${selection.pod?.name ?? selection.group?.name ?? session.file?.replace(/\.[^.]+$/, '') ?? 'log'}.log`)
   }
 
   const buildContext = (mode: AiContextMode): ExplainGroupInput[] => {
@@ -471,7 +560,7 @@ export function App() {
         title: groupTitle(t, g),
         count: g.count,
         lines: g.seqs.flatMap((seq) => {
-          const e = entriesBySeq.get(seq)
+          const e = engine.bySeq(seq)
           return e ? [entryText(e)] : []
         }),
       }))
@@ -496,6 +585,7 @@ export function App() {
         setSelectedSeq(undefined)
         setShortcuts(false)
         setUpdateOpen(false)
+        setFileError(undefined)
       } else if (e.key === '?' && !typing) {
         setShortcuts(true)
       }
@@ -506,19 +596,25 @@ export function App() {
 
   // Empty tab: welcome screen instead of the log views, and no right panel.
   const showingBuild = !!selection.build && !selection.pod
-  const isEmptyTab = !selection.pod && !session.file && !showingBuild
+  const isEmptyTab = !selection.pod && !selection.group && !session.file && !showingBuild
+  // Colors follow the order pods first appear in the tab, so a pod keeps its color when others join or leave.
+  const colorOf = (pod: string): number | undefined => {
+    let colors = podColors.current.get(session.activeTab.id)
+    if (!colors) podColors.current.set(session.activeTab.id, (colors = new Map()))
+    if (!colors.has(pod)) colors.set(pod, colors.size % 8)
+    return colors.get(pod)
+  }
+  const groupContainers = useMemo(() => {
+    const { context, namespace, group } = selection
+    if (!context || !namespace || !group) return []
+    const pods = (nav.pods[nsKey(context, namespace)] ?? []).filter((p) => group.pods.includes(p.name))
+    return pods[0]?.containers.filter((c) => pods.every((p) => p.containers.includes(c))) ?? []
+  }, [nav.pods, selection])
   const live = status?.state === 'live' || status?.state === 'reconnecting'
   return (
     <I18nProvider lang={lang}>
     <div className="app">
-      {notice && (
-        <div className="notice" role="status">
-          <span className="spacer">{notice}</span>
-          <button className="link" onClick={() => setNotice(undefined)}>
-            ×
-          </button>
-        </div>
-      )}
+      {notice && <NoticeBar key={notice.text} notice={notice} onClose={() => setNotice(undefined)} />}
       <input
         ref={fileRef}
         type="file"
@@ -536,6 +632,7 @@ export function App() {
           nav={nav}
           selection={selection}
           onPod={(c, n, p, inNewTab) => void selectPod(c, n, p, undefined, inNewTab)}
+          onGroup={(c, n, g, inNewTab) => void selectGroup(c, n, g, inNewTab)}
           onBuild={(c, n, b) => void openBuild(c, n, b)}
           onContainer={selectContainer}
           bookmarks={bookmarkedEntries}
@@ -549,13 +646,7 @@ export function App() {
           onPreferences={() => setPrefs(true)}
           recents={recents}
           onRecent={(r) => void openRecent(r)}
-          onForgetRecent={(r) =>
-            setRecents((prev) => {
-              const next = prev.filter((x) => recentKey(x) !== recentKey(r))
-              saveRecents(next)
-              return next
-            })
-          }
+          onForgetRecent={forgetRecent}
           onAiPreferences={() => setAiPrefs(true)}
           onShortcuts={() => setShortcuts(true)}
           onOpenFile={() => fileRef.current?.click()}
@@ -575,7 +666,7 @@ export function App() {
             }}
             homeActive={isEmptyTab}
             onHome={() => {
-              if (!session.openHome()) return setNotice(t('tabs.limit', { n: MAX_TABS }))
+              if (!session.openHome()) return setNotice({ kind: 'tabsLimit', text: t('tabs.limit', { n: MAX_TABS }) })
               afterTabChange()
             }}
           />
@@ -648,6 +739,25 @@ export function App() {
               if (context && namespace && pod && container) setShell({ context, namespace, pod: pod.name, container })
             }}
           />
+          {session.members && (
+            <PodChips
+              members={session.members}
+              hidden={hiddenPods}
+              colorOf={colorOf}
+              onToggle={(pod, solo) =>
+                setHiddenPods((prev) => {
+                  if (solo) return new Set(session.members!.map((m) => m.pod).filter((x) => x !== pod))
+                  const next = new Set(prev)
+                  if (next.has(pod)) next.delete(pod)
+                  else next.add(pod)
+                  return next
+                })
+              }
+              containers={groupContainers}
+              {...(selection.container && { container: selection.container })}
+              onContainer={selectContainer}
+            />
+          )}
           {showVolume && <VolumeChart entries={histogramEntries} marks={allMarks} {...(timeRange && { range: timeRange })} onRange={setTimeRange} onClose={() => setShowVolume(false)} />}
           {(() => {
             const main = (
@@ -665,12 +775,21 @@ export function App() {
                 onUserScrollUp={pause}
                 onResume={resume}
                 marks={placedMarks}
-                dropped={{ n: engine.dropped, capacity: DEFAULT_CAPACITY }}
+                dropped={{ n: engine.dropped, capacity: engine.capacity }}
                 live={!session.file}
                 {...(canCompare && !session.activeTab.compare && { onPrevious: toggleCompare })}
                 {...(hidden && { hidden })}
                 onPresetsOff={() => presets && void savePresets({ ...presets, active: [] })}
                 onClearFilters={clearFilters}
+                {...(selection.group && {
+                  podColor: colorOf,
+                  onOpenPod: (name: string) => {
+                    const { context, namespace } = selection
+                    const pod = context && namespace ? nav.pods[nsKey(context, namespace)]?.find((x) => x.name === name) : undefined
+                    if (context && namespace && pod) void selectPod(context, namespace, pod, selection.container, true)
+                    else setNotice({ kind: 'recentGone', text: t('recent.gone', { pod: name }) })
+                  },
+                })}
               />
             )
             if (!companion) return main
@@ -748,7 +867,7 @@ export function App() {
         />
         )}
       </div>
-      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} {...(upMs !== undefined && liveContainer && { uptime: { ms: upMs, container: liveContainer.name, restarts: liveContainer.restarts } })} />
+      <StatusBar {...(status && { status })} paused={paused} selection={selection} shown={rows.length} total={engine.size} dropped={engine.dropped} aiLabel={aiLabel(t, aiStatus)} {...(session.file && { file: session.file })} {...(session.loading !== undefined && { loading: session.loading })} {...(contextShown && { contextName: contextShown })} production={!!selectedContext?.production && !session.file} {...(updates.available && { update: updates.available })} onUpdate={() => setUpdateOpen(true)} {...(upMs !== undefined && liveContainer && { uptime: { ms: upMs, container: liveContainer.name, restarts: liveContainer.restarts } })} />
       {aiPrefs && (
         <AiPreferences
           onClose={() => {
@@ -758,7 +877,39 @@ export function App() {
         />
       )}
       {shortcuts && <ShortcutsModal onClose={() => setShortcuts(false)} />}
-      {prefs && <PreferencesModal theme={theme} onTheme={setTheme} lang={lang} onLang={setLang} updates={updates.consent === 'on'} onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')} onClose={() => setPrefs(false)} />}
+      {fileError && (
+        <FileErrorModal
+          problem={fileError.problem}
+          fileName={fileError.file.name}
+          size={fileError.file.size}
+          max={MAX_LOG_FILE_BYTES}
+          onConfirm={() => {
+            setFileError(undefined)
+            void openFile(fileError.file, true)
+          }}
+          onClose={() => setFileError(undefined)}
+          onOpenOther={() => {
+            setFileError(undefined)
+            fileRef.current?.click()
+          }}
+        />
+      )}
+      {prefs && (
+        <PreferencesModal
+          theme={theme}
+          onTheme={setTheme}
+          lang={lang}
+          onLang={setLang}
+          updates={updates.consent === 'on'}
+          onUpdates={(on) => updates.setConsent(on ? 'on' : 'off')}
+          bufferLines={bufferLines}
+          onBufferLines={(n) => {
+            setBufferLines(n)
+            saveBufferLines(n)
+          }}
+          onClose={() => setPrefs(false)}
+        />
+      )}
       {updateOpen && updates.available && (
         <UpdateModal
           version={updates.available}

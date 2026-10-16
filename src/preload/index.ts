@@ -50,6 +50,10 @@ const api: LogDeckApi = {
   setLanguage: (lang) => invoke(IPC.setLanguage, lang),
   openLink: (id) => invoke(IPC.openLink, id),
   checkUpdate: () => invoke(IPC.checkUpdate),
+  getKubeconfigs: () => invoke(IPC.kubeconfigGet),
+  addKubeconfig: (kind) => invoke(IPC.kubeconfigAdd, kind),
+  removeKubeconfig: (index) => invoke(IPC.kubeconfigRemove, index),
+  useDefaultKubeconfig: (on) => invoke(IPC.kubeconfigUseDefault, on),
 }
 
 contextBridge.exposeInMainWorld('logdeck', api)

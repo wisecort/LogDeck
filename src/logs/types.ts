@@ -35,4 +35,6 @@ export interface LogEntry {
   /** Stack-trace lines glued to this entry. */
   continuation: string[]
   fields?: Record<string, unknown>
+  /** Pod the line came from, in a tab that reads several replicas together. */
+  pod?: string
 }

@@ -12,6 +12,8 @@ import { buildMenu, disableSystemMenuItems } from './menu'
 import { messagesLanguage, setMessagesLanguage } from '../k8s/messages'
 import { AiSettingsStore } from './ai-settings-store'
 import { PresetStore } from './presets-store'
+import { KubeconfigStore } from './kubeconfig-store'
+import { applyKubeconfig } from '../k8s/kubeconfig'
 import { checkLatestRelease } from './update-check'
 import { UPDATE_INTERVAL_MS, type UpdateInfo } from '../shared/update'
 
@@ -94,6 +96,9 @@ void app.whenReady().then(() => {
     })
   }
   const presets = new PresetStore(join(app.getPath('userData'), 'presets.json'))
+  // Extra kubeconfigs apply before the first kubectl runs (F1.6).
+  const kubeconfigs = new KubeconfigStore(join(app.getPath('userData'), 'kubeconfigs.json'))
+  applyKubeconfig(kubeconfigs.get())
   const aiSettings = new AiSettingsStore(join(app.getPath('userData'), 'ai.json'))
   // Tests point the Keychain path at a fake `security` so they never read the user's vault.
   const keychain = createSecretStore(app.getPath('userData'), process.env['LOGDECK_SECURITY_BIN'])
@@ -106,7 +111,7 @@ void app.whenReady().then(() => {
     lastUpdate = { at: Date.now(), info }
     return info
   }
-  registerIpc({ service, registry, shells, presets, aiSettings, keychain, explain, checkUpdate, trusted: () => mainWindow?.webContents, onLanguage: (lang) => {
+  registerIpc({ service, registry, shells, presets, kubeconfigs, aiSettings, keychain, explain, checkUpdate, trusted: () => mainWindow?.webContents, onLanguage: (lang) => {
       buildMenu(APP_NAME, lang)
       setMessagesLanguage(lang)
     },

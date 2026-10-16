@@ -25,6 +25,8 @@ import {
 } from '../shared/ipc'
 import type { NamespacePresets } from '../shared/presets'
 import type { PresetStore } from './presets-store'
+import type { KubeconfigStore } from './kubeconfig-store'
+import { applyKubeconfig } from '../k8s/kubeconfig'
 import type { UpdateInfo } from '../shared/update'
 
 export interface IpcDeps {
@@ -32,6 +34,8 @@ export interface IpcDeps {
   registry: StreamRegistry
   shells: ShellRegistry
   presets: PresetStore
+  /** Kubeconfig files/folders added by the user; absent in tests that do not need it. */
+  kubeconfigs?: KubeconfigStore
   aiSettings: AiSettingsStore
   keychain: SecretStore
   explain: ExplainService
@@ -246,4 +250,32 @@ export function registerIpc(deps: IpcDeps): void {
   })
 
   handle(deps, IPC.checkUpdate, async () => (deps.checkUpdate ? deps.checkUpdate() : null))
+
+  // F1.6: extra kubeconfigs. The path always comes from a system dialog shown by main, never from the renderer,
+  // and only reaches kubectl through KUBECONFIG; the file is never read here (G3).
+  const kubeconfigs = deps.kubeconfigs
+  if (kubeconfigs) {
+    const save = (next: Parameters<KubeconfigStore['set']>[0]) => {
+      const saved = kubeconfigs.set(next)
+      return applyKubeconfig(saved)
+    }
+    handle(deps, IPC.kubeconfigGet, async () => applyKubeconfig(kubeconfigs.get()))
+    handle(deps, IPC.kubeconfigAdd, async (_e, kind: unknown) => {
+      if (kind !== 'file' && kind !== 'folder') throw new Error('tipo inválido')
+      const { canceled, filePaths } = await dialog.showOpenDialog({ properties: [kind === 'file' ? 'openFile' : 'openDirectory', 'showHiddenFiles'] })
+      const path = filePaths[0]
+      const current = kubeconfigs.get()
+      if (canceled || !path || current.sources.some((s) => s.kind === kind && s.path === path)) return applyKubeconfig(current)
+      return save({ ...current, sources: [...current.sources, { kind, path }] })
+    })
+    handle(deps, IPC.kubeconfigRemove, async (_e, index: unknown) => {
+      if (!isNumber(index)) throw new Error('índice inválido')
+      const current = kubeconfigs.get()
+      return save({ ...current, sources: current.sources.filter((_, i) => i !== index) })
+    })
+    handle(deps, IPC.kubeconfigUseDefault, async (_e, on: unknown) => {
+      if (!isBoolean(on)) throw new Error('valor inválido')
+      return save({ ...kubeconfigs.get(), useDefault: on })
+    })
+  }
 }

@@ -101,6 +101,11 @@ export const IconCopy = () => (
     <path d="M5 15V5a2 2 0 0 1 2-2h10" />
   </Svg>
 )
+export const IconFolder = () => (
+  <Svg>
+    <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  </Svg>
+)
 export const IconFile = () => (
   <Svg>
     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
@@ -156,6 +161,13 @@ export const IconCube = () => (
   <Svg size={22}>
     <path d="M12 2 3 7v10l9 5 9-5V7z" />
     <path d="M3 7l9 5 9-5M12 12v10" />
+  </Svg>
+)
+/** Replicas of one workload: copies of the same box. */
+export const IconReplicas = () => (
+  <Svg size={14}>
+    <rect x="8" y="8" width="13" height="13" rx="2" />
+    <path d="M4 16V5a1 1 0 0 1 1-1h11" />
   </Svg>
 )
 export const IconHistory = () => (

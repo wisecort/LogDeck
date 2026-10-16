@@ -9,6 +9,7 @@
 //   FAKE_KUBECTL_CAN_I      yes (default) | no
 //   FAKE_KUBECTL_EVENTS     ok (default) | forbidden
 //   FAKE_KUBECTL_ROUTES     ok (default) | missing (plain Kubernetes, no Route API)
+//   KUBECONFIG              each entry named extra-<name>.yaml adds a context <name> to get-contexts
 //
 // Any verb outside the read-only allowlist exits with code 99 so tests catch it.
 
@@ -54,6 +55,13 @@ if (verb === 'version') {
 
 if (verb === 'config' && positional[1] === 'get-contexts') {
   process.stdout.write(readFileSync(join(FIXTURES, 'kubectl/get-contexts.txt')))
+  // Extra kubeconfig files (F1.6): only the names matter, the fake never reads them either.
+  const delimiter = process.platform === 'win32' ? ';' : ':'
+  for (const entry of (env.KUBECONFIG || '').split(delimiter)) {
+    const m = /extra-([a-z0-9-]+)\.yaml$/.exec(entry)
+    // same fixed columns as the fixture header (NAME at 10, CLUSTER at 56, AUTHINFO at 88, NAMESPACE at 129)
+    if (m) process.stdout.write(' '.repeat(10) + m[1].padEnd(46) + `${m[1]}-cluster`.padEnd(32) + `${m[1]}-user`.padEnd(41) + 'default\n')
+  }
   process.exit(0)
 }
 
