@@ -3,6 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { homedir } from 'node:os'
 import { currentPlatform, kubectlInstallHint, resolveExecutable as resolveIn, withExtraPaths, type Platform } from '../platform/paths'
 import { assertReadOnly } from './args'
+import { withKubeconfig } from './kubeconfig'
 import { messagesLanguage, PATTERNS, texts } from './messages'
 
 export interface KubectlOptions {
@@ -29,9 +30,12 @@ const MISSING_PLUGIN = /executable (\S+) not found/i
 
 const DEFAULT_TIMEOUT_MS = 30_000
 
-/** Apps opened from the Finder/Start menu get a minimal PATH; add the usual dirs so kubectl and auth plugins resolve. */
+/**
+ * Apps opened from the Finder/Start menu get a minimal PATH; add the usual dirs so kubectl and auth plugins resolve.
+ * Also the KUBECONFIG list when the user added kubeconfig files or folders (F1.6).
+ */
 export function kubectlEnv(base: NodeJS.ProcessEnv, platform: Platform = currentPlatform()): NodeJS.ProcessEnv {
-  return withExtraPaths(base, platform, base['HOME'] ?? base['USERPROFILE'] ?? homedir())
+  return withKubeconfig(withExtraPaths(base, platform, base['HOME'] ?? base['USERPROFILE'] ?? homedir()))
 }
 
 /** Actionable message for common kubectl failures (F1.5), in the interface language. */

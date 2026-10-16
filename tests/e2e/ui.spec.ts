@@ -1,5 +1,5 @@
 // End-to-end UI flow with the fake kubectl (SPEC §6) plus the phase 6.5 UI/UX features.
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
@@ -628,4 +628,36 @@ test('replicas: all pods of a StatefulSet in one tab, merged by time, each line 
   await win.getByRole('button', { name: 'Início', exact: true }).click()
   await recents.getByRole('button', { name: /^portal-cache portal-hml$/ }).click()
   await expect(win.getByTestId('pod-chips').getByRole('button')).toHaveCount(2)
+})
+
+test('F1.6: a folder of kubeconfig files adds its contexts; LogDeck keeps the path, kubectl reads the files', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'logdeck-kubeconfigs-'))
+  // contents are irrelevant: only kubectl (here the fake) would read them
+  writeFileSync(join(dir, 'extra-team-b.yaml'), 'apiVersion: v1\n')
+  writeFileSync(join(dir, 'README.md'), 'not a kubeconfig\n')
+  await app.evaluate(({ dialog }, picked) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [picked] })) as typeof dialog.showOpenDialog
+  }, dir)
+
+  await win.getByLabel('Contexto', { exact: true }).selectOption({ label: 'Gerenciar contextos…' })
+  const modal = win.getByRole('dialog', { name: 'Gerenciar contextos' })
+  await expect(modal.getByTestId('ctx-row')).toHaveCount(3)
+  await expect(modal.getByLabel('Usar o kubeconfig padrão')).toBeDisabled()
+
+  await modal.getByRole('button', { name: 'Adicionar pasta…' }).click()
+  const source = modal.getByTestId('kubeconfig-source')
+  await expect(source).toContainText('1 arquivo')
+  await expect(modal.getByTestId('ctx-row')).toHaveCount(4)
+  await expect(modal.getByLabel('Nome no LogDeck para team-b')).toBeVisible()
+  await expect(modal.getByLabel('Usar o kubeconfig padrão')).toBeEnabled()
+  await win.screenshot({ path: 'test-results/ui-kubeconfigs.png' })
+
+  // kept after a restart of the window
+  await win.reload()
+  await win.getByLabel('Contexto', { exact: true }).selectOption({ label: 'Gerenciar contextos…' })
+  await expect(modal.getByTestId('kubeconfig-source')).toHaveCount(1)
+
+  await modal.getByRole('button', { name: /^Tirar .* da lista$/ }).click()
+  await expect(modal.getByTestId('kubeconfig-source')).toHaveCount(0)
+  await expect(modal.getByTestId('ctx-row')).toHaveCount(3)
 })

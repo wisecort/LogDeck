@@ -203,4 +203,11 @@ export const ptPT: Record<MessageKey, string> = {
   'group.noContainer': 'Os pods de {name} não têm um contentor em comum; abra um pod de cada vez.',
   'mark.podJoined': 'Pod {pod} entrou no separador',
   'mark.podJoinedHint': 'réplica nova; as linhas dela aparecem a partir daqui',
+  'ctx.files': 'Ficheiros kubeconfig',
+  'ctx.filesHelp': 'Além do kubeconfig predefinido, o kubectl lê os ficheiros e pastas que escolher aqui (variável KUBECONFIG). O LogDeck guarda só os caminhos e nunca lê o conteúdo. De uma pasta entram os ficheiros config, .yaml, .yml, .conf e .kubeconfig.',
+  'ctx.useDefault': 'Usar o kubeconfig predefinido',
+  'ctx.useDefaultHint': 'Só pode ser desligado com outro ficheiro ou pasta na lista.',
+  'ctx.addFile': 'Adicionar ficheiro…',
+  'ctx.folderFiles': '{n} ficheiros',
+  'ctx.folderFilesOne': '1 ficheiro',
 }

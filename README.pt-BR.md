@@ -160,7 +160,7 @@ Todos os arquivos ficam na página de [Releases](https://github.com/wisecort/Log
 
 ## Como usar
 
-1. **Escolha o contexto** no topo da barra lateral. Ele começa no contexto atual do seu kubeconfig; em **Gerenciar contextos…** você renomeia ou oculta contextos só no LogDeck.
+1. **Escolha o contexto** no topo da barra lateral. Ele começa no contexto atual do seu kubeconfig; em **Gerenciar contextos…** você renomeia ou oculta contextos só no LogDeck e adiciona arquivos kubeconfig ou uma pasta com eles, além do padrão.
 2. **Abra um namespace** e clique num pod (bolinha verde: rodando; vermelha: com problema; ↻ = restarts). Se o pod tiver mais de um container, escolha o container. ⌘-clique abre numa aba nova.
 3. **Acompanhe o log ao vivo.** Rolar para cima ou clicar numa linha pausa a tela; **Ao vivo** volta para o fim.
 4. **Filtre:** níveis (⌥+clique mostra só um), busca (⌘F, `Aa`, `.*`), exclusões e presets, **Tempo** (tail, desde quando, `--previous`) e o histograma.
@@ -210,7 +210,7 @@ As regras completas estão em [`GUARDRAILS.md`](GUARDRAILS.md) e o escopo em [`S
 | Sintoma | O que fazer |
 |---|---|
 | "kubectl não encontrado" | instale o kubectl (veja [Requisitos](#requisitos)) e abra o LogDeck de novo |
-| Nenhum contexto aparece | confira o `~/.kube/config` ou a variável `KUBECONFIG`; no OKD, faça `oc login` |
+| Nenhum contexto aparece | confira o `~/.kube/config` ou a variável `KUBECONFIG`, ou adicione o arquivo ou a pasta do seu kubeconfig em **Gerenciar contextos…**; no OKD, faça `oc login` |
 | "O cluster não respondeu em 30 s" | VPN desligada, rede ou login do contexto vencido (`oc login`, `aws sso login`…); teste com `kubectl --context <ctx> get namespaces` |
 | Erro de autenticação | o token expirou: faça login de novo no cluster |
 | Não lista namespaces | falta permissão de listar; digite o nome do namespace e tecle Enter |

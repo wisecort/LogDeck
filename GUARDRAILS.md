@@ -16,7 +16,9 @@ G2. Nunca rodar kubectl via shell string. Sempre spawn com array de argumentos.
     com flags fixas validadas e ferramentas desligadas; /usr/bin/security para o
     Keychain).
 G3. Nunca ler, copiar, logar ou enviar à IA o conteúdo do kubeconfig, tokens ou
-    certificados. Nunca usar `config view --raw`.
+    certificados. Nunca usar `config view --raw`. Kubeconfigs extras (F1.6): o usuário
+    escolhe o arquivo ou a pasta na janela do sistema; o app guarda só o caminho e o
+    passa ao kubectl em KUBECONFIG, sem abrir o arquivo.
 G4. Nunca trocar o contexto global do usuário (`kubectl config use-context` proibido).
     O app usa `--context` em cada chamada.
 G5. Contextos cujo nome contenha `prod`/`prd` são sinalizados com a marca vermelha PROD no seletor
@@ -42,7 +44,7 @@ G10. Plataformas: macOS, Linux e Windows (desde a 1.1.0). Código específico de
 |---|---|---|---|
 | G1 | `args.ts` tem allowlist de verbos e flags; tudo fora dela lança erro antes do spawn. `exec` só existe em `buildShellArgs`, chamado apenas por `src/k8s/shell.ts` | verbos `delete`, `apply`, `patch`, `scale`, `rollout`, `edit`, `cordon`, `drain`, `label`, `annotate`, `create`, `replace`, `set`, `expose`, `taint` como literais em `src/k8s/`; `'exec'` fora de `args.ts`/`shell.ts` | `args.test` |
 | G2 | `kubectl.ts` é o único `spawn`/`pty.spawn` do kubectl, com `shell: false`; nomes validados (abaixo). `src/ai/providers/claude-cli.ts` é o único `spawn` do `claude`, com argv fixo conferido por `assertClaudeArgs` | `shell: true`; `exec(`/`execSync(` com template string ou concatenação; `child_process` importado fora de `src/k8s/` e `src/ai/providers/` | `args.test`, `claude-cli.test`, `guardrails.test` |
-| G3 | `contexts.ts` usa só `config get-contexts` e devolve nome/cluster/namespace; nenhum arquivo do kubeconfig é lido pelo app | `config view --raw`, `--raw`, leitura de `.kube/config`, `client-key-data`, `client-certificate-data`, `certificate-authority-data` em `src/` | `contexts.test` |
+| G3 | `contexts.ts` usa só `config get-contexts` e devolve nome/cluster/namespace; nenhum arquivo do kubeconfig é lido pelo app. Kubeconfigs extras (`src/k8s/kubeconfig.ts`): caminho vindo só da janela do sistema aberta pelo main, checagem de existência e nomes da pasta, nunca conteúdo; o caminho padrão fica isolado em `src/platform/kubeconfig-path.ts` (exceção listada em `scripts/guardrails.allow`) | `config view --raw`, `--raw`, leitura de `.kube/config`, `client-key-data`, `client-certificate-data`, `certificate-authority-data` em `src/` | `contexts.test` |
 | G4 | todo comando recebe `--context=<nome>` montado por `args.ts` | `use-context`, `set-context`, `config set` | `args.test` + kubectl fake registra argv |
 | G5 | `isProductionContext(name)` → marca PROD no seletor e na barra de status | — | unit + E2E |
 | G6 | `explain` só via IPC disparado pelo botão "Enviar" do modal de preview; payload passa por `redact.ts` no main (não confia no renderer); o modal mostra o destino; HTTPS obrigatório fora de localhost; chave só no main via `safeStorage`. Aviso de versão: sem consentimento não há chamada; URL fixa, `redirect: 'error'`, sem credenciais, resposta tratada como dado (só tag `vX.Y.Z`; o link aberto é montado pelo app); main limita a um GET por dia | `fetch(`/`http`/`https` e `@anthropic-ai/sdk` fora de `src/ai/providers/` e `src/main/update-check.ts`; `bypassPermissions`, `acceptEdits`, `dangerously` ou `--tools default` em `src/` | `redact.test`, `explain.test`, `update.test`, E2E do modal e do aviso de versão |

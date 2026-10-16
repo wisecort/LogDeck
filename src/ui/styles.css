@@ -3617,3 +3617,70 @@ button.primary:disabled {
   direction: rtl;
   text-align: left;
 }
+
+/* Contexts dialog: kubeconfig files and folders beyond the default one (F1.6) */
+.kubeconfig-files {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.kubeconfig-files h3 {
+  margin: 0;
+  font-size: var(--fs-md);
+}
+
+.kubeconfig-files p {
+  margin: 0;
+}
+
+.kubeconfig-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.kubeconfig-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kubeconfig-list li > svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.kubeconfig-default {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.kubeconfig-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
+.kubeconfig-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kubeconfig-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

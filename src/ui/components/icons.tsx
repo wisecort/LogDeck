@@ -101,6 +101,11 @@ export const IconCopy = () => (
     <path d="M5 15V5a2 2 0 0 1 2-2h10" />
   </Svg>
 )
+export const IconFolder = () => (
+  <Svg>
+    <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+  </Svg>
+)
 export const IconFile = () => (
   <Svg>
     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />

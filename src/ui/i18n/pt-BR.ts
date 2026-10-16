@@ -439,6 +439,17 @@ export const ptBR = {
   'mark.podLeft': 'Pod {pod} saiu',
   'mark.podJoinedHint': 'réplica nova; as linhas dela aparecem daqui em diante',
   'mark.podLeftHint': 'o pod não existe mais; as linhas dele continuam acima',
+  'ctx.files': 'Arquivos kubeconfig',
+  'ctx.filesHelp': 'Além do kubeconfig padrão, o kubectl lê os arquivos e pastas que você escolher aqui (variável KUBECONFIG). O LogDeck guarda só os caminhos e nunca lê o conteúdo. De uma pasta entram os arquivos config, .yaml, .yml, .conf e .kubeconfig.',
+  'ctx.useDefault': 'Usar o kubeconfig padrão',
+  'ctx.useDefaultHint': 'Só dá para desligar com outro arquivo ou pasta na lista.',
+  'ctx.addFile': 'Adicionar arquivo…',
+  'ctx.addFolder': 'Adicionar pasta…',
+  'ctx.removeLabel': 'Tirar {path} da lista',
+  'ctx.folderFiles': '{n} arquivos',
+  'ctx.folderFilesOne': '1 arquivo',
+  'ctx.missing': 'não encontrado',
+  'ctx.reloadError': 'O kubectl não conseguiu ler os contextos: {msg}',
 } as const
 
 export type MessageKey = keyof typeof ptBR

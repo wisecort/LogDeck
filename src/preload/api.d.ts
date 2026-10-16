@@ -1,6 +1,7 @@
 import type {
   BuildInfo,
   ContextInfo,
+  KubeconfigView,
   Exposure,
   LogLinesEvent,
   LogStatusEvent,
@@ -67,6 +68,12 @@ export interface LogDeckApi {
   openLink(id: 'github' | 'linkedin' | 'releases'): Promise<void>
   /** Latest published version (anonymous GET to GitHub, at most once a day); null on any failure. */
   checkUpdate(): Promise<UpdateInfo | null>
+  /** Kubeconfig files and folders added by the user (F1.6): paths only. */
+  getKubeconfigs(): Promise<KubeconfigView>
+  /** Opens the system dialog to pick a kubeconfig file or a folder of them; main keeps the path. */
+  addKubeconfig(kind: 'file' | 'folder'): Promise<KubeconfigView>
+  removeKubeconfig(index: number): Promise<KubeconfigView>
+  useDefaultKubeconfig(on: boolean): Promise<KubeconfigView>
 }
 
 declare global {
