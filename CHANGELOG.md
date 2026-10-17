@@ -6,6 +6,8 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+## [1.6.4] — 2026-10-16
+
 - **All replicas in one tab:** when one pod's kubectl is slower to send its first lines (common on OKD, where each one logs in first), its lines now interleave by time with the other pods instead of landing after them.
 
 ## [1.6.3] — 2026-10-16

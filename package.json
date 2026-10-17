@@ -1,7 +1,7 @@
 {
   "name": "logdeck",
   "productName": "LogDeck",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Read-only Kubernetes and OKD/OpenShift log explorer for macOS, Linux and Windows",
   "private": true,
   "license": "MIT",
