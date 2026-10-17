@@ -37,7 +37,7 @@ export class LogEngine {
   private changes = 0
   // Several pods (ingest with a source): one assembler per pod so each stack trace stays on its entry,
   // one shared sequence, and lines held in `pending` until flush() puts them in time order.
-  private sources = new Map<string, { assembler: LogAssembler; last?: LogEntry }>()
+  private sources = new Map<string, { assembler: LogAssembler; last?: LogEntry; sentAt?: number; latest?: number }>()
   private pending: LogEntry[] = []
   private seq = 1
   private perPod = new Map<string, number>()
@@ -103,11 +103,13 @@ export class LogEngine {
       s = { assembler }
       this.sources.set(source, s)
     }
+    s.sentAt = (this.opts.now ?? Date.now)()
     for (const line of lines) {
       const event = s.assembler.push(line)
       if (event.type === 'entry') {
         event.entry.pod = source
         s.last = event.entry
+        s.latest = Math.max(s.latest ?? -Infinity, mergeTime(event.entry))
         this.pending.push(event.entry)
       } else if (s.last) {
         // Same object in `pending` or in the buffer: the trace lands on its entry either way.
@@ -123,9 +125,14 @@ export class LogEngine {
    */
   flush(now: number, holdMs: number): boolean {
     const cut = now - holdMs
-    const ready = this.pending.filter((e) => e.ingestTime <= cut)
+    // A pod that sent lines within holdMs may still be sending its backlog: lines of the others newer than
+    // what it covers wait for it (at most 10× holdMs), so a slow kubectl does not push its pod to the end.
+    let watermark = Infinity
+    for (const s of this.sources.values()) if ((s.sentAt ?? -Infinity) > cut && s.latest !== undefined) watermark = Math.min(watermark, s.latest)
+    const isReady = (e: LogEntry) => e.ingestTime <= cut && (mergeTime(e) <= watermark || e.ingestTime <= now - holdMs * 10)
+    const ready = this.pending.filter(isReady)
     if (ready.length === 0) return false
-    this.pending = this.pending.filter((e) => e.ingestTime > cut)
+    this.pending = this.pending.filter((e) => !isReady(e))
     ready.sort((a, b) => mergeTime(a) - mergeTime(b) || a.seq - b.seq)
     for (const e of ready) {
       this.buffer.push(e)

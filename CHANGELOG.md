@@ -6,6 +6,10 @@ Based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). One entry per
 
 ## [Unreleased]
 
+## [1.6.4] — 2026-10-16
+
+- **All replicas in one tab:** when one pod's kubectl is slower to send its first lines (common on OKD, where each one logs in first), its lines now interleave by time with the other pods instead of landing after them.
+
 ## [1.6.3] — 2026-10-16
 
 - **A log file that cannot be opened gets a dialog** in the middle of the window instead of the thin notice on top, which was easy to miss (issue #24): what went wrong (empty, too large, not text), the file name, what to do about it, and **Open another file…**. It closes with OK or Esc.
